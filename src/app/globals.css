@@ -548,6 +548,14 @@
     @apply font-semibold text-gold;
   }
 
+  .jumuah-friday-iqama-time {
+    @apply font-sans text-sm font-normal leading-5 tabular-nums text-muted-foreground;
+  }
+
+  .jumuah-friday-iqama-line-active .jumuah-friday-iqama-time {
+    @apply font-semibold text-gold;
+  }
+
   .prayer-times-clock-header {
     @apply mb-6 border-b border-gold/20 pb-6 text-center;
   }
@@ -629,7 +637,19 @@
   }
 
   .admin-prayer-times-table-wrap .admin-prayer-times-table--slots {
-    @apply min-w-[24rem];
+    @apply min-w-[36rem];
+  }
+
+  .admin-prayer-times-table--slots .admin-prayer-times-col-label {
+    width: 34%;
+  }
+
+  .admin-prayer-times-table--slots .admin-prayer-times-col-value {
+    width: 50%;
+  }
+
+  .admin-prayer-times-table--slots .admin-prayer-times-col-actions {
+    width: 16%;
   }
 
   .admin-prayer-times-col-prayer,
@@ -651,6 +671,10 @@
 
   .admin-prayer-times-col-value {
     width: 74%;
+  }
+
+  .admin-prayer-times-slot-label-cell {
+    @apply whitespace-nowrap pr-4 align-middle;
   }
 
   .admin-prayer-times-col-actions {
@@ -1377,5 +1401,516 @@
   .icon-action-tooltip:hover::after,
   .icon-action-tooltip:focus-visible::after {
     @apply opacity-100;
+  }
+
+  /* ─── TV Prayer Display ─────────────────────────────────── */
+
+  .display-root {
+    @apply min-h-screen overflow-hidden bg-black;
+  }
+
+  .display-viewport {
+    @apply mx-auto aspect-video h-screen w-screen overflow-hidden;
+  }
+
+  .display-prayer-screen {
+    @apply relative h-full w-full text-foreground transition-colors duration-700;
+    --display-green: #0a2e1f;
+    --display-green-light: #0f6b4a;
+    --display-gold: #d4af37;
+    --display-gold-soft: rgba(212, 175, 55, 0.15);
+  }
+
+  .display-theme-hybrid {
+    background: linear-gradient(160deg, var(--display-green) 0%, #061912 55%, #041008 100%);
+    color: #f5f5f0;
+  }
+
+  .display-theme-hybrid.display-theme-night {
+    background: linear-gradient(160deg, #030a07 0%, #020604 100%);
+  }
+
+  .display-theme-dark {
+    background: linear-gradient(160deg, #030a07 0%, #020604 100%);
+    color: #f5f5f0;
+  }
+
+  .display-theme-light {
+    @apply bg-background text-foreground;
+  }
+
+  .display-bg-pattern {
+    @apply pointer-events-none absolute inset-0 overflow-hidden opacity-[0.06];
+    color: var(--display-gold);
+  }
+
+  .display-bg-pattern-svg {
+    @apply h-full w-full;
+  }
+
+  .display-prayer-screen-inner {
+    @apply relative z-10 flex h-full flex-col overflow-hidden p-[clamp(0.5rem,1vw,2rem)];
+  }
+
+  .display-top-bar {
+    @apply flex shrink-0 items-start justify-between gap-[clamp(0.5rem,1vw,2rem)];
+  }
+
+  .display-logo-block {
+    @apply flex items-center gap-[clamp(0.5rem,1vw,1.5rem)];
+  }
+
+  .display-logo {
+    @apply rounded-full bg-white/5 p-1;
+  }
+
+  .display-site-name {
+    @apply font-heading text-[clamp(1rem,2vw,3rem)] font-semibold text-gold;
+  }
+
+  .display-minaret-pulse {
+    @apply mt-1 text-gold;
+  }
+
+  .display-minaret-icon {
+    @apply h-[clamp(1.5rem,2.5vw,2.5rem)] w-[clamp(1rem,1.8vw,1.75rem)] animate-pulse;
+  }
+
+  .display-clock {
+    @apply ml-auto shrink-0 text-right;
+  }
+
+  .display-clock-english {
+    @apply text-[clamp(1rem,2vw,3rem)] text-white/70;
+  }
+
+  .display-clock-hijri {
+    @apply text-[clamp(1rem,2vw,3rem)] text-gold/80;
+  }
+
+  .display-clock-time {
+    @apply font-heading text-[clamp(1rem,2vw,3rem)] font-semibold tabular-nums leading-none;
+  }
+
+  .display-center-stage {
+    @apply flex min-h-0 flex-1 flex-col justify-center overflow-hidden;
+  }
+
+  .display-prayer-timetable {
+    @apply mx-auto w-full max-w-5xl;
+  }
+
+  .display-prayer-timetable-header {
+    @apply mb-[clamp(0.5rem,1vh,1rem)] text-center;
+  }
+
+  .display-prayer-timetable-title {
+    @apply font-heading text-[clamp(1.5rem,3vw,2.75rem)] font-semibold leading-tight text-foreground;
+  }
+
+  .display-prayer-timetable-subtitle {
+    @apply mt-1 font-heading text-[clamp(1rem,2vw,1.5rem)] font-medium text-white/75;
+  }
+
+  .display-prayer-timetable .prayer-times-clock-header {
+    @apply mb-[clamp(0.5rem,1vh,1rem)] border-b-0 pb-0;
+  }
+
+  .display-prayer-timetable .prayer-times-english-date,
+  .display-prayer-timetable .prayer-times-hijri-date {
+    @apply text-[clamp(0.875rem,1.4vw,1.25rem)] text-white/70;
+  }
+
+  .display-prayer-timetable .prayer-times-live-clock {
+    @apply text-[clamp(2rem,4.5vw,4rem)] text-foreground;
+  }
+
+  .display-prayer-timetable .prayer-times-table-wrap {
+    @apply border-white/15 bg-black/20;
+  }
+
+  .display-prayer-timetable .prayer-times-table {
+    @apply text-[clamp(0.875rem,1.5vw,1.25rem)];
+  }
+
+  .display-prayer-timetable .prayer-times-table-head-cell,
+  .display-prayer-timetable .prayer-times-table-cell {
+    @apply px-[clamp(0.5rem,1vw,1.25rem)] py-[clamp(0.35rem,0.8vw,0.75rem)];
+  }
+
+  .display-prayer-timetable .prayer-times-table-cell-time {
+    @apply text-[clamp(1rem,2vw,1.75rem)];
+  }
+
+  .display-prayer-timetable .jumuah-friday-adhan-line {
+    @apply max-w-none gap-[clamp(0.5rem,1vw,1rem)] font-heading text-[clamp(1rem,2vw,1.75rem)] font-semibold tabular-nums text-foreground;
+  }
+
+  .display-prayer-timetable .jumuah-friday-adhan-label {
+    @apply text-[clamp(0.875rem,1.4vw,1.125rem)] font-medium text-white/70;
+  }
+
+  .display-prayer-timetable .jumuah-friday-adhan-time,
+  .display-prayer-timetable .jumuah-friday-iqama-time {
+    @apply min-w-[clamp(3rem,5vw,4rem)] font-heading text-[clamp(1rem,2vw,1.75rem)] font-semibold tabular-nums text-foreground;
+  }
+
+  .display-prayer-timetable .jumuah-friday-iqama-line {
+    @apply font-heading text-[clamp(1rem,2vw,1.75rem)] font-semibold leading-none text-foreground;
+  }
+
+  .display-countdown-footer {
+    @apply mt-[clamp(0.75rem,2vh,2rem)] shrink-0 border-t border-gold/20 pt-[clamp(0.75rem,2vh,2rem)] text-center;
+  }
+
+  .display-countdown-footer-label {
+    @apply mb-2 text-[clamp(0.875rem,1.4vw,1.125rem)] uppercase tracking-wide text-white/70;
+  }
+
+  .display-countdown-footer-time {
+    @apply font-heading text-[clamp(2rem,4.5vw,3.5rem)] font-semibold tabular-nums text-gold;
+  }
+
+  .display-countdown-footer-title {
+    @apply font-heading text-[clamp(1.25rem,2vw,1.75rem)] font-semibold text-red-200;
+  }
+
+  .display-countdown-footer-message {
+    @apply mt-2 line-clamp-2 text-[clamp(0.875rem,1.4vw,1.125rem)] text-white/85;
+  }
+
+  .display-prayer-stack {
+    @apply flex flex-col items-center gap-[clamp(0.5rem,1vw,2rem)];
+  }
+
+  .display-seasonal-wrapper {
+    @apply flex flex-col items-center gap-[clamp(0.25rem,0.6vw,0.75rem)];
+  }
+
+  .display-seasonal-banner {
+    @apply w-full max-w-4xl rounded-lg border px-[clamp(0.5rem,1vw,1.25rem)] py-[clamp(0.25rem,0.5vw,0.5rem)] text-center;
+  }
+
+  .display-seasonal-banner-ramadan {
+    @apply border-gold/40 bg-gold/10;
+  }
+
+  .display-seasonal-banner-eid {
+    @apply border-gold bg-gold text-mosque-black;
+  }
+
+  .display-seasonal-banner-jumuah {
+    @apply border-emerald/40 bg-emerald/20;
+  }
+
+  .display-seasonal-banner-greeting {
+    @apply font-heading text-[clamp(1rem,2vw,3rem)] font-semibold leading-tight;
+  }
+
+  .display-seasonal-banner-sub {
+    @apply text-[clamp(1rem,2vw,3rem)] leading-tight opacity-80;
+  }
+
+  .display-seasonal-panel-message {
+    @apply mb-[clamp(0.5rem,1vh,1rem)] rounded-lg border px-[clamp(0.75rem,1.5vw,1.25rem)] py-[clamp(0.5rem,1vh,0.75rem)] text-center;
+  }
+
+  .display-seasonal-panel-message-eid {
+    @apply border-gold/40 bg-gold/10;
+  }
+
+  .display-seasonal-panel-message-ramadan {
+    @apply border-gold/40 bg-gold/10;
+  }
+
+  .display-seasonal-panel-message-jumuah {
+    @apply border-emerald/40 bg-emerald/15;
+  }
+
+  .display-seasonal-panel-message-title {
+    @apply font-heading text-[clamp(1rem,1.8vw,1.5rem)] font-semibold leading-tight text-gold;
+  }
+
+  .display-seasonal-panel-message-text {
+    @apply mt-1 text-[clamp(0.875rem,1.4vw,1.125rem)] leading-snug text-white/85;
+  }
+
+  .display-prayer-times-panel {
+    @apply w-full;
+  }
+
+  .display-prayer-times-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--display-prayer-columns, 5), minmax(0, 1fr));
+    gap: clamp(0.5rem, 1vw, 2rem);
+    @apply w-full text-center;
+  }
+
+  .display-prayer-card {
+    @apply flex min-w-0 flex-col justify-between rounded-lg border border-white/10 bg-white/5 p-[clamp(0.5rem,1vw,2rem)] transition-all duration-300;
+  }
+
+  .display-prayer-card-divider {
+    @apply relative;
+  }
+
+  .display-prayer-card-divider::after {
+    content: "";
+    @apply absolute right-0 top-[10%] hidden h-[80%] w-px bg-gold/25 xl:block;
+    transform: translateX(calc(clamp(0.25rem, 0.5vw, 1rem)));
+  }
+
+  .display-prayer-card-next {
+    @apply border-gold/60 bg-gold/15 shadow-gold;
+  }
+
+  .display-prayer-card-name {
+    @apply font-heading text-[clamp(1rem,2vw,3rem)] font-semibold uppercase tracking-wide text-gold;
+  }
+
+  .display-prayer-card-times {
+    @apply mt-[clamp(0.5rem,1vw,1.25rem)] flex flex-col justify-between gap-[clamp(0.5rem,1vw,1rem)];
+  }
+
+  .display-prayer-card-time-block {
+    @apply flex flex-col items-center gap-1;
+  }
+
+  .display-prayer-card-time-label {
+    @apply text-[clamp(1rem,2vw,3rem)] uppercase tracking-wide text-white/60;
+  }
+
+  .display-prayer-card-time-value {
+    @apply font-heading text-[clamp(1rem,2vw,3rem)] font-semibold tabular-nums leading-none;
+  }
+
+  .display-prayer-card-iqama {
+    @apply text-gold;
+  }
+
+  .display-next-prayer-countdown {
+    @apply flex w-full shrink-0 items-center justify-center;
+    margin-top: clamp(1rem, 3vh, 4rem);
+  }
+
+  .display-countdown-ring {
+    width: clamp(120px, 20vw, 260px);
+    height: clamp(120px, 20vw, 260px);
+    @apply relative shrink-0;
+  }
+
+  .display-countdown-ring-svg {
+    @apply h-full w-full -rotate-90;
+  }
+
+  .display-countdown-ring-track {
+    @apply fill-none stroke-white/10;
+    stroke-width: 8;
+  }
+
+  .display-countdown-ring-progress {
+    @apply fill-none stroke-gold transition-all duration-1000 ease-linear;
+    stroke-width: 8;
+    stroke-linecap: round;
+  }
+
+  .display-countdown-ring-content {
+    @apply absolute inset-0 flex flex-col items-center justify-center text-center;
+  }
+
+  .display-countdown-ring-label {
+    @apply text-[clamp(1rem,2vw,3rem)] uppercase tracking-wide text-white/70;
+  }
+
+  .display-countdown-ring-time {
+    @apply font-heading text-[clamp(1rem,2vw,3rem)] font-semibold tabular-nums leading-none text-gold;
+  }
+
+  .display-emergency-alert {
+    @apply max-w-3xl rounded-xl border border-red-400/50 bg-red-500/10 px-[clamp(0.5rem,1vw,2rem)] py-[clamp(0.5rem,1vw,1.5rem)] text-center;
+  }
+
+  .display-emergency-alert-label {
+    @apply text-[clamp(1rem,2vw,3rem)] uppercase tracking-wide text-red-300;
+  }
+
+  .display-emergency-alert-title {
+    @apply mt-2 font-heading text-[clamp(1rem,2vw,3rem)] font-semibold text-red-200;
+  }
+
+  .display-emergency-alert-message {
+    @apply mt-2 text-[clamp(1rem,2vw,3rem)] text-white/85;
+  }
+
+  .display-bottom-stage {
+    @apply flex shrink-0 flex-col justify-end overflow-hidden;
+    flex: 0 0 clamp(9rem, 20vh, 13rem);
+    min-height: clamp(9rem, 20vh, 13rem);
+    max-height: clamp(9rem, 20vh, 13rem);
+  }
+
+  .display-rotating-panels {
+    @apply flex h-full w-full flex-col overflow-hidden;
+  }
+
+  .display-rotating-panels-inner {
+    @apply flex-1 overflow-hidden transition-opacity duration-500 ease-in-out;
+  }
+
+  .display-rotating-panels-visible {
+    @apply opacity-100;
+  }
+
+  .display-rotating-panels-hidden {
+    @apply opacity-0;
+  }
+
+  .display-rotating-panel {
+    @apply flex h-full flex-col overflow-hidden rounded-xl border border-gold/20 bg-black/20 p-[clamp(0.5rem,1vw,1.25rem)];
+  }
+
+  .display-rotating-panel-title {
+    @apply mb-[clamp(0.25rem,0.6vw,0.75rem)] shrink-0 font-heading text-[clamp(0.875rem,1.4vw,1.125rem)] font-semibold text-gold;
+  }
+
+  .display-rotating-panel-empty-text {
+    @apply line-clamp-3 text-[clamp(0.875rem,1.3vw,1rem)] text-white/60;
+  }
+
+  .display-announcements-list,
+  .display-events-list {
+    @apply min-h-0 flex-1 space-y-[clamp(0.25rem,0.5vw,0.5rem)] overflow-hidden;
+  }
+
+  .display-announcement-item {
+    @apply flex gap-[clamp(0.5rem,1vw,1rem)] border-b border-white/10 pb-[clamp(0.25rem,0.5vw,0.5rem)] last:border-b-0 last:pb-0;
+  }
+
+  .display-announcement-priority {
+    @apply shrink-0 rounded px-2 py-0.5 text-[clamp(0.625rem,0.9vw,0.75rem)] uppercase tracking-wide;
+  }
+
+  .display-announcement-title {
+    @apply line-clamp-1 text-[clamp(0.875rem,1.3vw,1rem)] font-semibold;
+  }
+
+  .display-announcement-message {
+    @apply line-clamp-2 text-[clamp(0.8125rem,1.2vw,0.9375rem)] text-white/75;
+  }
+
+  .display-event-date {
+    @apply text-[clamp(0.75rem,1.1vw,0.875rem)] text-gold;
+  }
+
+  .display-event-title {
+    @apply line-clamp-1 text-[clamp(0.875rem,1.3vw,1rem)] font-semibold;
+  }
+
+  .display-event-location {
+    @apply line-clamp-1 text-[clamp(0.75rem,1.1vw,0.875rem)] text-white/60;
+  }
+
+  .display-ayah-arabic {
+    @apply mb-2 line-clamp-2 text-[clamp(0.9375rem,1.5vw,1.125rem)] leading-relaxed;
+    font-family: "Amiri", "Traditional Arabic", serif;
+  }
+
+  .display-ayah-english {
+    @apply line-clamp-2 text-[clamp(0.8125rem,1.2vw,0.9375rem)] italic text-white/85;
+  }
+
+  .display-ayah-source {
+    @apply line-clamp-1 text-[clamp(0.75rem,1.1vw,0.875rem)] text-gold;
+  }
+
+  .display-weather-temp {
+    @apply font-heading text-[clamp(1.5rem,2.5vw,2rem)] font-semibold text-gold;
+  }
+
+  .display-weather-desc {
+    @apply line-clamp-1 text-[clamp(0.875rem,1.3vw,1rem)];
+  }
+
+  .display-weather-wind,
+  .display-weather-location {
+    @apply line-clamp-1 text-[clamp(0.75rem,1.1vw,0.875rem)] text-white/60;
+  }
+
+  .display-announcement-priority-high {
+    @apply bg-red-500/20 text-red-300;
+  }
+
+  .display-announcement-priority-medium {
+    @apply bg-gold/20 text-gold;
+  }
+
+  .display-announcement-priority-low {
+    @apply bg-white/10 text-white/70;
+  }
+
+  .display-rotating-panels-dots {
+    @apply mt-[clamp(0.25rem,0.5vw,0.5rem)] flex justify-center gap-2;
+  }
+
+  .display-rotating-panels-dot {
+    @apply h-2 w-2 rounded-full bg-white/30 transition-colors;
+  }
+
+  .display-rotating-panels-dot-active {
+    @apply bg-gold;
+  }
+
+  .display-scrolling-ticker {
+    @apply mt-auto shrink-0 overflow-hidden border-t border-gold pt-[clamp(0.25rem,0.5vw,0.5rem)];
+  }
+
+  .display-scrolling-ticker-line {
+    @apply hidden;
+  }
+
+  .display-scrolling-ticker-track {
+    @apply flex overflow-hidden whitespace-nowrap;
+    min-height: clamp(1.5rem, 2.5vh, 2.25rem);
+  }
+
+  .display-scrolling-ticker-text {
+    @apply inline-block min-w-full shrink-0 animate-display-ticker px-[clamp(0.5rem,1vw,2rem)] font-medium text-gold;
+    font-size: clamp(1rem, 2vw, 3rem);
+  }
+
+  .admin-display-manager {
+    @apply space-y-6;
+  }
+
+  .admin-display-header {
+    @apply flex flex-wrap items-start justify-between gap-4;
+  }
+
+  .admin-display-loading {
+    @apply flex items-center justify-center py-16;
+  }
+
+  .admin-display-tabs-list {
+    @apply mb-6;
+  }
+
+  .admin-display-tab-content {
+    @apply mt-0;
+  }
+
+  .admin-display-grid {
+    @apply grid gap-6 lg:grid-cols-2;
+  }
+
+  .admin-display-date-grid {
+    @apply grid gap-4 sm:grid-cols-2;
+  }
+
+  .admin-display-list-item {
+    @apply flex flex-wrap items-start justify-between gap-3 rounded-lg border border-border p-4;
+  }
+
+  .admin-display-checkbox-row {
+    @apply flex items-center gap-2 text-sm;
   }
 }

@@ -111,9 +111,19 @@ const config: Config = {
       transitionDuration: {
         DEFAULT: "200ms",
         slow: "400ms",
+        400: "400ms",
       },
       transitionTimingFunction: {
         smooth: "cubic-bezier(0.4, 0, 0.2, 1)",
+      },
+      keyframes: {
+        "display-ticker": {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(-100%)" },
+        },
+      },
+      animation: {
+        "display-ticker": "display-ticker 30s linear infinite",
       },
       backgroundImage: {
         "hero-pattern":

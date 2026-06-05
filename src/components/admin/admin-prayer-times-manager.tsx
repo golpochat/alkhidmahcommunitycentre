@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { format, nextFriday, parseISO } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { Loader2, Plus, RotateCcw, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ import {
   DEFAULT_EID_ADHA_TIMES,
   DEFAULT_EID_FITR_TIMES,
   defaultJumuahAdminSlots,
+  getJumuahSaveDate,
   getEidPrayerLabel,
   getJumuahPrayerLabel,
   isFriday,
@@ -250,11 +251,6 @@ export function AdminPrayerTimesManager() {
   );
   const [reloadKey, setReloadKey] = useState(0);
 
-  const jumuahDate = useMemo(
-    () => format(nextFriday(new Date()), "yyyy-MM-dd"),
-    [],
-  );
-
   const selectedFriday = useMemo(() => {
     if (!selectedDate) return false;
     return isFriday(parseISO(selectedDate));
@@ -320,11 +316,6 @@ export function AdminPrayerTimesManager() {
         if (!response.ok) return;
 
         const data = await response.json();
-        if (selectedFriday && data.override?.jumuah?.length) {
-          setJumuahSlots(jumuahSlotsFromRecord(data.override));
-          return;
-        }
-
         setJumuahSlots(jumuahSlotsFromRecord(data.activeJumuah ?? null));
       } catch {
         setJumuahSlots(defaultJumuahAdminSlots());
@@ -332,7 +323,7 @@ export function AdminPrayerTimesManager() {
     }
 
     loadActiveJumuah();
-  }, [reloadKey, selectedFriday, selectedDate]);
+  }, [reloadKey]);
 
   function updateAdhanConfig(
     prayer: DailyPrayerKey,
@@ -407,6 +398,16 @@ export function AdminPrayerTimesManager() {
       const data = await response.json();
       throw new Error(data.error || "Save failed");
     }
+
+    return response.json();
+  }
+
+  function jumuahPayloadSlots() {
+    return jumuahSlots.map((slot) => ({
+      index: slot.index,
+      adhan: slot.adhan || null,
+      iqama: slot.iqama || slot.adhan || null,
+    }));
   }
 
   async function saveSection(section: OverrideSection) {
@@ -443,12 +444,15 @@ export function AdminPrayerTimesManager() {
       }
 
       if (section === "jumuah") {
-        await postOverride({
+        const result = await postOverride({
           section: "jumuah",
           date: todayDateKey(),
-          jumuahDate,
-          jumuah: jumuahSlots,
+          jumuahDate: getJumuahSaveDate(),
+          jumuah: jumuahPayloadSlots(),
         });
+        if (result?.activeJumuah) {
+          setJumuahSlots(jumuahSlotsFromRecord(result.activeJumuah));
+        }
         toast.success("Jumu'ah prayer times saved");
       }
 
@@ -489,7 +493,7 @@ export function AdminPrayerTimesManager() {
     };
 
     if (section === "daily") payload.date = selectedDate;
-    if (section === "jumuah") payload.jumuahDate = jumuahDate;
+    if (section === "jumuah") payload.jumuahDate = getJumuahSaveDate();
     if (section === "eid") {
       payload.date = eidDate;
       payload.eidDate = eidDate;
@@ -694,7 +698,7 @@ export function AdminPrayerTimesManager() {
                         key={jumuah.index}
                         className="prayer-times-table-row"
                       >
-                        <TableCell className="prayer-times-table-cell font-medium">
+                        <TableCell className="prayer-times-table-cell admin-prayer-times-slot-label-cell font-medium">
                           {getJumuahPrayerLabel(jumuah.index)}
                         </TableCell>
                         <TableCell className="prayer-times-table-cell admin-prayer-times-value-cell">

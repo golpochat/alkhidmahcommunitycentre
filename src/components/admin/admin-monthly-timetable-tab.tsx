@@ -92,12 +92,21 @@ export function AdminMonthlyTimetableTab() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/monthly/generate?month=${month}&year=${year}`);
-      const data = await parseJsonResponse<{ error?: string; rows?: MonthlyRow[] }>(response);
+      const response = await fetch(
+        `/api/monthly/generate?month=${month}&year=${year}`,
+      );
+      const data = await parseJsonResponse<{
+        error?: string;
+        rows?: MonthlyRow[];
+      }>(response);
       if (!response.ok) throw new Error(data.error || "Failed to load");
       setRows(data.rows ?? []);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to load monthly timetable");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to load monthly timetable",
+      );
     } finally {
       setLoading(false);
     }
@@ -109,7 +118,9 @@ export function AdminMonthlyTimetableTab() {
 
   function updateRow(index: number, patch: Partial<MonthlyRow>) {
     setRows((current) =>
-      current.map((row, rowIndex) => (rowIndex === index ? { ...row, ...patch } : row))
+      current.map((row, rowIndex) =>
+        rowIndex === index ? { ...row, ...patch } : row,
+      ),
     );
   }
 
@@ -121,7 +132,10 @@ export function AdminMonthlyTimetableTab() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ month, year }),
       });
-      const data = await parseJsonResponse<{ error?: string; rows?: MonthlyRow[] }>(response);
+      const data = await parseJsonResponse<{
+        error?: string;
+        rows?: MonthlyRow[];
+      }>(response);
       if (!response.ok) throw new Error(data.error || "Generation failed");
       setRows(data.rows ?? []);
       toast.success("Monthly timetable filled from daily prayer times");
@@ -140,7 +154,10 @@ export function AdminMonthlyTimetableTab() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ month, year, rows }),
       });
-      const data = await parseJsonResponse<{ error?: string; rows?: MonthlyRow[] }>(response);
+      const data = await parseJsonResponse<{
+        error?: string;
+        rows?: MonthlyRow[];
+      }>(response);
       if (!response.ok) throw new Error(data.error || "Save failed");
       setRows(data.rows ?? []);
       toast.success("Monthly timetable saved and published to homepage");
@@ -161,11 +178,14 @@ export function AdminMonthlyTimetableTab() {
       });
       const { url, filename } = await downloadPdfFromResponse(
         response,
-        `prayer-timetable-${year}-${String(month).padStart(2, "0")}.pdf`
+        `prayer-timetable-${year}-${String(month).padStart(2, "0")}.pdf`,
       );
       if (pdfPreviewUrl) URL.revokeObjectURL(pdfPreviewUrl);
       setPdfPreviewUrl(url);
-      pdfPreviewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      pdfPreviewRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
       toast.success(`Downloaded ${filename}`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "PDF failed");
@@ -182,17 +202,26 @@ export function AdminMonthlyTimetableTab() {
             Monthly Prayer Timetable (Full Month View)
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Generate a full month with Adhan and Iqama times. Override any field before saving.
+            Generate a full month with Adhan and Iqama times. Override any field
+            before saving.
           </p>
         </div>
       </div>
 
-      <details className="rounded-lg border border-border bg-secondary/20 p-4" open>
-        <summary className="cursor-pointer font-medium text-gold">Month selector</summary>
+      <details
+        className="rounded-lg border border-border bg-secondary/20 p-4"
+        open
+      >
+        <summary className="cursor-pointer font-medium text-gold">
+          Month selector
+        </summary>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label>Month</Label>
-            <Select value={String(month)} onValueChange={(value) => setMonth(Number(value))}>
+            <Select
+              value={String(month)}
+              onValueChange={(value) => setMonth(Number(value))}
+            >
               <SelectTrigger className="w-full">
                 <span>{MONTHS[month - 1]}</span>
               </SelectTrigger>
@@ -207,7 +236,10 @@ export function AdminMonthlyTimetableTab() {
           </div>
           <div className="space-y-2">
             <Label>Year</Label>
-            <Select value={String(year)} onValueChange={(value) => setYear(Number(value))}>
+            <Select
+              value={String(year)}
+              onValueChange={(value) => setYear(Number(value))}
+            >
               <SelectTrigger className="w-full">
                 <span>{year}</span>
               </SelectTrigger>
@@ -224,22 +256,52 @@ export function AdminMonthlyTimetableTab() {
       </details>
 
       <div className="flex flex-wrap gap-2">
-        <Button type="button" variant="outline" disabled={generating || loading} onClick={handleGenerate}>
-          {generating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+        <Button
+          type="button"
+          variant="outline"
+          disabled={generating || loading}
+          onClick={handleGenerate}
+        >
+          {generating ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw className="mr-2 h-4 w-4" />
+          )}
           Fill from daily prayer times
         </Button>
-        <Button type="button" className="btn-gold" disabled={saving || rows.length === 0} onClick={handleSave}>
-          {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+        <Button
+          type="button"
+          className="btn-gold"
+          disabled={saving || rows.length === 0}
+          onClick={handleSave}
+        >
+          {saving ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Save className="mr-2 h-4 w-4" />
+          )}
           Save timetable
         </Button>
-        <Button type="button" variant="outline" disabled={rows.length === 0 || generatingPdf} onClick={handlePdfPreview}>
-          {generatingPdf ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileDown className="mr-2 h-4 w-4" />}
+        <Button
+          type="button"
+          variant="outline"
+          disabled={rows.length === 0 || generatingPdf}
+          onClick={handlePdfPreview}
+        >
+          {generatingPdf ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <FileDown className="mr-2 h-4 w-4" />
+          )}
           Generate Monthly Prayer Timetable PDF
         </Button>
       </div>
 
       {pdfPreviewUrl && (
-        <div ref={pdfPreviewRef} className="rounded-lg border border-border bg-secondary/20 p-4">
+        <div
+          ref={pdfPreviewRef}
+          className="rounded-lg border border-border bg-secondary/20 p-4"
+        >
           <p className="font-medium text-gold">PDF preview</p>
           <div className="mt-4 space-y-3">
             <object
@@ -249,7 +311,8 @@ export function AdminMonthlyTimetableTab() {
               className="h-[520px] w-full rounded-md border border-border bg-white"
             >
               <p className="p-4 text-sm text-muted-foreground">
-                Preview unavailable in this browser. Use the download link below.
+                Preview unavailable in this browser. Use the download link
+                below.
               </p>
             </object>
             <a
@@ -270,7 +333,9 @@ export function AdminMonthlyTimetableTab() {
         </div>
       ) : (
         <details className="rounded-lg border border-border" open>
-          <summary className="cursor-pointer px-4 py-3 font-medium">Month view table</summary>
+          <summary className="cursor-pointer px-4 py-3 font-medium">
+            Month view table
+          </summary>
           <div className="admin-prayer-times-table-wrap overflow-x-auto p-4 pt-0">
             <Table>
               <TableHeader>
@@ -293,46 +358,96 @@ export function AdminMonthlyTimetableTab() {
               </TableHeader>
               <TableBody>
                 {rows.map((row, index) => (
-                  <TableRow key={row.date} className={cn(row.isFriday && "bg-gold/10")}>
+                  <TableRow
+                    key={row.date}
+                    className={cn(row.isFriday && "bg-gold/10")}
+                  >
                     <TableCell className="whitespace-nowrap text-xs">
                       {format(parseISO(row.date), "d MMM")}
                     </TableCell>
                     <TableCell className="text-xs">{row.dayName}</TableCell>
                     <TableCell>
-                      <EditableCell value={row.fajrAdhan} onChange={(v) => updateRow(index, { fajrAdhan: v })} type="time" />
+                      <EditableCell
+                        value={row.fajrAdhan}
+                        onChange={(v) => updateRow(index, { fajrAdhan: v })}
+                        type="time"
+                      />
                     </TableCell>
                     <TableCell>
-                      <EditableCell value={row.fajrIqama} onChange={(v) => updateRow(index, { fajrIqama: v })} type="time" />
+                      <EditableCell
+                        value={row.fajrIqama}
+                        onChange={(v) => updateRow(index, { fajrIqama: v })}
+                        type="time"
+                      />
                     </TableCell>
                     <TableCell>
-                      <EditableCell value={row.sunrise} onChange={(v) => updateRow(index, { sunrise: v })} type="time" />
+                      <EditableCell
+                        value={row.sunrise}
+                        onChange={(v) => updateRow(index, { sunrise: v })}
+                        type="time"
+                      />
                     </TableCell>
                     <TableCell>
-                      <EditableCell value={row.dhuhrAdhan} onChange={(v) => updateRow(index, { dhuhrAdhan: v })} type="time" />
+                      <EditableCell
+                        value={row.dhuhrAdhan}
+                        onChange={(v) => updateRow(index, { dhuhrAdhan: v })}
+                        type="time"
+                      />
                     </TableCell>
                     <TableCell>
-                      <EditableCell value={row.dhuhrIqama} onChange={(v) => updateRow(index, { dhuhrIqama: v })} type="time" />
+                      <EditableCell
+                        value={row.dhuhrIqama}
+                        onChange={(v) => updateRow(index, { dhuhrIqama: v })}
+                        type="time"
+                      />
                     </TableCell>
                     <TableCell>
-                      <EditableCell value={row.asrAdhan} onChange={(v) => updateRow(index, { asrAdhan: v })} type="time" />
+                      <EditableCell
+                        value={row.asrAdhan}
+                        onChange={(v) => updateRow(index, { asrAdhan: v })}
+                        type="time"
+                      />
                     </TableCell>
                     <TableCell>
-                      <EditableCell value={row.asrIqama} onChange={(v) => updateRow(index, { asrIqama: v })} type="time" />
+                      <EditableCell
+                        value={row.asrIqama}
+                        onChange={(v) => updateRow(index, { asrIqama: v })}
+                        type="time"
+                      />
                     </TableCell>
                     <TableCell>
-                      <EditableCell value={row.maghribAdhan} onChange={(v) => updateRow(index, { maghribAdhan: v })} type="time" />
+                      <EditableCell
+                        value={row.maghribAdhan}
+                        onChange={(v) => updateRow(index, { maghribAdhan: v })}
+                        type="time"
+                      />
                     </TableCell>
                     <TableCell>
-                      <EditableCell value={row.maghribIqama} onChange={(v) => updateRow(index, { maghribIqama: v })} type="time" />
+                      <EditableCell
+                        value={row.maghribIqama}
+                        onChange={(v) => updateRow(index, { maghribIqama: v })}
+                        type="time"
+                      />
                     </TableCell>
                     <TableCell>
-                      <EditableCell value={row.ishaAdhan} onChange={(v) => updateRow(index, { ishaAdhan: v })} type="time" />
+                      <EditableCell
+                        value={row.ishaAdhan}
+                        onChange={(v) => updateRow(index, { ishaAdhan: v })}
+                        type="time"
+                      />
                     </TableCell>
                     <TableCell>
-                      <EditableCell value={row.ishaIqama} onChange={(v) => updateRow(index, { ishaIqama: v })} type="time" />
+                      <EditableCell
+                        value={row.ishaIqama}
+                        onChange={(v) => updateRow(index, { ishaIqama: v })}
+                        type="time"
+                      />
                     </TableCell>
                     <TableCell>
-                      <EditableCell value={row.notes} onChange={(v) => updateRow(index, { notes: v })} />
+                      <EditableCell
+                        value={row.notes}
+                        onChange={(v) => updateRow(index, { notes: v })}
+                      />
                     </TableCell>
                   </TableRow>
                 ))}

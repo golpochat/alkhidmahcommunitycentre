@@ -13,6 +13,7 @@ import {
   Image,
   LayoutDashboard,
   Menu,
+  Monitor,
 } from "lucide-react";
 import {
   Sheet,
@@ -73,6 +74,12 @@ const navLinks = [
     href: "/admin/special-prayers",
     label: "Prayer Timetable",
     icon: Clock,
+    canAccess: canManagePrayerTimes,
+  },
+  {
+    href: "/admin/display",
+    label: "TV Display",
+    icon: Monitor,
     canAccess: canManagePrayerTimes,
   },
 ];

@@ -138,7 +138,11 @@ export function PrayerTimesDisplay({
             {sunriseRow && <PrayerTableRow row={sunriseRow} nextPrayer={nextPrayer} />}
 
             {fridayJumuah ? (
-              <JumuahFridayRow jumuah={schedule.jumuah} nextPrayer={nextPrayer} />
+              <JumuahFridayRow
+                jumuah={schedule.jumuah}
+                nextPrayer={nextPrayer}
+                asrAdhan={schedule.prayers.asr.adhan}
+              />
             ) : (
               dhuhrRow && (
                 <PrayerTableRow

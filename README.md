@@ -37,13 +37,13 @@ npm run build
 
 ## Project structure
 
-| Path | Description |
-|------|-------------|
-| `src/app/(site)/` | Public website |
-| `src/app/admin/` | Staff dashboard |
+| Path                   | Description                          |
+| ---------------------- | ------------------------------------ |
+| `src/app/(site)/`      | Public website                       |
+| `src/app/admin/`       | Staff dashboard                      |
 | `src/app/super-admin/` | Super-admin (roles, users, settings) |
-| `src/app/api/` | REST API routes |
-| `prisma/` | Schema, migrations, seed |
+| `src/app/api/`         | REST API routes                      |
+| `prisma/`              | Schema, migrations, seed             |
 
 ## License
 

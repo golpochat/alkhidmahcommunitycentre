@@ -19,6 +19,7 @@ export const ADMIN_PAGE_TITLES: Record<string, string> = {
   "/admin/registrations": "Registrations",
   "/admin/special-prayers": "Prayer Timetable",
   "/admin/prayer-times": "Prayer Timetable",
+  "/admin/display": "TV Display",
   "/admin/profile": "My Profile",
 };
 

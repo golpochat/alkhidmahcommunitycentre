@@ -39,9 +39,9 @@ interface RamadanRow extends RamadanTableRow {
 }
 
 export function AdminRamadanTimetableTab() {
-  const [seasonOptions, setSeasonOptions] = useState<RamadanSeasonSelectOption[]>(
-    [],
-  );
+  const [seasonOptions, setSeasonOptions] = useState<
+    RamadanSeasonSelectOption[]
+  >([]);
   const [year, setYear] = useState<number | null>(null);
   const [seasonInfo, setSeasonInfo] = useState<RamadanSeasonInfo | null>(null);
   const [rows, setRows] = useState<RamadanRow[]>([]);
@@ -189,7 +189,7 @@ export function AdminRamadanTimetableTab() {
       if (!response.ok) throw new Error(data.error || "Generation failed");
       setRows(data.rows ?? []);
       toast.success(
-        "Ramadan timetable filled using your daily prayer times (modified adhan where set)."
+        "Ramadan timetable filled using your daily prayer times (modified adhan where set).",
       );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Generation failed");
@@ -268,8 +268,7 @@ export function AdminRamadanTimetableTab() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ year }),
       });
-      const pdfYear =
-        selectedSeason?.endDate?.slice(0, 4) ?? String(year);
+      const pdfYear = selectedSeason?.endDate?.slice(0, 4) ?? String(year);
       const { url, filename } = await downloadPdfFromResponse(
         response,
         `ramadan-timetable-${pdfYear}.pdf`,

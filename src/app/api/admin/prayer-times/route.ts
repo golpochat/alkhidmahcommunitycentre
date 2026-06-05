@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { format, nextFriday } from "date-fns";
+import { revalidateTag } from "next/cache";
+import { format } from "date-fns";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { canManagePrayerTimes, requireSession } from "@/lib/auth";
@@ -11,7 +12,9 @@ import {
   getActiveEidOverride,
   getActiveJumuahOverride,
 } from "@/lib/prayer-times";
+import { DISPLAY_PRAYER_TIMES_CACHE_TAG } from "@/lib/display-api";
 import { legacyIqamaFieldsFromConfig, parseDailyIqamaConfig } from "@/lib/prayer-iqama";
+import { getJumuahSaveDate } from "@/lib/prayer-times-pure";
 import { prayerTimesOverrideSchema, type PrayerTimesOverrideFormValues } from "@/lib/validations";
 
 const overrideInclude = {
@@ -214,7 +217,7 @@ async function resetOverrideSection(
 
   if (section === "jumuah") {
     const jumuahDate = parseDateParam(
-      String(body.jumuahDate ?? format(nextFriday(new Date()), "yyyy-MM-dd"))
+      String(body.jumuahDate ?? getJumuahSaveDate())
     );
     const existing = await db.prayerTimesOverride.findUnique({
       where: { date: jumuahDate },
@@ -264,7 +267,7 @@ async function saveJumuahSection(
   validated: PrayerTimesOverrideFormValues
 ) {
   const jumuahDate = parseDateParam(
-    validated.jumuahDate ?? format(nextFriday(new Date()), "yyyy-MM-dd")
+    validated.jumuahDate ?? getJumuahSaveDate()
   );
   const jumuahOverride = await tx.prayerTimesOverride.upsert({
     where: { date: jumuahDate },
@@ -283,10 +286,19 @@ async function saveJumuahSection(
         date: jumuahDate,
         index: item.index,
         adhan: item.adhan ?? null,
-        iqama: item.iqama ?? null,
+        iqama: item.iqama ?? item.adhan ?? null,
       })),
     });
   }
+
+  await tx.jumuahOverride.deleteMany({
+    where: { prayerTimesOverrideId: { not: jumuahOverride.id } },
+  });
+
+  await tx.prayerTimesOverride.update({
+    where: { id: jumuahOverride.id },
+    data: { eidShowOnFrontend: jumuahOverride.eidShowOnFrontend },
+  });
 
   return jumuahOverride;
 }
@@ -342,7 +354,7 @@ async function saveAllSections(validated: PrayerTimesOverrideFormValues) {
   const dailyDate = parseDateParam(validated.date);
   const eidDate = parseDateParam(validated.eidDate ?? validated.date);
   const jumuahDate = parseDateParam(
-    validated.jumuahDate ?? format(nextFriday(new Date()), "yyyy-MM-dd")
+    validated.jumuahDate ?? getJumuahSaveDate()
   );
   const dailyFields = buildDailyFields(validated);
   const legacyEid = legacyEidColumns(validated.eidType, validated.eidPrayers);
@@ -431,6 +443,7 @@ export async function POST(request: NextRequest) {
 
       if (section) {
         await resetOverrideSection(section, body);
+        revalidateTag(DISPLAY_PRAYER_TIMES_CACHE_TAG);
         return NextResponse.json({ success: true });
       }
 
@@ -458,6 +471,7 @@ export async function POST(request: NextRequest) {
         });
       });
 
+      revalidateTag(DISPLAY_PRAYER_TIMES_CACHE_TAG);
       return NextResponse.json({ success: true });
     }
 
@@ -486,6 +500,8 @@ export async function POST(request: NextRequest) {
       where: { date: parseDateParam(validated.date) },
       include: overrideInclude,
     });
+
+    revalidateTag(DISPLAY_PRAYER_TIMES_CACHE_TAG);
 
     return NextResponse.json(
       {

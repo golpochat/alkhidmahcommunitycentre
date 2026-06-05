@@ -406,3 +406,31 @@ export const emailTestSchema = z.object({
 
 export type SmtpEmailSettingFormValues = z.infer<typeof smtpEmailSettingSchema>;
 export type EmailTestFormValues = z.infer<typeof emailTestSchema>;
+
+export const displayNoticeSchema = z.object({
+  title: z.string().min(2, "Title is required").max(120),
+  message: z.string().min(2, "Message is required").max(500),
+  priority: z.enum(["high", "medium", "low"]),
+  startDate: z.string().datetime().optional().nullable(),
+  endDate: z.string().datetime().optional().nullable(),
+});
+
+export const displaySettingsSchema = z.object({
+  rotationSpeed: z.number().int().min(5).max(120),
+  enabledPanels: z.array(
+    z.enum(["announcements", "events", "ayat", "weather"])
+  ),
+  theme: z.enum(["hybrid", "dark", "light"]),
+  pinCode: z.string().max(8).optional().nullable(),
+  brightnessSchedule: z.unknown().optional().nullable(),
+});
+
+export const ayahRotationSchema = z.object({
+  arabic: z.string().min(2).max(500),
+  english: z.string().min(2).max(500),
+  source: z.string().min(2).max(120),
+});
+
+export type DisplayNoticeFormValues = z.infer<typeof displayNoticeSchema>;
+export type DisplaySettingsFormValues = z.infer<typeof displaySettingsSchema>;
+export type AyahRotationFormValues = z.infer<typeof ayahRotationSchema>;

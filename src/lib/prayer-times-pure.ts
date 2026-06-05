@@ -194,6 +194,12 @@ export function isFriday(date: Date) {
   return date.getDay() === 5;
 }
 
+/** Date key used when saving Jumu'ah overrides (today if Friday, otherwise next Friday). */
+export function getJumuahSaveDate(now: Date = new Date()): string {
+  const today = parseISO(format(now, "yyyy-MM-dd"));
+  return format(isFriday(today) ? today : nextFriday(today), "yyyy-MM-dd");
+}
+
 export function normalizeTime(value?: string | null) {
   if (!value) return null;
   return value.split(" ")[0].slice(0, 5);
@@ -680,11 +686,22 @@ export function buildEidInfoFromRecord(
   };
 }
 
-export function getActiveJumuahIndex(jumuah: JumuahSlot[], now: Date = new Date()) {
-  if (jumuah.length === 0) return 1;
+export function getActiveJumuahIndex(
+  jumuah: JumuahSlot[],
+  now: Date = new Date(),
+  asrAdhan?: string | null
+): number | null {
+  if (jumuah.length === 0) return null;
 
   const sorted = [...jumuah].sort((a, b) => a.index - b.index);
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+  if (asrAdhan) {
+    const asrMinutes = parseTimeToMinutes(asrAdhan);
+    if (currentMinutes >= asrMinutes) {
+      return null;
+    }
+  }
 
   for (const slot of sorted) {
     if (!slot.adhan) continue;

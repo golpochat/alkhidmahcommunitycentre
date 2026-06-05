@@ -167,9 +167,15 @@ export async function getActiveEidOverride() {
 }
 
 export async function getActiveJumuahOverride() {
-  return db.prayerTimesOverride.findFirst({
-    where: { jumuahOverrides: { some: {} } },
+  const latestSlot = await db.jumuahOverride.findFirst({
     orderBy: { updatedAt: "desc" },
+    select: { prayerTimesOverrideId: true },
+  });
+
+  if (!latestSlot) return null;
+
+  return db.prayerTimesOverride.findUnique({
+    where: { id: latestSlot.prayerTimesOverrideId },
     include: {
       jumuahOverrides: { orderBy: { index: "asc" } },
     },
@@ -277,16 +283,7 @@ export async function getPrayerTimesForDate(
   const dates = buildDateLabels(dateKey, hijri);
   const sunrise = normalizeTime(apiTimings.Sunrise);
 
-  let jumuah: JumuahSlot[] = [];
-
-  if (friday) {
-    if (override?.jumuahOverrides?.length) {
-      jumuah = mapJumuahOverrides(override.jumuahOverrides);
-    } else {
-      jumuah = await resolveConfiguredJumuahSlots();
-    }
-  }
-
+  const jumuah = friday ? await resolveConfiguredJumuahSlots() : [];
   const configuredJumuah = await resolveConfiguredJumuahSlots();
 
   const replaceDhuhrWithJumuah = friday && jumuah.length > 0;
@@ -370,4 +367,102 @@ export async function getLastEidPrayerTimes(): Promise<PrayerTimesResponse | nul
   if (!lastEid) return null;
 
   return getPrayerTimesForDate(format(lastEid.date, "yyyy-MM-dd"));
+}
+
+function buildStoredPrayerSlot(
+  adhan?: string | null,
+  iqama?: string | null
+): PrayerSlot {
+  const normalizedAdhan = normalizeTime(adhan);
+  const normalizedIqama = normalizeTime(iqama);
+
+  return {
+    adhan: normalizedAdhan,
+    iqama: normalizedIqama,
+    iqamaDisplay: normalizedIqama,
+  };
+}
+
+async function buildPrayerTimesFromMonthlyRow(
+  date: Date,
+  dateKey: string,
+  row: {
+    fajrAdhan: string | null;
+    fajrIqama: string | null;
+    dhuhrAdhan: string | null;
+    dhuhrIqama: string | null;
+    asrAdhan: string | null;
+    asrIqama: string | null;
+    maghribAdhan: string | null;
+    maghribIqama: string | null;
+    ishaAdhan: string | null;
+    ishaIqama: string | null;
+    sunrise: string | null;
+  },
+  override: DbPrayerTimesOverrideRecord | null
+): Promise<PrayerTimesResponse> {
+  const friday = isFriday(date);
+  let dates = buildDateLabels(dateKey, null);
+
+  try {
+    const aladhan = await fetchAlAdhan(date);
+    dates = buildDateLabels(dateKey, aladhan.data.date.hijri);
+  } catch {
+    // English date only when Hijri lookup is unavailable
+  }
+
+  const jumuah = friday ? await resolveConfiguredJumuahSlots() : [];
+  const replaceDhuhrWithJumuah = friday && jumuah.length > 0;
+  const eid = await resolveEidForDisplay(dateKey, date, override);
+
+  const response: PrayerTimesResponse = {
+    date: dateKey,
+    ...dates,
+    sunrise: normalizeTime(row.sunrise),
+    isFriday: friday,
+    prayers: {
+      fajr: buildStoredPrayerSlot(row.fajrAdhan, row.fajrIqama),
+      dhuhr: replaceDhuhrWithJumuah
+        ? null
+        : buildStoredPrayerSlot(row.dhuhrAdhan, row.dhuhrIqama),
+      asr: buildStoredPrayerSlot(row.asrAdhan, row.asrIqama),
+      maghrib: buildStoredPrayerSlot(row.maghribAdhan, row.maghribIqama),
+      isha: buildStoredPrayerSlot(row.ishaAdhan, row.ishaIqama),
+    },
+    jumuah,
+    configuredJumuah: await resolveConfiguredJumuahSlots(),
+    eid,
+    nextPrayer: null,
+    degraded: false,
+  };
+
+  response.nextPrayer = findNextPrayer(response);
+  return response;
+}
+
+/** TV display: prefer Daily Prayer Times override, then monthly timetable row, then live schedule. */
+export async function getPrayerTimesForDisplay(
+  dateParam?: string | null
+): Promise<PrayerTimesResponse> {
+  const date = parseDateParam(dateParam);
+  const dateKey = toDateKey(date);
+
+  const override = (await db.prayerTimesOverride.findUnique({
+    where: { date },
+    include: overrideRelationsInclude(),
+  })) as DbPrayerTimesOverrideRecord | null;
+
+  if (hasDailyOverrideData(override)) {
+    return getPrayerTimesForDate(dateParam);
+  }
+
+  const monthly = await db.monthlyTimetable.findFirst({
+    where: { date },
+  });
+
+  if (monthly?.fajrAdhan) {
+    return buildPrayerTimesFromMonthlyRow(date, dateKey, monthly, override);
+  }
+
+  return getPrayerTimesForDate(dateParam);
 }

@@ -76,17 +76,18 @@ model AccessRolePermission {
 }
 
 model User {
-  id           String          @id @default(cuid())
-  email        String          @unique
-  passwordHash String
-  name         String?
-  roleId       String
-  isActive     Boolean         @default(true)
-  role         AccessRole      @relation(fields: [roleId], references: [id])
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
-  authTokens   AuthToken[]
-  adminLogs    UserAdminLog[]
+  id             String          @id @default(cuid())
+  email          String          @unique
+  passwordHash   String
+  name           String?
+  roleId         String
+  isActive       Boolean         @default(true)
+  role           AccessRole      @relation(fields: [roleId], references: [id])
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  authTokens     AuthToken[]
+  adminLogs      UserAdminLog[]
+  displayNotices DisplayNotice[]
 
   @@index([roleId])
 }
@@ -418,4 +419,39 @@ model MonthlyTimetable {
 
   @@unique([month, year, date])
   @@index([month, year])
+}
+
+model DisplayNotice {
+  id          String    @id @default(cuid())
+  title       String
+  message     String
+  priority    String
+  startDate   DateTime?
+  endDate     DateTime?
+  createdById String?
+  createdBy   User?     @relation(fields: [createdById], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([priority])
+  @@index([startDate, endDate])
+}
+
+model DisplaySettings {
+  id                 String   @id @default(cuid())
+  rotationSpeed      Int      @default(10)
+  enabledPanels      String[]
+  theme              String   @default("hybrid")
+  pinCode            String?
+  brightnessSchedule Json?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model AyahRotation {
+  id        String   @id @default(cuid())
+  arabic    String
+  english   String
+  source    String
+  createdAt DateTime @default(now())
 }

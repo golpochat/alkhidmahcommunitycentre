@@ -21,7 +21,7 @@
     "db:test-users": "dotenv -e .env.local -- npx tsx scripts/create-test-users.ts",
     "db:seed-donations-sample": "dotenv -e .env.local -- npx tsx scripts/seed-sample-donations.ts",
     "db:clear-donations-sample": "dotenv -e .env.local -- npx tsx scripts/clear-sample-donations.ts",
-    "db:seed-donation-categories": "dotenv -e .env.local -- npx tsx scripts/seed-donation-categories.ts",
+    "db:seed-display-rotation": "dotenv -e .env.local -- npx tsx scripts/seed-display-rotation.ts",
     "db:fix-super-admin": "dotenv -e .env.local -- npx tsx scripts/ensure-single-super-admin.ts",
     "fonts:setup-flyer": "node scripts/setup-flyer-fonts.mjs",
     "stripe:verify": "dotenv -e .env.local -- npx tsx scripts/verify-stripe-settings.ts",

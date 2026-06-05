@@ -15,13 +15,18 @@ import { cn } from "@/lib/utils";
 interface JumuahFridayRowProps {
   jumuah: JumuahSlot[];
   nextPrayer: NextPrayer | null;
+  asrAdhan?: string | null;
 }
 
 function jumuahSlotsKey(slots: JumuahSlot[]) {
   return slots.map((slot) => `${slot.index}:${slot.adhan ?? ""}`).join("|");
 }
 
-export function JumuahFridayRow({ jumuah, nextPrayer }: JumuahFridayRowProps) {
+export function JumuahFridayRow({
+  jumuah,
+  nextPrayer,
+  asrAdhan,
+}: JumuahFridayRowProps) {
   const sorted = useMemo(
     () => [...jumuah].sort((a, b) => a.index - b.index),
     [jumuah]
@@ -29,23 +34,29 @@ export function JumuahFridayRow({ jumuah, nextPrayer }: JumuahFridayRowProps) {
   const slotsKey = useMemo(() => jumuahSlotsKey(sorted), [sorted]);
   const sortedRef = useRef(sorted);
   sortedRef.current = sorted;
+  const asrAdhanRef = useRef(asrAdhan);
+  asrAdhanRef.current = asrAdhan;
 
-  const [activeIndex, setActiveIndex] = useState(() =>
-    getActiveJumuahIndex(sorted)
+  const [activeIndex, setActiveIndex] = useState<number | null>(() =>
+    getActiveJumuahIndex(sorted, new Date(), asrAdhan)
   );
 
   useEffect(() => {
-    setActiveIndex(getActiveJumuahIndex(sortedRef.current));
-  }, [slotsKey]);
+    setActiveIndex(
+      getActiveJumuahIndex(sortedRef.current, new Date(), asrAdhanRef.current)
+    );
+  }, [slotsKey, asrAdhan]);
 
   useEffect(() => {
     const syncActiveJumuah = () => {
-      setActiveIndex(getActiveJumuahIndex(sortedRef.current));
+      setActiveIndex(
+        getActiveJumuahIndex(sortedRef.current, new Date(), asrAdhanRef.current)
+      );
     };
 
     const interval = setInterval(syncActiveJumuah, 30_000);
     return () => clearInterval(interval);
-  }, [slotsKey]);
+  }, [slotsKey, asrAdhan]);
 
   const isNext = sorted.some(
     (slot) =>
@@ -67,7 +78,7 @@ export function JumuahFridayRow({ jumuah, nextPrayer }: JumuahFridayRowProps) {
       <TableCell className="prayer-times-table-cell jumuah-friday-adhan-cell text-right">
         <div className="jumuah-friday-adhan-list">
           {sorted.map((slot) => {
-            const isActive = slot.index === activeIndex;
+            const isActive = activeIndex !== null && slot.index === activeIndex;
 
             return (
               <p
@@ -91,7 +102,7 @@ export function JumuahFridayRow({ jumuah, nextPrayer }: JumuahFridayRowProps) {
       <TableCell className="prayer-times-table-cell jumuah-friday-iqama-cell text-right">
         <div className="jumuah-friday-iqama-list">
           {sorted.map((slot) => {
-            const isActive = slot.index === activeIndex;
+            const isActive = activeIndex !== null && slot.index === activeIndex;
 
             return (
               <p
@@ -101,7 +112,9 @@ export function JumuahFridayRow({ jumuah, nextPrayer }: JumuahFridayRowProps) {
                   isActive && "jumuah-friday-iqama-line-active"
                 )}
               >
-                —
+                <span className="jumuah-friday-iqama-time">
+                  {formatPrayerTime24h(slot.iqama ?? slot.adhan)}
+                </span>
               </p>
             );
           })}
