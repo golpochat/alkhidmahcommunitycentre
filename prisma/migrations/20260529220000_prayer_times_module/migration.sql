@@ -1,0 +1,1 @@
+-- Drop legacy prayer override columns and add JumuahOverride table via db push

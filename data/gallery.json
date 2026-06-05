@@ -1,0 +1,56 @@
+[
+  {
+    "id": "gal-1",
+    "title": "Jumuah Congregation",
+    "description": "Friday prayer gathering at Al Khidmah Community Centre",
+    "imageUrl": "/images/gallery/jumuah.jpg",
+    "category": "community",
+    "featured": true,
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "gal-2",
+    "title": "Ramadan Programme",
+    "description": "Community programme during the blessed month",
+    "imageUrl": "/images/gallery/ramadan.jpg",
+    "category": "ramadan",
+    "featured": true,
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "gal-3",
+    "title": "Qur'an Recitation",
+    "description": "Students learning the Qur'an",
+    "imageUrl": "/images/gallery/quran.jpg",
+    "category": "classes",
+    "featured": true,
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "gal-4",
+    "title": "Charity Drive",
+    "description": "Volunteers serving the local community",
+    "imageUrl": "/images/gallery/charity.jpg",
+    "category": "community",
+    "featured": false,
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "gal-5",
+    "title": "Eid Celebration",
+    "description": "Joyful Eid gathering with families",
+    "imageUrl": "/images/gallery/eid.jpg",
+    "category": "eid",
+    "featured": true,
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "gal-6",
+    "title": "Youth Programme",
+    "description": "Engaging activities for our youth",
+    "imageUrl": "/images/gallery/youth.jpg",
+    "category": "youth",
+    "featured": false,
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  }
+]

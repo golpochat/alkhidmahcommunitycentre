@@ -28,9 +28,15 @@ yarn-error.log*
 # local env files
 .env*.local
 
+# test credentials (contains passwords)
+TEST-ACCOUNTS.md
+
 # vercel
 .vercel
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# generated flyer PNGs (keep folder via .gitkeep)
+/public/flyers/*.png

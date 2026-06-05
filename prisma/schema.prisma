@@ -1,0 +1,421 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AccountTier {
+  SUPER_ADMIN
+  STAFF
+  MEMBER
+}
+
+model Permission {
+  id          String                 @id @default(cuid())
+  key         String                 @unique
+  name        String
+  description String?
+  group       String
+  isSystem    Boolean                @default(true)
+  isActive    Boolean                @default(true)
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+  roles       AccessRolePermission[]
+}
+
+model AccessRole {
+  id               String                 @id @default(cuid())
+  slug             String                 @unique
+  name             String
+  description      String?
+  tier             AccountTier
+  isSystem         Boolean                @default(false)
+  isActive         Boolean                @default(true)
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  users            User[]
+  permissions      AccessRolePermission[]
+  staffInvitations StaffInvitation[]
+}
+
+enum StaffInvitationStatus {
+  PENDING
+  ACCEPTED
+  CANCELLED
+}
+
+model StaffInvitation {
+  id             String                @id @default(cuid())
+  email          String
+  name           String?
+  roleId         String
+  role           AccessRole            @relation(fields: [roleId], references: [id])
+  tokenHash      String                @unique
+  status         StaffInvitationStatus @default(PENDING)
+  expiresAt      DateTime
+  invitedByEmail String?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  acceptedAt     DateTime?
+
+  @@index([email])
+  @@index([status])
+  @@index([expiresAt])
+}
+
+model AccessRolePermission {
+  roleId       String
+  permissionId String
+  role         AccessRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+}
+
+model User {
+  id           String          @id @default(cuid())
+  email        String          @unique
+  passwordHash String
+  name         String?
+  roleId       String
+  isActive     Boolean         @default(true)
+  role         AccessRole      @relation(fields: [roleId], references: [id])
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  authTokens   AuthToken[]
+  adminLogs    UserAdminLog[]
+
+  @@index([roleId])
+}
+
+enum UserAdminAction {
+  STATUS_CHANGE
+  PASSWORD_RESET
+  ROLE_CHANGE
+}
+
+model UserAdminLog {
+  id         String          @id @default(cuid())
+  userId     String
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  actorEmail String?
+  action     UserAdminAction
+  reason     String
+  details    String?
+  createdAt  DateTime        @default(now())
+
+  @@index([userId, createdAt])
+}
+
+enum AuthTokenType {
+  PASSWORD_RESET
+  EMAIL_CHANGE
+}
+
+model AuthToken {
+  id        String        @id @default(cuid())
+  userId    String
+  type      AuthTokenType
+  tokenHash String        @unique
+  newEmail  String?
+  expiresAt DateTime
+  createdAt DateTime      @default(now())
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+}
+
+model Event {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
+  description String
+  category    String?
+  startAt     DateTime
+  endAt       DateTime?
+  location    String?
+  imageUrl    String?
+  published   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Class {
+  id            String         @id @default(cuid())
+  title         String
+  slug          String         @unique
+  description   String
+  ageGroup      String?
+  schedule      String?
+  fee           Int?
+  teacher       String?
+  published     Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  registrations Registration[]
+}
+
+model Registration {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  notes     String?
+  classId   String
+  createdAt DateTime @default(now())
+  class     Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+}
+
+model GalleryAlbum {
+  id        String        @id @default(cuid())
+  name      String        @unique
+  published Boolean       @default(false)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  items     GalleryItem[]
+}
+
+model GalleryItem {
+  id        String       @id @default(cuid())
+  albumId   String
+  title     String?
+  category  String?
+  imageUrl  String
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  album     GalleryAlbum @relation(fields: [albumId], references: [id], onDelete: Cascade)
+
+  @@index([albumId])
+}
+
+model Donation {
+  id         String   @id @default(cuid())
+  donorName  String?
+  donorEmail String?
+  amount     Int
+  currency   String   @default("EUR")
+  category   String
+  provider   String
+  providerId String?
+  status     String   @default("pending")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model DonationCategory {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  donationUrl String
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+}
+
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+enum PaymentGatewayType {
+  STRIPE
+  PAYPAL
+  BANK_TRANSFER
+}
+
+model PaymentGateway {
+  id           String             @id @default(cuid())
+  name         String
+  type         PaymentGatewayType
+  isEnabled    Boolean            @default(true)
+  currency     String             @default("EUR")
+  publicConfig Json               @default("{}")
+  secretsEnc   String             @default("")
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  @@index([type, isEnabled])
+}
+
+enum SmtpEncryption {
+  NONE
+  TLS
+  SSL
+}
+
+model SmtpEmailSetting {
+  id              String         @id @default(cuid())
+  provider        String
+  smtpHost        String
+  smtpPort        Int            @default(587)
+  encryption      SmtpEncryption @default(TLS)
+  smtpUsername    String
+  smtpPasswordEnc String         @default("")
+  fromEmail       String
+  fromName        String         @default("")
+  isDefault       Boolean        @default(false)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([isDefault])
+}
+
+model PrayerTimesOverride {
+  id        String   @id @default(cuid())
+  date      DateTime @unique @db.Date
+  eidType   String?
+  eidShowOnFrontend Boolean @default(false)
+
+  fajrAdhan    String?
+  fajrIqama    String?
+  dhuhrAdhan   String?
+  dhuhrIqama   String?
+  asrAdhan     String?
+  asrIqama     String?
+  maghribAdhan String?
+  maghribIqama String?
+  ishaAdhan    String?
+  ishaIqama    String?
+  iqamaConfig  Json?
+  adhanConfig  Json?
+
+  eidFitrAdhan1 String?
+  eidFitrIqama1 String?
+  eidFitrAdhan2 String?
+  eidFitrIqama2 String?
+  eidAdhaAdhan1 String?
+  eidAdhaIqama1 String?
+  eidAdhaAdhan2 String?
+  eidAdhaIqama2 String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  jumuahOverrides JumuahOverride[]
+  eidOverrides    EidOverride[]
+}
+
+model EidOverride {
+  id                    String              @id @default(cuid())
+  prayerTimesOverrideId String
+  date                  DateTime            @db.Date
+  adhan                 String?
+  iqama                 String?
+  index                 Int
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  prayerTimesOverride   PrayerTimesOverride @relation(fields: [prayerTimesOverrideId], references: [id], onDelete: Cascade)
+
+  @@unique([prayerTimesOverrideId, index])
+}
+
+model JumuahOverride {
+  id                    String              @id @default(cuid())
+  prayerTimesOverrideId String
+  date                  DateTime            @db.Date
+  adhan                 String?
+  iqama                 String?
+  index                 Int
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  prayerTimesOverride   PrayerTimesOverride @relation(fields: [prayerTimesOverrideId], references: [id], onDelete: Cascade)
+
+  @@unique([prayerTimesOverrideId, index])
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  subject   String
+  message   String
+  createdAt DateTime @default(now())
+}
+
+model RamadanTimetable {
+  id               String   @id @default(cuid())
+  year             Int
+  date             DateTime @db.Date
+  hijriDay         Int?
+  hijriDate        String?
+  suhoorEnd        String?
+  fajr             String?
+  sunrise          String?
+  dhuhr            String?
+  asr              String?
+  maghrib          String?
+  iftar            String?
+  isha             String?
+  taraweeh         String?
+  notes            String?
+  isCommunityIftar Boolean  @default(false)
+  isOddNight       Boolean  @default(false)
+  isLastTen        Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([year, date])
+  @@index([year])
+}
+
+model RamadanSettings {
+  year          Int      @id
+  notesMessage  String?  @db.Text
+  qrSlotCount   Int      @default(3)
+  masjidName    String?
+  address       String?
+  phone         String?
+  email         String?
+  website       String?
+  donationLink  String?
+  footerMessage String?  @db.Text
+  updatedAt     DateTime @updatedAt
+}
+
+model RamadanPaymentQR {
+  id        String   @id @default(cuid())
+  year      Int
+  category  String
+  url       String
+  qrImage   String?  @db.Text
+  order     Int
+  enabled   Boolean  @default(true)
+  updatedAt DateTime @updatedAt
+
+  @@unique([year, order])
+  @@index([year])
+}
+
+model MonthlyTimetable {
+  id           String   @id @default(cuid())
+  month        Int
+  year         Int
+  date         DateTime @db.Date
+  fajrAdhan    String?
+  fajrIqama    String?
+  dhuhrAdhan   String?
+  dhuhrIqama   String?
+  asrAdhan     String?
+  asrIqama     String?
+  maghribAdhan String?
+  maghribIqama String?
+  ishaAdhan    String?
+  ishaIqama    String?
+  sunrise      String?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([month, year, date])
+  @@index([month, year])
+}

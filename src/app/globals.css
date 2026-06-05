@@ -1,27 +1,1381 @@
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-}
-
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+}
+
+@layer base {
+  .theme {
+    --font-heading: var(--font-heading);
+    --font-sans: var(--font-sans);
+  }
+
+  :root {
+    --background: #ffffff;
+    --foreground: #0a0a0a;
+    --card: #ffffff;
+    --card-foreground: #0a0a0a;
+    --popover: #ffffff;
+    --popover-foreground: #0a0a0a;
+    --primary: #0f6b4a;
+    --primary-foreground: #ffffff;
+    --secondary: #f5f5f5;
+    --secondary-foreground: #0a0a0a;
+    --muted: #f5f5f5;
+    --muted-foreground: #737373;
+    --accent: #d4af37;
+    --accent-foreground: #0a0a0a;
+    --destructive: #dc2626;
+    --destructive-foreground: #ffffff;
+    --border: #e5e5e5;
+    --input: #e5e5e5;
+    --ring: #d4af37;
+    --radius: 0.625rem;
+    --gold: #d4af37;
+    --emerald: #0f6b4a;
+    --mosque-black: #0a0a0a;
+    --mosque-white: #ffffff;
+  }
+
+  .dark {
+    --background: #0a0a0a;
+    --foreground: #ffffff;
+    --card: #141414;
+    --card-foreground: #ffffff;
+    --popover: #141414;
+    --popover-foreground: #ffffff;
+    --primary: #d4af37;
+    --primary-foreground: #0a0a0a;
+    --secondary: #1a1a1a;
+    --secondary-foreground: #ffffff;
+    --muted: #1a1a1a;
+    --muted-foreground: #a3a3a3;
+    --accent: #0f6b4a;
+    --accent-foreground: #ffffff;
+    --destructive: #ef4444;
+    --destructive-foreground: #ffffff;
+    --border: rgba(255, 255, 255, 0.1);
+    --input: rgba(255, 255, 255, 0.15);
+    --ring: #d4af37;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    @apply overflow-x-hidden;
+  }
+
+  body {
+    @apply max-w-full overflow-x-hidden bg-background text-foreground font-sans;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-heading;
+  }
+}
+
+@layer components {
+  .section-container {
+    @apply mx-auto w-full max-w-7xl px-gutter;
+  }
+
+  .section-padding {
+    @apply py-section-sm md:py-section;
+  }
+
+  .heading-display {
+    @apply font-heading text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl;
+  }
+
+  .heading-section {
+    @apply font-heading text-3xl font-semibold tracking-tight md:text-4xl;
+  }
+
+  .text-gold-accent {
+    @apply text-gold;
+  }
+
+  .btn-gold {
+    @apply bg-gold text-mosque-black shadow-gold transition-all hover:bg-gold-light hover:shadow-card-hover;
+  }
+
+  .btn-emerald {
+    @apply bg-emerald text-white shadow-card transition-all hover:bg-emerald-light hover:shadow-card-hover;
+  }
+
+  .card-mosque {
+    @apply rounded-lg border border-border bg-card p-6 shadow-card transition-shadow duration-200 hover:shadow-card-hover;
+  }
+
+  .bg-islamic-geometric {
+    @apply bg-islamic-pattern bg-mosque-black;
+  }
+
+  .mobile-nav-link {
+    @apply rounded-md px-3 py-3 text-base font-medium text-foreground transition-colors duration-200 hover:bg-secondary hover:text-gold;
+  }
+
+  .mobile-nav-link-active {
+    @apply bg-secondary text-gold;
+  }
+
+  .image-islamic {
+    @apply h-full w-full object-cover object-center brightness-105;
+  }
+
+  .image-card-islamic {
+    @apply h-full w-full rounded-lg object-cover object-center brightness-105;
+  }
+
+  .image-frame {
+    @apply relative overflow-hidden;
+  }
+
+  .image-frame-hero::after {
+    content: "";
+    @apply pointer-events-none absolute inset-0 bg-gradient-to-b from-black/20 to-black/60;
+  }
+
+  .image-frame-card {
+    @apply relative min-h-[12rem] overflow-hidden rounded-lg;
+  }
+
+  .footer-islamic {
+    @apply relative border-t border-border bg-mosque-black text-mosque-white;
+  }
+
+  .footer-islamic::before {
+    content: "";
+    @apply pointer-events-none absolute inset-0 bg-footer-islamic-pattern opacity-100;
+  }
+
+  .footer-islamic > * {
+    @apply relative z-10;
+  }
+
+  .footer-main {
+    @apply py-8 md:py-10;
+  }
+
+  .footer-main-grid {
+    @apply grid gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6;
+  }
+
+  .footer-brand {
+    @apply space-y-3 sm:col-span-2 lg:col-span-1;
+  }
+
+  .footer-logo {
+    @apply mx-0;
+  }
+
+  .header-logo {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+    flex-shrink: 0;
+  }
+
+  .header-logo img,
+  .header-logo-image {
+    height: 90px;
+    min-height: 90px;
+    width: auto;
+    max-height: none;
+    object-fit: contain;
+  }
+
+  .footer-brand-text {
+    @apply max-w-xs text-sm leading-relaxed text-neutral-400;
+  }
+
+  .footer-heading {
+    @apply mb-3 font-heading text-sm font-semibold uppercase tracking-wide text-gold;
+  }
+
+  .footer-link-list {
+    @apply space-y-1.5;
+  }
+
+  .footer-link {
+    @apply text-sm text-neutral-400 transition-colors hover:text-gold;
+  }
+
+  .footer-contact-list {
+    @apply space-y-2 text-sm text-neutral-400;
+  }
+
+  .footer-contact-item {
+    @apply flex items-start gap-2;
+  }
+
+  .footer-contact-icon {
+    @apply mt-0.5 h-4 w-4 shrink-0 text-gold;
+  }
+
+  .footer-social-row {
+    @apply flex flex-wrap gap-2;
+  }
+
+  .footer-social-link {
+    @apply flex h-9 w-9 items-center justify-center rounded-full border border-neutral-700 text-gold transition-all duration-200 hover:border-gold hover:text-gold-light hover:shadow-[0_0_12px_rgba(212,175,55,0.35)];
+  }
+
+  .footer-legal {
+    @apply border-t border-neutral-800 bg-black/50;
+  }
+
+  .footer-legal-inner {
+    @apply flex flex-col gap-3 py-4 text-xs text-neutral-500 md:flex-row md:items-center md:justify-between;
+  }
+
+  .footer-legal-copy,
+  .footer-legal-charity {
+    @apply text-neutral-500;
+  }
+
+  .navbar-donate-link {
+    @apply px-3 py-2 text-sm;
+  }
+
+  .navbar-auth-link {
+    @apply shrink-0;
+  }
+
+  .avatar-islamic {
+    @apply border-2 border-gold/40 bg-gold/10 text-gold;
+  }
+
+  .social-icon-link {
+    @apply flex h-11 w-11 items-center justify-center rounded-full border border-neutral-700 text-gold transition-all duration-200 hover:border-gold hover:text-gold-light hover:shadow-[0_0_14px_rgba(212,175,55,0.45)];
+  }
+
+  .gallery-masonry {
+    column-gap: 1rem;
+    columns: 2;
+  }
+
+  .gallery-masonry-item {
+    break-inside: avoid;
+    margin-bottom: 1rem;
+  }
+
+  @media (min-width: 768px) {
+    .gallery-masonry {
+      columns: 3;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .gallery-masonry {
+      columns: 4;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .gallery-masonry {
+      columns: 5;
+    }
+  }
+
+  .gallery-fade-in {
+    @apply translate-y-4 opacity-0 transition-all duration-700 ease-out;
+  }
+
+  .gallery-fade-in.is-visible {
+    @apply translate-y-0 opacity-100;
+  }
+
+  .gallery-image-card {
+    @apply overflow-hidden rounded-lg border border-border transition-all duration-300 hover:border-gold/50 hover:shadow-gold;
+  }
+
+  .contact-form-label {
+    @apply font-medium text-gold;
+  }
+
+  .contact-form-input {
+    @apply transition-colors focus-visible:border-gold focus-visible:ring-gold/30;
+  }
+
+  .contact-form-input-error {
+    @apply border-destructive focus-visible:border-destructive focus-visible:ring-destructive;
+  }
+
+  .contact-map-card {
+    @apply overflow-hidden rounded-lg border-2 border-gold/30 shadow-card;
+  }
+
+  .whatsapp-chat-button {
+    @apply flex w-full items-center justify-center gap-2 rounded-lg border-2 border-gold bg-transparent px-6 py-3 text-base font-medium text-gold transition-all duration-200 hover:bg-gold/10 hover:shadow-[0_0_18px_rgba(212,175,55,0.35)];
+  }
+
+  .admin-sidebar {
+    @apply w-64 flex-col border-r border-border bg-card transition-colors duration-200;
+  }
+
+  .admin-nav-link {
+    @apply flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-secondary hover:text-foreground;
+  }
+
+  .admin-nav-link-active {
+    @apply border border-gold/20 bg-gold/10 text-gold shadow-[0_0_12px_rgba(212,175,55,0.15)];
+  }
+
+  .admin-dashboard-main {
+    @apply flex min-h-0 flex-1 flex-col;
+  }
+
+  .admin-dashboard-navbar {
+    @apply flex items-center justify-between border-b border-border bg-card px-4 py-4 md:px-8;
+  }
+
+  .admin-dashboard-navbar-title {
+    @apply font-heading text-xl font-semibold md:text-2xl;
+  }
+
+  .admin-dashboard-content {
+    @apply flex-1 overflow-auto p-4 md:p-8;
+  }
+
+  .admin-donations-export-actions {
+    @apply flex flex-wrap gap-2;
+  }
+
+  .admin-donations-pagination {
+    @apply mt-6 flex flex-col gap-4 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between;
+  }
+
+  .admin-donations-pagination-summary {
+    @apply text-sm text-muted-foreground;
+  }
+
+  .admin-donations-pagination-controls {
+    @apply flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6;
+  }
+
+  .admin-donations-pagination-size {
+    @apply flex items-center gap-2;
+  }
+
+  .admin-donations-page-size-trigger {
+    @apply w-20;
+  }
+
+  .admin-donations-pagination-nav {
+    @apply flex items-center gap-2;
+  }
+
+  .admin-donations-pagination-page {
+    @apply min-w-[7rem] text-center text-sm text-muted-foreground;
+  }
+
+  .donation-stripe-embedded {
+    @apply min-h-[28rem] w-full overflow-hidden rounded-lg border border-border bg-card;
+  }
+
+  .donation-card-payment-zone {
+    @apply space-y-3 rounded-lg border border-dashed border-border bg-card p-4;
+  }
+
+  .donation-card-payment-zone-label {
+    @apply text-sm font-medium text-gold;
+  }
+
+  .donation-card-payment-zone-loading {
+    @apply flex items-center gap-3 py-6;
+  }
+
+  .donation-success-content {
+    @apply space-y-6 p-8 md:p-10;
+  }
+
+  .donation-success-header {
+    @apply space-y-3;
+  }
+
+  .donation-success-summary {
+    @apply space-y-3 rounded-lg border border-border bg-card p-4 text-left;
+  }
+
+  .donation-success-summary-row {
+    @apply flex items-start justify-between gap-4 text-sm;
+  }
+
+  .donation-success-summary-label {
+    @apply text-muted-foreground;
+  }
+
+  .donation-success-summary-value {
+    @apply text-right font-medium;
+  }
+
+  .donation-success-receipt {
+    @apply space-y-3 border-t border-border pt-6;
+  }
+
+  .donation-success-receipt-loading {
+    @apply flex items-center justify-center gap-2 text-sm text-muted-foreground;
+  }
+
+  .donation-success-download {
+    @apply inline-flex w-full items-center justify-center gap-2 whitespace-nowrap;
+  }
+
+  .donation-success-nav {
+    @apply grid grid-cols-1 gap-3 border-t border-border pt-6 sm:grid-cols-2;
+  }
+
+  .donation-success-nav-link {
+    @apply w-full border-gold text-gold hover:bg-gold/10;
+  }
+
+  .donation-success-footer {
+    @apply border-t border-border pt-6 text-xs text-muted-foreground;
+  }
+
+  .admin-dashboard-footer {
+    @apply border-t border-border px-4 py-4 text-center text-xs text-muted-foreground md:px-8;
+  }
+
+  .admin-user-menu-trigger {
+    @apply inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium transition-colors hover:border-gold/40 hover:text-gold;
+  }
+
+  .admin-user-menu-name {
+    @apply max-w-[10rem] truncate md:max-w-[14rem];
+  }
+
+  .admin-stat-card {
+    @apply transition-all duration-200 hover:border-gold/30 hover:shadow-card-hover;
+  }
+
+  .prayer-times-table-wrap {
+    @apply overflow-x-auto rounded-lg border border-border;
+  }
+
+  .prayer-times-table {
+    @apply w-full min-w-[320px] text-sm;
+  }
+
+  .prayer-times-table-head {
+    @apply border-b border-border bg-muted text-left text-xs uppercase tracking-wide text-muted-foreground;
+  }
+
+  .prayer-times-table-head-cell {
+    @apply px-4 py-3 font-medium;
+  }
+
+  .prayer-times-table-row {
+    @apply border-b border-border transition-colors last:border-b-0;
+  }
+
+  .prayer-times-table-row-next {
+    @apply border-gold bg-gold/10 shadow-gold;
+  }
+
+  .prayer-times-table-row-muted {
+    @apply opacity-50;
+  }
+
+  .prayer-times-table-cell {
+    @apply px-4 py-3;
+  }
+
+  .prayer-times-table-cell-name {
+    @apply font-medium;
+  }
+
+  .prayer-times-table-cell-time {
+    @apply font-heading font-semibold tabular-nums;
+  }
+
+  .jumuah-prayer-notice-inline {
+    @apply mt-1 block font-sans text-xs font-normal normal-case text-muted-foreground;
+  }
+
+  .jumuah-friday-adhan-cell {
+    @apply align-top;
+  }
+
+  .jumuah-friday-adhan-list {
+    @apply flex flex-col items-end gap-2 py-0.5;
+  }
+
+  .jumuah-friday-adhan-line {
+    @apply flex w-full max-w-[14rem] items-baseline justify-end gap-6 font-sans text-sm font-normal normal-case tabular-nums text-foreground;
+  }
+
+  .jumuah-friday-adhan-label {
+    @apply shrink-0 text-right;
+  }
+
+  .jumuah-friday-adhan-time {
+    @apply min-w-[3.25rem] shrink-0 text-right;
+  }
+
+  .jumuah-friday-adhan-line-active .jumuah-friday-adhan-label,
+  .jumuah-friday-adhan-line-active .jumuah-friday-adhan-time {
+    @apply font-semibold text-gold;
+  }
+
+  .jumuah-friday-iqama-cell {
+    @apply align-top;
+  }
+
+  .jumuah-friday-iqama-list {
+    @apply flex flex-col items-end gap-2 py-0.5;
+  }
+
+  .jumuah-friday-iqama-line {
+    @apply font-sans text-sm font-normal leading-5 text-muted-foreground;
+  }
+
+  .jumuah-friday-iqama-line-active {
+    @apply font-semibold text-gold;
+  }
+
+  .prayer-times-clock-header {
+    @apply mb-6 border-b border-gold/20 pb-6 text-center;
+  }
+
+  .prayer-times-english-date {
+    @apply text-sm text-muted-foreground;
+  }
+
+  .prayer-times-live-clock {
+    @apply my-2 font-heading text-4xl font-semibold tabular-nums text-foreground md:text-5xl;
+  }
+
+  .prayer-times-hijri-date {
+    @apply text-sm text-muted-foreground;
+  }
+
+  .prayer-times-countdown-footer {
+    @apply mt-6 border-t border-gold/20 pt-6 text-center;
+  }
+
+  .prayer-times-countdown-label {
+    @apply mb-2 font-sans text-sm font-normal normal-case tracking-normal text-muted-foreground;
+  }
+
+  .prayer-times-countdown-timer {
+    @apply font-heading text-4xl font-semibold tabular-nums text-gold md:text-5xl;
+  }
+
+  .eid-prayer-banner {
+    @apply rounded-lg border border-gold/40 bg-gold p-5 text-mosque-black shadow-gold md:p-6;
+  }
+
+  .eid-prayer-banner-header {
+    @apply mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between;
+  }
+
+  .eid-prayer-banner-title {
+    @apply font-heading text-xl font-semibold md:text-2xl;
+  }
+
+  .eid-prayer-banner-greeting {
+    @apply font-heading text-base font-medium md:text-lg;
+  }
+
+  .eid-prayer-banner-date {
+    @apply mb-3 text-sm opacity-90;
+  }
+
+  .eid-prayer-banner-row {
+    @apply flex items-center justify-between gap-4 border-t border-mosque-black/10 py-2;
+  }
+
+  .eid-home-banner {
+    @apply border-y border-gold/30 bg-gold py-8 text-mosque-black;
+  }
+
+  .eid-home-banner-inner {
+    @apply section-container flex flex-col items-start gap-6 md:flex-row md:items-center md:justify-between;
+  }
+
+  .eid-home-banner-content {
+    @apply space-y-4;
+  }
+
+  .admin-prayer-times-table-wrap {
+    @apply w-full overflow-x-auto rounded-lg border border-border;
+  }
+
+  .admin-prayer-times-table-wrap [data-slot="table-container"] {
+    @apply w-full overflow-x-auto;
+  }
+
+  .admin-prayer-times-table-wrap .prayer-times-table.admin-prayer-times-table {
+    @apply w-full table-fixed;
+  }
+
+  .admin-prayer-times-table-wrap .admin-prayer-times-table--daily {
+    @apply min-w-[52rem];
+  }
+
+  .admin-prayer-times-table-wrap .admin-prayer-times-table--slots {
+    @apply min-w-[24rem];
+  }
+
+  .admin-prayer-times-col-prayer,
+  .admin-prayer-times-col-label {
+    width: 12%;
+  }
+
+  .admin-prayer-times-col-adhan-api {
+    width: 12%;
+  }
+
+  .admin-prayer-times-col-adhan-adjust {
+    width: 40%;
+  }
+
+  .admin-prayer-times-col-iqama {
+    width: 36%;
+  }
+
+  .admin-prayer-times-col-value {
+    width: 74%;
+  }
+
+  .admin-prayer-times-col-actions {
+    width: 8%;
+  }
+
+  .admin-prayer-times-table-wrap .prayer-times-table-head-cell {
+    @apply align-middle;
+  }
+
+  .admin-prayer-times-table-wrap [data-slot="input"],
+  .admin-prayer-times-table-wrap [data-slot="select-trigger"] {
+    @apply focus-visible:ring-2;
+  }
+
+  .admin-prayer-times-value-cell {
+    @apply min-w-0 align-middle;
+  }
+
+  .admin-prayer-times-value-cell [data-slot="input"] {
+    @apply w-full max-w-none;
+  }
+
+  .admin-prayer-times-actions-cell {
+    @apply w-12 min-w-[3rem] align-middle text-right;
+  }
+
+  .admin-prayer-times-actions-head {
+    @apply w-12 min-w-[3rem];
+  }
+
+  .admin-prayer-times-adhan-cell [data-slot="input"] {
+    @apply w-full max-w-none;
+  }
+
+  .admin-prayer-times-adhan-api-cell {
+    @apply align-middle;
+  }
+
+  .admin-prayer-times-adhan-adjust-cell,
+  .admin-prayer-times-iqama-cell {
+    @apply min-w-0 overflow-hidden align-middle;
+  }
+
+  .admin-adhan-api-time {
+    @apply font-heading text-sm font-semibold tabular-nums normal-case;
+  }
+
+  .admin-adhan-field {
+    @apply flex w-full min-w-0 flex-row flex-nowrap items-center gap-1.5;
+  }
+
+  .admin-adhan-field [data-slot="select-trigger"].admin-adhan-field-mode {
+    @apply w-[8.25rem] max-w-[42%] shrink-0;
+  }
+
+  .admin-adhan-field [data-slot="input"].admin-adhan-field-offset {
+    @apply max-w-[5.5rem] shrink-0 flex-none;
+  }
+
+  .admin-adhan-field [data-slot="input"].admin-adhan-field-fixed-time {
+    @apply w-[9.5rem] shrink-0 flex-none;
+  }
+
+  .admin-adhan-shown-time {
+    @apply m-auto shrink-0 font-heading text-sm font-semibold tabular-nums normal-case text-gold;
+  }
+
+  .admin-iqama-field {
+    @apply flex w-full min-w-0 flex-row flex-nowrap items-center gap-1.5;
+  }
+
+  .admin-iqama-field [data-slot="select-trigger"].admin-iqama-field-mode {
+    @apply w-[7.75rem] max-w-[55%] shrink-0;
+  }
+
+  .admin-iqama-field [data-slot="input"].admin-iqama-field-value {
+    @apply w-[5.5rem] min-w-0 shrink-0 flex-none;
+  }
+
+  .admin-iqama-field [data-slot="input"].admin-iqama-field-fixed-time {
+    @apply w-[8.25rem] shrink-0 flex-none;
+  }
+
+  .admin-iqama-field [data-slot="input"].admin-iqama-field-text {
+    @apply min-w-0 flex-1;
+  }
+
+  .admin-prayer-times-tabs {
+    @apply w-full flex-col gap-0;
+  }
+
+  .admin-prayer-times-tabs-list {
+    @apply flex h-auto w-full max-w-none items-end gap-0 rounded-none border-0 border-b border-border bg-transparent p-0;
+  }
+
+  .admin-prayer-times-tabs-list [data-slot="tabs-trigger"] {
+    @apply -mb-px flex min-h-[3rem] flex-1 basis-0 items-center justify-center rounded-none rounded-t-md border border-transparent px-3 py-2.5 text-center text-sm font-medium leading-snug text-muted-foreground shadow-none transition-colors;
+    white-space: normal;
+  }
+
+  .admin-prayer-times-tabs-list [data-slot="tabs-trigger"]::after {
+    @apply hidden;
+  }
+
+  .admin-prayer-times-tabs-list
+    [data-slot="tabs-trigger"]:hover:not([data-active]) {
+    @apply text-foreground;
+    background-color: color-mix(in srgb, var(--muted) 40%, transparent);
+  }
+
+  .admin-prayer-times-tabs-list [data-slot="tabs-trigger"][data-active] {
+    @apply z-10 border-border border-b-card bg-card font-semibold text-foreground;
+  }
+
+  .admin-prayer-times-tab-content {
+    @apply mt-0 w-full space-y-4 rounded-b-lg border border-border border-t-0 bg-card p-4 sm:p-6;
+  }
+
+  .admin-prayer-times-tab-section {
+    @apply space-y-6;
+  }
+
+  .admin-prayer-times-tab-header {
+    @apply flex flex-row items-center justify-between gap-4;
+  }
+
+  .admin-prayer-times-tab-header-daily {
+    @apply flex-col sm:flex-row sm:items-end;
+  }
+
+  .admin-prayer-times-tab-title {
+    @apply font-heading text-lg font-semibold leading-none tracking-tight;
+  }
+
+  .admin-prayer-times-tab-body {
+    @apply space-y-4;
+  }
+
+  .admin-prayer-times-tab-body-eid {
+    @apply space-y-6;
+  }
+
+  .admin-prayer-times-tab-actions {
+    @apply flex flex-wrap gap-3 border-t border-border pt-4;
+  }
+
+  .ramadan-header {
+    @apply mb-6 flex w-full flex-col items-center gap-3 text-center;
+  }
+
+  .ramadan-header-logo-wrap {
+    @apply flex items-center justify-center;
+  }
+
+  .ramadan-header-logo {
+    @apply h-10 w-auto max-w-[220px] object-contain;
+  }
+
+  .ramadan-header-contact {
+    @apply space-y-1 text-center text-xs text-muted-foreground md:text-sm;
+  }
+
+  .ramadan-header-copy {
+    @apply space-y-1;
+  }
+
+  .ramadan-header-title {
+    @apply text-lg font-semibold text-gold;
+  }
+
+  .ramadan-header-arabic {
+    @apply text-base text-gold;
+  }
+
+  .ramadan-header-subtitle {
+    @apply text-sm text-muted-foreground;
+  }
+
+  .ramadan-header-contact {
+    @apply space-y-1 text-center text-xs text-muted-foreground md:text-sm;
+  }
+
+  .ramadan-header-divider {
+    @apply mt-3 h-px w-full bg-gold/60;
+  }
+
+  .admin-ramadan-timetable-details .admin-ramadan-row--last-ten {
+    @apply bg-blue-500/10;
+  }
+
+  .admin-ramadan-timetable-details .admin-ramadan-row--odd-night {
+    @apply border-l-4 border-gold;
+  }
+
+  .admin-ramadan-timetable-details .admin-ramadan-row--even-night {
+    background-color: color-mix(in srgb, var(--gold) 28%, transparent);
+  }
+
+  .admin-ramadan-season-settings-grid {
+    @apply mt-4 grid gap-4;
+  }
+
+  .admin-ramadan-settings-field {
+    @apply min-w-0 space-y-2;
+  }
+
+  .admin-ramadan-season-settings-actions {
+    @apply grid grid-cols-1 gap-2 sm:grid-cols-2;
+  }
+
+  .admin-ramadan-season-settings-actions [data-slot="button"] {
+    @apply w-full;
+  }
+
+  @media (min-width: 1024px) {
+    .admin-ramadan-season-settings-grid {
+      grid-template-columns: 3fr 2.5fr 2.5fr;
+    }
+
+    .admin-ramadan-season-settings-season {
+      grid-column: 1;
+      grid-row: 1;
+    }
+
+    .admin-ramadan-season-settings-start {
+      grid-column: 2;
+      grid-row: 1;
+    }
+
+    .admin-ramadan-season-settings-end {
+      grid-column: 3;
+      grid-row: 1;
+    }
+
+    .admin-ramadan-season-settings-actions {
+      grid-column: 2 / 4;
+      grid-row: 2;
+    }
+  }
+
+  .admin-ramadan-moon-sighting {
+    @apply rounded-lg border border-border;
+    background-color: color-mix(in srgb, var(--secondary) 15%, transparent);
+  }
+
+  .admin-ramadan-moon-sighting--active {
+    @apply border-gold/40;
+  }
+
+  .admin-ramadan-moon-sighting-body {
+    @apply p-4;
+  }
+
+  .admin-ramadan-moon-sighting-badge {
+    @apply font-medium text-gold;
+  }
+
+  .ramadan-notes-section {
+    @apply w-full space-y-4 rounded-lg border border-border p-4;
+    background-color: color-mix(in srgb, var(--secondary) 20%, transparent);
+  }
+
+  .ramadan-notes-toolbar {
+    @apply flex justify-end;
+  }
+
+  .ramadan-notes-counter {
+    @apply text-xs text-muted-foreground md:text-sm;
+  }
+
+  .ramadan-notes-counter--limit {
+    @apply font-medium text-destructive;
+  }
+
+  .ramadan-notes-over-limit {
+    @apply text-xs text-destructive md:text-sm;
+  }
+
+  .ramadan-rich-text-content--limit {
+    @apply border-destructive;
+  }
+
+  .ramadan-notes-textarea {
+    @apply min-h-32 w-full resize-y rounded-md border border-border bg-background p-3 text-sm leading-relaxed;
+  }
+
+  .ramadan-rich-text-editor {
+    @apply space-y-3;
+  }
+
+  .ramadan-rich-text-toolbar {
+    @apply flex flex-wrap items-center gap-2;
+  }
+
+  .ramadan-rich-text-content {
+    @apply min-h-40 w-full rounded-md border border-border bg-background p-3 text-sm leading-relaxed text-foreground outline-none;
+    white-space: pre-wrap;
+  }
+
+  .ramadan-rich-text-content div {
+    min-height: 1.35em;
+  }
+
+  .ramadan-rich-text-content:empty::before {
+    content: attr(data-placeholder);
+    @apply text-muted-foreground;
+  }
+
+  .ramadan-rich-text-content--disabled {
+    @apply cursor-not-allowed opacity-60;
+  }
+
+  .ramadan-rich-text-content ul {
+    @apply list-disc pl-5;
+  }
+
+  .ramadan-rich-text-content ol {
+    @apply list-decimal pl-5;
+  }
+
+  .ramadan-payment-qr-section {
+    @apply w-full space-y-4 rounded-lg border border-border p-4;
+    background-color: color-mix(in srgb, var(--secondary) 20%, transparent);
+  }
+
+  .ramadan-payment-qr-header {
+    @apply space-y-1;
+  }
+
+  .ramadan-payment-qr-title {
+    @apply text-base font-semibold text-gold;
+  }
+
+  .ramadan-payment-qr-description {
+    @apply text-sm text-muted-foreground;
+  }
+
+  .ramadan-payment-qr-display-count {
+    @apply space-y-2;
+  }
+
+  .ramadan-payment-qr-display-count-options {
+    @apply flex flex-wrap gap-2;
+  }
+
+  .ramadan-payment-qr-grid {
+    @apply grid gap-4 md:grid-cols-3;
+  }
+
+  .ramadan-payment-qr-slot {
+    @apply flex flex-col gap-2;
+  }
+
+  .ramadan-payment-qr-preview {
+    @apply flex h-40 items-center justify-center rounded-md border border-border bg-white p-2;
+  }
+
+  .ramadan-payment-qr-preview--empty {
+    @apply text-sm text-neutral-600;
+  }
+
+  .ramadan-payment-qr-select-trigger {
+    @apply h-10 w-full max-w-none justify-between;
+  }
+
+  .ramadan-payment-qr-select-trigger [data-slot="select-value"] {
+    @apply truncate;
+  }
+
+  .ramadan-payment-qr-category-label {
+    @apply text-sm font-medium text-foreground;
+  }
+
+  .ramadan-payment-qr-preview-image {
+    @apply h-full w-full max-h-36 max-w-36 object-contain;
+  }
+
+  .auth-page-shell {
+    @apply flex min-h-screen items-center justify-center p-4;
+    background-color: color-mix(in srgb, var(--secondary) 30%, transparent);
+  }
+
+  .auth-page-icon {
+    @apply mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gold;
+  }
+
+  .profile-settings-grid {
+    @apply grid max-w-3xl gap-6;
+  }
+
+  .profile-settings-form {
+    @apply space-y-4;
+  }
+
+  .password-input-wrap {
+    @apply relative;
+  }
+
+  .password-input-field {
+    @apply pr-10;
+  }
+
+  .password-input-toggle {
+    @apply absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground transition-colors hover:text-foreground;
+  }
+
+  .admin-branding-grid {
+    @apply grid gap-8 md:grid-cols-2;
+  }
+
+  .admin-branding-item {
+    @apply space-y-4;
+  }
+
+  .admin-branding-preview {
+    @apply relative overflow-hidden rounded-lg border border-gold/30;
+    background-color: color-mix(in srgb, var(--secondary) 20%, transparent);
+  }
+
+  .admin-branding-preview-logo {
+    @apply h-24 w-48;
+  }
+
+  .admin-branding-preview-favicon {
+    @apply h-16 w-16;
+  }
+
+  .admin-branding-remove {
+    @apply absolute right-2 top-2 border border-border;
+    background-color: color-mix(in srgb, var(--background) 80%, transparent);
+  }
+
+  .admin-settings-tabs {
+    @apply w-full flex-col gap-0;
+  }
+
+  .admin-settings-tabs-list {
+    @apply mb-0 flex h-auto w-full max-w-none items-end gap-0 rounded-none border-0 border-b border-border bg-transparent p-0;
+  }
+
+  .admin-settings-tabs-list [data-slot="tabs-trigger"] {
+    @apply -mb-px flex min-h-[3rem] flex-1 basis-0 items-center justify-center rounded-none rounded-t-md border border-transparent px-4 py-2.5 text-center text-sm font-medium text-muted-foreground shadow-none transition-colors;
+  }
+
+  .admin-settings-tabs-list
+    [data-slot="tabs-trigger"]:hover:not([data-active]) {
+    @apply text-foreground;
+    background-color: color-mix(in srgb, var(--muted) 40%, transparent);
+  }
+
+  .admin-settings-tabs-list [data-slot="tabs-trigger"][data-active] {
+    @apply z-10 border-border border-b-card bg-card font-semibold text-foreground;
+  }
+
+  .admin-settings-tab-content {
+    @apply mt-0 rounded-b-lg border border-border border-t-0 bg-card p-4 sm:p-6;
+  }
+
+  .admin-settings-tab-body {
+    @apply space-y-6;
+  }
+
+  .roles-table-wrap [data-slot="table-container"],
+  .users-table-wrap [data-slot="table-container"],
+  .email-settings-table-wrap [data-slot="table-container"] {
+    overflow-x: clip;
+  }
+
+  .email-settings-default-badge {
+    @apply border-sky-500/30 bg-sky-500/15 text-sky-700 dark:text-sky-300;
+  }
+
+  .email-setting-dialog {
+    @apply max-h-[90vh] max-w-lg overflow-y-auto;
+  }
+
+  .email-setting-form {
+    @apply space-y-4;
+  }
+
+  .email-setting-form-row {
+    @apply grid gap-4 sm:grid-cols-2;
+  }
+
+  .email-setting-default-row {
+    @apply flex cursor-pointer items-center gap-2 text-sm;
+  }
+
+  .email-setting-dialog-footer {
+    @apply gap-2 sm:justify-start;
+  }
+
+  .email-setting-view-list {
+    @apply space-y-3 text-sm;
+  }
+
+  .email-setting-view-list dt {
+    @apply font-medium text-muted-foreground;
+  }
+
+  .email-setting-view-list dd {
+    @apply mt-0.5 text-foreground;
+  }
+
+  .roles-table-wrap [data-slot="table-cell"],
+  .users-table-wrap [data-slot="table-cell"] {
+    white-space: normal;
+  }
+
+  .users-table-wrap .icon-action-tooltip::after {
+    display: none;
+  }
+
+  .role-status-switch {
+    width: 2rem;
+    min-width: 2rem;
+  }
+
+  .role-status-switch[data-checked] {
+    background-color: var(--gold);
+    border-color: var(--gold);
+  }
+
+  .role-status-switch[data-unchecked] {
+    background-color: color-mix(in srgb, var(--foreground) 18%, var(--background));
+    border: 1px solid color-mix(in srgb, var(--foreground) 45%, transparent);
+  }
+
+  .role-status-switch [data-slot="switch-thumb"] {
+    transition: transform 0.2s ease, background-color 0.2s ease;
+  }
+
+  .role-status-switch[data-checked] [data-slot="switch-thumb"] {
+    transform: translateX(0.875rem);
+    background-color: var(--background);
+  }
+
+  .role-status-switch[data-unchecked] [data-slot="switch-thumb"] {
+    transform: translateX(0);
+    background-color: color-mix(in srgb, var(--foreground) 75%, var(--background));
+  }
+
+  .role-status-switch::after {
+    display: none;
+  }
+
+  .admin-settings-toggle-row {
+    @apply flex items-center justify-between gap-4 rounded-lg border border-border p-4;
+  }
+
+  .role-permission-picker {
+    @apply space-y-4;
+  }
+
+  .role-permission-picker-toolbar {
+    @apply flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between;
+  }
+
+  .role-permission-picker-search {
+    @apply relative w-full sm:max-w-sm;
+  }
+
+  .role-permission-picker-search-icon {
+    @apply pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground;
+  }
+
+  .role-permission-picker-search input {
+    @apply pl-9;
+  }
+
+  .role-permission-picker-summary {
+    @apply text-sm text-muted-foreground;
+  }
+
+  .role-permission-picker-groups {
+    @apply max-h-[min(24rem,50vh)] space-y-3 overflow-y-auto pr-1;
+  }
+
+  .role-permission-picker-empty {
+    @apply rounded-lg border border-dashed border-border py-8 text-center text-sm text-muted-foreground;
+  }
+
+  .role-permission-picker-group {
+    @apply overflow-hidden rounded-lg border border-border;
+  }
+
+  .role-permission-picker-group-header {
+    @apply flex items-center justify-between gap-2 border-b border-border px-3 py-2;
+    background-color: color-mix(in srgb, var(--muted) 30%, transparent);
+  }
+
+  .role-permission-picker-group-toggle {
+    @apply flex min-w-0 flex-1 items-center gap-2 text-left;
+  }
+
+  .role-permission-picker-group-title {
+    @apply font-medium text-gold;
+  }
+
+  .role-permission-picker-group-count {
+    @apply text-xs text-muted-foreground;
+  }
+
+  .role-permission-picker-group-actions {
+    @apply shrink-0;
+  }
+
+  .role-permission-picker-group-body {
+    @apply space-y-2 p-3;
+  }
+
+  .role-permission-picker-item {
+    @apply flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 transition-colors;
+  }
+
+  .role-permission-picker-item:hover {
+    background-color: color-mix(in srgb, var(--muted) 20%, transparent);
+  }
+
+  .role-permission-picker-item-text {
+    @apply min-w-0 space-y-0.5;
+  }
+
+  .role-permission-picker-item-name {
+    @apply block font-medium;
+  }
+
+  .role-permission-picker-item-key {
+    @apply block font-mono text-xs text-muted-foreground;
+  }
+
+  .role-permission-picker-item-description {
+    @apply block text-sm text-muted-foreground;
+  }
+
+  .permissions-module-list {
+    @apply space-y-3;
+  }
+
+  .permissions-module-empty {
+    @apply rounded-lg border border-dashed border-border py-8 text-center text-sm text-muted-foreground;
+  }
+
+  .permissions-module-item {
+    @apply overflow-hidden rounded-lg border border-border;
+  }
+
+  .permissions-module-trigger {
+    @apply flex w-full items-center gap-2 px-4 py-3 text-left;
+    background-color: color-mix(in srgb, var(--muted) 25%, transparent);
+  }
+
+  .permissions-module-title {
+    @apply font-medium;
+  }
+
+  .permissions-module-detail {
+    @apply border-t border-border;
+  }
+
+  .permissions-module-detail [data-slot="table-container"] {
+    overflow-x: clip;
+  }
+
+  .permissions-module-detail [data-slot="table-cell"] {
+    white-space: normal;
+  }
+
+  .permissions-module-detail .icon-action-tooltip::after {
+    display: none;
+  }
+
+  .permission-detail-list {
+    @apply space-y-4;
+  }
+
+  .permission-detail-item dt {
+    @apply text-sm font-medium text-gold;
+  }
+
+  .permission-detail-item dd {
+    @apply mt-1 text-sm text-foreground;
+  }
+
+  .admin-user-context-box {
+    @apply rounded-lg border border-border p-4;
+    background-color: color-mix(in srgb, var(--gold) 8%, transparent);
+  }
+
+  .admin-user-context-box-name {
+    @apply font-medium;
+  }
+
+  .admin-user-context-box-email {
+    @apply text-sm text-muted-foreground;
+  }
+
+  .admin-user-context-box-meta {
+    @apply mt-2 text-sm text-muted-foreground;
+  }
+
+  .admin-user-context-box-meta span {
+    @apply text-foreground;
+  }
+
+  .admin-user-history-list {
+    @apply max-h-80 space-y-3 overflow-y-auto;
+  }
+
+  .admin-user-history-item {
+    @apply rounded-lg border border-border p-3;
+  }
+
+  .icon-action-tooltip {
+    @apply relative;
+  }
+
+  .icon-action-tooltip::after {
+    content: attr(data-tooltip);
+    @apply pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md border border-border bg-popover px-2 py-1 text-xs text-popover-foreground opacity-0 shadow-md transition-opacity;
+  }
+
+  .icon-action-tooltip:hover::after,
+  .icon-action-tooltip:focus-visible::after {
+    @apply opacity-100;
   }
 }

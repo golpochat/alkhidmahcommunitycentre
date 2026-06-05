@@ -1,0 +1,71 @@
+[
+  {
+    "id": "evt-1",
+    "title": "Weekly Tafseer Circle",
+    "description": "Join us every Friday after Maghrib for a weekly tafseer circle exploring the meanings of the Quran with Sheikh Ahmad.",
+    "date": "2026-06-06",
+    "startTime": "20:30",
+    "endTime": "21:30",
+    "location": "Main Prayer Hall",
+    "category": "lecture",
+    "imageUrl": "/images/events/tafseer.jpg",
+    "featured": true,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "updatedAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "evt-2",
+    "title": "Community Iftar Gathering",
+    "description": "A community iftar bringing families together with shared meals, children's activities, and evening prayers.",
+    "date": "2026-03-15",
+    "startTime": "18:00",
+    "endTime": "21:00",
+    "location": "Community Hall",
+    "category": "ramadan",
+    "imageUrl": "/images/events/iftar.jpg",
+    "featured": true,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "updatedAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "evt-3",
+    "title": "Youth Football Tournament",
+    "description": "Annual youth football tournament promoting teamwork, fitness, and brotherhood among our young community members.",
+    "date": "2026-07-12",
+    "startTime": "10:00",
+    "endTime": "16:00",
+    "location": "Clondalkin Sports Ground",
+    "category": "youth",
+    "imageUrl": "/images/events/youth.jpg",
+    "featured": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "updatedAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "evt-4",
+    "title": "Mosque Open Day",
+    "description": "Welcome neighbours and friends to learn about Islam, tour our facilities, and enjoy refreshments.",
+    "date": "2026-08-23",
+    "startTime": "11:00",
+    "endTime": "15:00",
+    "location": "Al Khidmah Community Centre",
+    "imageUrl": "/images/events/open-day.jpg",
+    "featured": true,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "updatedAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "evt-5",
+    "title": "Annual Fundraising Dinner",
+    "description": "Support mosque development projects at our annual fundraising dinner with guest speakers and community awards.",
+    "date": "2026-11-08",
+    "startTime": "18:30",
+    "endTime": "22:00",
+    "location": "Community Hall",
+    "category": "fundraising",
+    "imageUrl": "/images/events/fundraising.jpg",
+    "featured": false,
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "updatedAt": "2026-01-01T00:00:00.000Z"
+  }
+]
