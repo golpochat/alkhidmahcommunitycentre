@@ -242,6 +242,18 @@ export function getJumuahOrdinalLabel(index: number) {
   return `${formatJumuahOrdinal(index)} Jumuah`;
 }
 
+export function formatJamaahLabel(index: number) {
+  return `${formatJumuahOrdinal(index)} Jama'ah`;
+}
+
+export function isCombinedMaghribIsha(schedule: PrayerTimesResponse): boolean {
+  const ishaAdhan = normalizeTime(schedule.prayers.isha.adhan);
+  const ishaIqamah = normalizeTime(schedule.prayers.isha.iqama);
+  if (!ishaAdhan || !ishaIqamah) return false;
+
+  return parseTimeToMinutes(ishaIqamah) < parseTimeToMinutes(ishaAdhan);
+}
+
 export function formatNextPrayerCountdownLabel(nextPrayer: NextPrayer) {
   if (nextPrayer.type === "jumuah") {
     const match = nextPrayer.name.match(/(\d+)\s*$/);

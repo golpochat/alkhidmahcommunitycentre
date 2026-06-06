@@ -13,6 +13,8 @@ export type DisplayPanelKey = (typeof DEFAULT_ENABLED_PANELS)[number];
 
 export type DisplayTheme = "hybrid" | "dark" | "light";
 
+export type OrientationOverride = "landscape" | "portrait" | null;
+
 export interface SerializedDisplaySettings {
   id: string;
   rotationSpeed: number;
@@ -20,6 +22,8 @@ export interface SerializedDisplaySettings {
   theme: DisplayTheme;
   pinCode: string | null;
   brightnessSchedule: unknown;
+  orientationOverride: OrientationOverride;
+  autoFullscreen: boolean;
 }
 
 const DEFAULT_SETTINGS = {
@@ -28,6 +32,8 @@ const DEFAULT_SETTINGS = {
   theme: "hybrid" as DisplayTheme,
   pinCode: null as string | null,
   brightnessSchedule: null as unknown,
+  orientationOverride: null as OrientationOverride,
+  autoFullscreen: false,
 };
 
 export async function ensureDisplaySettings() {
@@ -42,6 +48,7 @@ export async function ensureDisplaySettings() {
       rotationSpeed: DEFAULT_SETTINGS.rotationSpeed,
       enabledPanels: DEFAULT_SETTINGS.enabledPanels,
       theme: DEFAULT_SETTINGS.theme,
+      autoFullscreen: DEFAULT_SETTINGS.autoFullscreen,
     },
   });
 }
@@ -58,5 +65,11 @@ export function serializeDisplaySettings(
     theme: (settings.theme as DisplayTheme) || "hybrid",
     pinCode: settings.pinCode,
     brightnessSchedule: settings.brightnessSchedule,
+    orientationOverride:
+      settings.orientationOverride === "landscape" ||
+      settings.orientationOverride === "portrait"
+        ? settings.orientationOverride
+        : null,
+    autoFullscreen: settings.autoFullscreen ?? false,
   };
 }

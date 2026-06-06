@@ -438,14 +438,16 @@ model DisplayNotice {
 }
 
 model DisplaySettings {
-  id                 String   @id @default(cuid())
-  rotationSpeed      Int      @default(10)
-  enabledPanels      String[]
-  theme              String   @default("hybrid")
-  pinCode            String?
-  brightnessSchedule Json?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  id                  String   @id @default(cuid())
+  rotationSpeed       Int      @default(10)
+  enabledPanels       String[]
+  theme               String   @default("hybrid")
+  pinCode             String?
+  brightnessSchedule  Json?
+  orientationOverride String?
+  autoFullscreen      Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 }
 
 model AyahRotation {

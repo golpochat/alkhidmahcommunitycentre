@@ -5,12 +5,9 @@ import { AnnouncementsPanel } from "@/components/display/rotating-panels/announc
 import { AyahPanel } from "@/components/display/rotating-panels/ayah-panel";
 import { EventsPanel } from "@/components/display/rotating-panels/events-panel";
 import { WeatherPanel } from "@/components/display/rotating-panels/weather-panel";
-import { getSeasonalPanelMessage } from "@/components/display/seasonal-banner";
 import type { CachedAyah } from "@/lib/display-cache";
 import type { SerializedDisplayNotice, WeatherPayload } from "@/lib/display-types";
 import type { SerializedEvent } from "@/lib/events";
-import type { SeasonalFlags } from "@/lib/seasonal-types";
-import type { PrayerTimesResponse } from "@/lib/prayer-times-client";
 
 interface RotatingPanelsProps {
   enabledPanels: string[];
@@ -19,9 +16,6 @@ interface RotatingPanelsProps {
   events: SerializedEvent[];
   ayat: CachedAyah[];
   weather: WeatherPayload;
-  seasonal?: SeasonalFlags;
-  schedule?: PrayerTimesResponse;
-  showJumuahBanner?: boolean;
 }
 
 export function RotatingPanels({
@@ -31,18 +25,10 @@ export function RotatingPanels({
   events,
   ayat,
   weather,
-  seasonal,
-  schedule,
-  showJumuahBanner = false,
 }: RotatingPanelsProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [ayahIndex, setAyahIndex] = useState(0);
   const [visible, setVisible] = useState(true);
-
-  const seasonalMessage = useMemo(() => {
-    if (!seasonal || !schedule) return null;
-    return getSeasonalPanelMessage(seasonal, schedule, showJumuahBanner);
-  }, [seasonal, schedule, showJumuahBanner]);
 
   const panels = useMemo(() => {
     const list: Array<{ key: string; node: ReactNode }> = [];
@@ -51,10 +37,7 @@ export function RotatingPanels({
       list.push({
         key: "announcements",
         node: (
-          <AnnouncementsPanel
-            notices={notices}
-            seasonalMessage={seasonalMessage}
-          />
+          <AnnouncementsPanel notices={notices} rotationSpeed={rotationSpeed} />
         ),
       });
     }
@@ -78,7 +61,7 @@ export function RotatingPanels({
     }
 
     return list;
-  }, [enabledPanels, notices, events, ayat, ayahIndex, weather, seasonalMessage]);
+  }, [enabledPanels, notices, events, ayat, ayahIndex, weather, rotationSpeed]);
 
   useEffect(() => {
     if (panels.length <= 1) return;

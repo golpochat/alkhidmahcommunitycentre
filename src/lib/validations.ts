@@ -423,6 +423,8 @@ export const displaySettingsSchema = z.object({
   theme: z.enum(["hybrid", "dark", "light"]),
   pinCode: z.string().max(8).optional().nullable(),
   brightnessSchedule: z.unknown().optional().nullable(),
+  orientationOverride: z.enum(["landscape", "portrait"]).nullable().optional(),
+  autoFullscreen: z.boolean().optional(),
 });
 
 export const ayahRotationSchema = z.object({

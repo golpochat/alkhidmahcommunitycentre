@@ -179,6 +179,8 @@ export function AdminDisplayManager() {
           theme: settings.theme,
           pinCode: settings.pinCode,
           brightnessSchedule,
+          orientationOverride: settings.orientationOverride,
+          autoFullscreen: settings.autoFullscreen,
         }),
       });
 
@@ -492,6 +494,45 @@ export function AdminDisplayManager() {
                 </div>
 
                 <div className="space-y-2">
+                  <Label>Orientation</Label>
+                  <Select
+                    value={settings.orientationOverride ?? "auto"}
+                    onValueChange={(value) => {
+                      if (!value) return;
+                      setSettings({
+                        ...settings,
+                        orientationOverride:
+                          value === "auto"
+                            ? null
+                            : (value as "landscape" | "portrait"),
+                      });
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="auto">Auto (detect from screen)</SelectItem>
+                      <SelectItem value="landscape">Landscape</SelectItem>
+                      <SelectItem value="portrait">Portrait</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <label className="admin-display-checkbox-row">
+                  <Checkbox
+                    checked={settings.autoFullscreen}
+                    onCheckedChange={(checked) =>
+                      setSettings({
+                        ...settings,
+                        autoFullscreen: checked === true,
+                      })
+                    }
+                  />
+                  <span>Auto full screen on load</span>
+                </label>
+
+                <div className="space-y-2">
                   <Label>Theme</Label>
                   <Select
                     value={settings.theme}
@@ -615,44 +656,46 @@ export function AdminDisplayManager() {
               <CardHeader>
                 <CardTitle>Rotation List</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                {ayat.length === 0 && (
-                  <p className="text-sm text-muted-foreground">No entries yet</p>
-                )}
-                {ayat.map((item) => (
-                  <div key={item.id} className="admin-display-list-item">
-                    <div>
-                      <p className="font-medium" dir="rtl">
-                        {item.arabic}
-                      </p>
-                      <p className="text-sm">{item.english}</p>
-                      <p className="text-xs text-muted-foreground">{item.source}</p>
+              <CardContent>
+                <div className="admin-display-rotation-list">
+                  {ayat.length === 0 && (
+                    <p className="text-sm text-muted-foreground">No entries yet</p>
+                  )}
+                  {ayat.map((item) => (
+                    <div key={item.id} className="admin-display-list-item">
+                      <div>
+                        <p className="font-medium" dir="rtl">
+                          {item.arabic}
+                        </p>
+                        <p className="text-sm">{item.english}</p>
+                        <p className="text-xs text-muted-foreground">{item.source}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setEditingAyahId(item.id);
+                            setAyahForm({
+                              arabic: item.arabic,
+                              english: item.english,
+                              source: item.source,
+                            });
+                          }}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => deleteAyah(item.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setEditingAyahId(item.id);
-                          setAyahForm({
-                            arabic: item.arabic,
-                            english: item.english,
-                            source: item.source,
-                          });
-                        }}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => deleteAyah(item.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </CardContent>
             </Card>
           </div>

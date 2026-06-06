@@ -1,28 +1,19 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { LandscapeDisplayLayout } from "@/app/display/prayer/landscape";
+import { PortraitDisplayLayout } from "@/app/display/prayer/portrait";
 import { BackgroundPattern } from "@/components/display/background-pattern";
-import { DisplayPrayerTimetable } from "@/components/display/display-prayer-timetable";
-import { NextPrayerCountdown } from "@/components/display/next-prayer-countdown";
-import { RotatingPanels } from "@/components/display/rotating-panels";
-import { ScrollingTicker } from "@/components/display/scrolling-ticker";
-import { SeasonalModeWrapper } from "@/components/display/seasonal-mode-wrapper";
+import type { DisplayTodayResponse } from "@/components/display/display-layout-props";
 import type { CachedAyah } from "@/lib/display-cache";
 import type { SerializedDisplayNotice, WeatherPayload } from "@/lib/display-types";
 import type { SerializedDisplaySettings } from "@/lib/display-settings";
 import type { SerializedEvent } from "@/lib/events";
-import { isAfterIsha, shouldShowJumuahCountdown } from "@/lib/seasonal-client";
-import type { SeasonalFlags } from "@/lib/seasonal-types";
-import type { PrayerTimesResponse } from "@/lib/prayer-times-client";
+import { resolveDisplayOrientation } from "@/lib/display-orientation";
+import { useOrientation } from "@/hooks/useOrientation";
+import { isAfterIsha } from "@/lib/seasonal-client";
 
-interface DisplayTodayResponse {
-  schedule: PrayerTimesResponse;
-  seasonal: SeasonalFlags;
-  weather: WeatherPayload;
-  fetchedAt: string;
-}
-
-interface PrayerDisplayScreenProps {
+interface DisplayRouterProps {
   initialToday: DisplayTodayResponse;
   initialNotices: SerializedDisplayNotice[];
   initialEvents: SerializedEvent[];
@@ -31,14 +22,15 @@ interface PrayerDisplayScreenProps {
   initialSettings: SerializedDisplaySettings;
 }
 
-export function PrayerDisplayScreen({
+export function DisplayRouter({
   initialToday,
   initialNotices,
   initialEvents,
   initialAyat,
   initialWeather,
   initialSettings,
-}: PrayerDisplayScreenProps) {
+}: DisplayRouterProps) {
+  const detectedOrientation = useOrientation();
   const [schedule, setSchedule] = useState(initialToday.schedule);
   const [seasonal, setSeasonal] = useState(initialToday.seasonal);
   const [notices, setNotices] = useState(initialNotices);
@@ -47,6 +39,11 @@ export function PrayerDisplayScreen({
   const [weather, setWeather] = useState(initialWeather);
   const [settings, setSettings] = useState(initialSettings);
   const [now, setNow] = useState(() => new Date());
+
+  const orientation = resolveDisplayOrientation(
+    settings.orientationOverride,
+    detectedOrientation
+  );
 
   const refreshData = useCallback(async () => {
     try {
@@ -85,6 +82,15 @@ export function PrayerDisplayScreen({
     return () => clearInterval(clockInterval);
   }, []);
 
+  useEffect(() => {
+    if (!settings.autoFullscreen) return;
+
+    document.documentElement.classList.add("display-kiosk-mode");
+    return () => {
+      document.documentElement.classList.remove("display-kiosk-mode");
+    };
+  }, [settings.autoFullscreen]);
+
   const themeClass = useMemo(() => {
     const base = `display-theme-${settings.theme}`;
     const night =
@@ -94,41 +100,31 @@ export function PrayerDisplayScreen({
     return `${base}${night}`;
   }, [settings.theme, schedule, now]);
 
-  const showJumuahBanner = shouldShowJumuahCountdown(schedule, now);
+  const layoutProps = {
+    schedule,
+    seasonal,
+    notices,
+    events,
+    ayat,
+    weather,
+    settings,
+    now,
+  };
+
+  const viewportClass =
+    orientation === "portrait"
+      ? "display-viewport display-viewport-portrait"
+      : "display-viewport display-viewport-landscape";
 
   return (
     <div className={`display-prayer-screen ${themeClass}`}>
       <BackgroundPattern />
-
-      <div className="display-viewport">
-        <div className="display-prayer-screen-inner">
-          <div className="display-center-stage">
-            <SeasonalModeWrapper seasonal={seasonal} schedule={schedule} now={now}>
-              <DisplayPrayerTimetable schedule={schedule} />
-              <NextPrayerCountdown
-                schedule={schedule}
-                seasonal={seasonal}
-                notices={notices}
-              />
-            </SeasonalModeWrapper>
-          </div>
-
-          <div className="display-bottom-stage">
-            <RotatingPanels
-              enabledPanels={settings.enabledPanels}
-              rotationSpeed={settings.rotationSpeed}
-              notices={notices}
-              events={events}
-              ayat={ayat}
-              weather={weather}
-              seasonal={seasonal}
-              schedule={schedule}
-              showJumuahBanner={showJumuahBanner}
-            />
-          </div>
-
-          <ScrollingTicker notices={notices} />
-        </div>
+      <div className={viewportClass}>
+        {orientation === "portrait" ? (
+          <PortraitDisplayLayout {...layoutProps} />
+        ) : (
+          <LandscapeDisplayLayout {...layoutProps} />
+        )}
       </div>
     </div>
   );

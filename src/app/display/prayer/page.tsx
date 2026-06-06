@@ -1,12 +1,12 @@
-import { PrayerDisplayScreen } from "@/components/display/prayer-display-screen";
+import { DisplayRouter } from "@/app/display/prayer/display-router";
 import {
   getActiveDisplayNotices,
   getCachedWeather,
   getDisplayAyat,
+  getDisplaySettingsPayload,
   getDisplayTodayPayload,
+  getUpcomingDisplayEvents,
 } from "@/lib/display-api";
-import { getDisplaySettingsPayload } from "@/lib/display-api";
-import { getUpcomingDisplayEvents } from "@/lib/display-api";
 
 export const revalidate = 60;
 
@@ -21,7 +21,7 @@ export default async function PrayerDisplayPage() {
   ]);
 
   return (
-    <PrayerDisplayScreen
+    <DisplayRouter
       initialToday={today}
       initialNotices={notices}
       initialEvents={events}

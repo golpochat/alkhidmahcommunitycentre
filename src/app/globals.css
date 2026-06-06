@@ -1405,12 +1405,134 @@
 
   /* ─── TV Prayer Display ─────────────────────────────────── */
 
+  html.display-kiosk-mode,
+  html.display-kiosk-mode body {
+    @apply h-screen w-screen overflow-hidden;
+  }
+
+  .display-prayer-screen .display-fullscreen-button {
+    @apply hidden;
+  }
+
   .display-root {
     @apply min-h-screen overflow-hidden bg-black;
   }
 
   .display-viewport {
     @apply mx-auto aspect-video h-screen w-screen overflow-hidden;
+  }
+
+  .display-viewport-landscape {
+    @apply aspect-video;
+  }
+
+  .display-viewport-portrait {
+    @apply aspect-[9/16] max-h-screen max-w-[min(100vw,calc(100vh*9/16))];
+  }
+
+  .display-landscape-layout {
+    @apply gap-[clamp(0.5rem,1vw,2rem)];
+  }
+
+  .display-landscape-middle {
+    @apply flex min-h-0 flex-1 flex-col items-center justify-center gap-[clamp(0.5rem,1vw,2rem)] overflow-hidden;
+  }
+
+  .display-landscape-grid-stage {
+    @apply flex min-h-0 flex-1 items-center justify-center overflow-hidden;
+  }
+
+  .display-landscape-countdown-stage {
+    @apply flex w-full shrink-0 items-center justify-center;
+  }
+
+  .display-landscape-eid-banner {
+    @apply mx-auto w-full max-w-4xl shrink-0;
+  }
+
+  .display-landscape-bottom {
+    @apply flex shrink-0 flex-col justify-end overflow-hidden border-t border-gold/20;
+    flex: 0 0 clamp(5.4rem, 12vh, 7.8rem);
+    min-height: clamp(5.4rem, 12vh, 7.8rem);
+    max-height: clamp(5.4rem, 12vh, 7.8rem);
+  }
+
+  .display-landscape-bottom .display-rotating-panels {
+    @apply min-h-0 flex-1;
+  }
+
+  .display-landscape-bottom .display-rotating-panel {
+    @apply border-0 bg-transparent;
+  }
+
+  .display-landscape-bottom .display-rotating-panel-title {
+    @apply font-bold text-gold/55;
+  }
+
+  .display-landscape-bottom .display-announcement-dot-active {
+    @apply bg-gold/55;
+  }
+
+  .display-landscape-bottom .display-events-list {
+    @apply gap-[clamp(0.35rem,0.75vw,0.875rem)];
+  }
+
+  .display-landscape-bottom .display-event-date {
+    @apply text-[clamp(0.875rem,1.3vw,1.125rem)] text-gold/70;
+  }
+
+  .display-landscape-bottom .display-event-title {
+    @apply text-[clamp(1rem,1.5vw,1.375rem)] font-bold;
+  }
+
+  .display-landscape-bottom .display-event-location {
+    @apply text-[clamp(0.8125rem,1.2vw,1rem)] text-white/55;
+  }
+
+  .display-portrait-layout {
+    @apply gap-[clamp(0.35rem,0.8vh,0.75rem)];
+  }
+
+  .display-portrait-countdown-stage {
+    @apply flex shrink-0 justify-center py-[clamp(0.25rem,0.5vh,0.5rem)];
+  }
+
+  .display-portrait-stack-stage {
+    @apply min-h-0 flex-1 overflow-hidden;
+  }
+
+  .display-prayer-times-stack {
+    @apply mx-auto h-full w-full max-w-md overflow-hidden;
+  }
+
+  .display-prayer-times-stack .prayer-times-table-wrap {
+    @apply border-white/15 bg-black/20;
+  }
+
+  .display-portrait-panels {
+    @apply flex min-h-0 shrink-0 flex-col gap-[clamp(0.25rem,0.5vh,0.5rem)] overflow-hidden;
+    flex: 0 0 clamp(8rem, 18vh, 11rem);
+  }
+
+  .display-priority-countdown {
+    @apply flex shrink-0 flex-col items-center justify-center gap-[clamp(0.25rem,0.5vh,0.5rem)];
+  }
+
+  .display-priority-countdown-large .display-countdown-ring {
+    width: clamp(140px, 24vw, 280px);
+    height: clamp(140px, 24vw, 280px);
+  }
+
+  .display-countdown-footer-large .display-countdown-footer-label {
+    @apply text-[clamp(1rem,2vw,1.5rem)];
+  }
+
+  .display-countdown-footer-large .display-countdown-footer-time {
+    @apply text-[clamp(2.5rem,6vw,4.5rem)];
+  }
+
+  .display-fullscreen-button {
+    @apply absolute bottom-[clamp(0.5rem,1vw,1.25rem)] right-[clamp(0.5rem,1vw,1.25rem)] z-20 border-gold/40 bg-black/40 text-gold hover:bg-gold/10;
   }
 
   .display-prayer-screen {
@@ -1454,6 +1576,30 @@
 
   .display-top-bar {
     @apply flex shrink-0 items-start justify-between gap-[clamp(0.5rem,1vw,2rem)];
+  }
+
+  .display-top-bar-landscape {
+    @apply grid grid-cols-3 items-center;
+  }
+
+  .display-top-bar-landscape .display-logo-block {
+    @apply justify-self-start;
+  }
+
+  .display-top-bar-dates {
+    @apply justify-self-center text-center;
+  }
+
+  .display-top-bar-time {
+    @apply justify-self-end text-[clamp(2rem,4vw,6rem)] font-bold text-white;
+  }
+
+  .display-top-bar-landscape .display-clock-english {
+    @apply text-[clamp(0.875rem,1.5vw,1.75rem)] font-bold text-white/75;
+  }
+
+  .display-top-bar-landscape .display-clock-hijri {
+    @apply text-[clamp(0.875rem,1.5vw,1.75rem)] font-bold text-gold/70;
   }
 
   .display-logo-block {
@@ -1560,15 +1706,27 @@
   }
 
   .display-countdown-footer {
-    @apply mt-[clamp(0.75rem,2vh,2rem)] shrink-0 border-t border-gold/20 pt-[clamp(0.75rem,2vh,2rem)] text-center;
+    @apply mt-[clamp(0.5rem,1vh,1rem)] shrink-0 text-center;
+  }
+
+  .display-countdown-footer-landscape {
+    @apply mt-[clamp(0.5rem,1vh,1rem)] flex flex-col items-center gap-[clamp(0.35rem,0.75vw,0.75rem)] border-0 pt-0;
+  }
+
+  .display-countdown-footer-landscape .display-countdown-footer-time {
+    @apply text-[clamp(1.5rem,3vw,4rem)] font-bold tabular-nums text-gold;
+  }
+
+  .display-countdown-below-grid {
+    @apply mx-auto max-w-3xl;
   }
 
   .display-countdown-footer-label {
-    @apply mb-2 text-[clamp(0.875rem,1.4vw,1.125rem)] uppercase tracking-wide text-white/70;
+    @apply mb-2 text-[clamp(0.875rem,1.4vw,1.125rem)] font-bold uppercase tracking-wide text-white/70;
   }
 
   .display-countdown-footer-time {
-    @apply font-heading text-[clamp(2rem,4.5vw,3.5rem)] font-semibold tabular-nums text-gold;
+    @apply font-heading text-[clamp(2rem,4.5vw,3.5rem)] font-bold tabular-nums text-gold;
   }
 
   .display-countdown-footer-title {
@@ -1584,7 +1742,7 @@
   }
 
   .display-seasonal-wrapper {
-    @apply flex flex-col items-center gap-[clamp(0.25rem,0.6vw,0.75rem)];
+    @apply flex w-full flex-col items-center gap-[clamp(0.25rem,0.6vw,0.75rem)];
   }
 
   .display-seasonal-banner {
@@ -1641,13 +1799,12 @@
 
   .display-prayer-times-grid {
     display: grid;
-    grid-template-columns: repeat(var(--display-prayer-columns, 5), minmax(0, 1fr));
-    gap: clamp(0.5rem, 1vw, 2rem);
-    @apply w-full text-center;
+    grid-template-columns: repeat(var(--display-prayer-columns, 6), minmax(0, 1fr));
+    @apply w-full gap-[clamp(0.5rem,1vw,2rem)] text-center;
   }
 
   .display-prayer-card {
-    @apply flex min-w-0 flex-col justify-between rounded-lg border border-white/10 bg-white/5 p-[clamp(0.5rem,1vw,2rem)] transition-all duration-300;
+    @apply flex min-w-0 flex-col items-center justify-between rounded-lg border border-white/10 bg-white/5 p-[clamp(0.5rem,1vw,2rem)] transition-all duration-300;
   }
 
   .display-prayer-card-divider {
@@ -1656,7 +1813,7 @@
 
   .display-prayer-card-divider::after {
     content: "";
-    @apply absolute right-0 top-[10%] hidden h-[80%] w-px bg-gold/25 xl:block;
+    @apply absolute right-0 top-[10%] h-[80%] w-px bg-gold/30;
     transform: translateX(calc(clamp(0.25rem, 0.5vw, 1rem)));
   }
 
@@ -1665,11 +1822,47 @@
   }
 
   .display-prayer-card-name {
-    @apply font-heading text-[clamp(1rem,2vw,3rem)] font-semibold uppercase tracking-wide text-gold;
+    @apply font-heading text-[clamp(1.2rem,2vw,3rem)] font-bold uppercase tracking-wide text-gold;
+  }
+
+  .display-prayer-card-jumuah-slots {
+    @apply mt-[clamp(0.5rem,1vw,1.25rem)] flex w-full flex-col gap-[clamp(0.35rem,0.75vw,0.75rem)];
+  }
+
+  .display-jumuah-card-list {
+    @apply mt-[clamp(0.5rem,1vw,1.25rem)] flex w-full flex-col gap-[clamp(0.35rem,0.75vw,0.875rem)];
+  }
+
+  .display-jumuah-card-row {
+    @apply flex flex-col items-center gap-[clamp(0.15rem,0.35vw,0.35rem)] text-center;
+  }
+
+  .display-jumuah-card-label {
+    @apply text-[clamp(0.75rem,1.1vw,0.9375rem)] font-bold uppercase tracking-wide text-white/65;
+  }
+
+  .display-jumuah-card-times {
+    @apply flex flex-wrap items-center justify-center gap-x-[clamp(0.35rem,0.75vw,0.75rem)] font-heading text-[clamp(1rem,1.5vw,2rem)] font-bold tabular-nums leading-tight;
+  }
+
+  .display-jumuah-card-separator {
+    @apply text-gold/40;
+  }
+
+  .display-prayer-card-sunrise .display-prayer-card-times {
+    @apply mt-[clamp(0.5rem,1vw,1.25rem)];
+  }
+
+  .display-prayer-card-jumuah-slots .display-prayer-card-times {
+    @apply mt-0;
   }
 
   .display-prayer-card-times {
-    @apply mt-[clamp(0.5rem,1vw,1.25rem)] flex flex-col justify-between gap-[clamp(0.5rem,1vw,1rem)];
+    @apply mt-[clamp(0.5rem,1vw,1.25rem)] flex w-full flex-col justify-between gap-[clamp(0.5rem,1vw,1rem)];
+  }
+
+  .display-prayer-card-jumuah-slots .display-prayer-card-times {
+    @apply mt-0;
   }
 
   .display-prayer-card-time-block {
@@ -1677,11 +1870,11 @@
   }
 
   .display-prayer-card-time-label {
-    @apply text-[clamp(1rem,2vw,3rem)] uppercase tracking-wide text-white/60;
+    @apply text-[clamp(0.75rem,1vw,1rem)] font-bold uppercase tracking-wide text-white/60;
   }
 
   .display-prayer-card-time-value {
-    @apply font-heading text-[clamp(1rem,2vw,3rem)] font-semibold tabular-nums leading-none;
+    @apply font-heading text-[clamp(1rem,1.5vw,2rem)] font-bold tabular-nums leading-none;
   }
 
   .display-prayer-card-iqama {
@@ -1795,7 +1988,31 @@
   }
 
   .display-announcement-message {
-    @apply line-clamp-2 text-[clamp(0.8125rem,1.2vw,0.9375rem)] text-white/75;
+    @apply line-clamp-4 text-[clamp(0.8125rem,1.2vw,0.9375rem)] leading-relaxed text-white/75;
+  }
+
+  .display-announcement-feature {
+    @apply flex min-h-0 flex-1 flex-col items-center justify-center gap-[clamp(0.35rem,0.8vw,0.75rem)] overflow-hidden px-[clamp(0.25rem,0.5vw,0.75rem)] text-center;
+  }
+
+  .display-announcement-feature .display-announcement-title {
+    @apply line-clamp-2 text-[clamp(0.9375rem,1.5vw,1.125rem)];
+  }
+
+  .display-announcement-feature .display-announcement-message {
+    @apply line-clamp-4 text-[clamp(0.875rem,1.3vw,1rem)];
+  }
+
+  .display-announcement-dots {
+    @apply mt-[clamp(0.25rem,0.5vw,0.5rem)] flex shrink-0 justify-center gap-2;
+  }
+
+  .display-announcement-dot {
+    @apply h-2 w-2 rounded-full bg-white/30 transition-colors;
+  }
+
+  .display-announcement-dot-active {
+    @apply bg-gold;
   }
 
   .display-event-date {
@@ -1908,6 +2125,11 @@
 
   .admin-display-list-item {
     @apply flex flex-wrap items-start justify-between gap-3 rounded-lg border border-border p-4;
+  }
+
+  .admin-display-rotation-list {
+    @apply flex flex-col gap-3 overflow-y-auto pr-1;
+    max-height: calc(5 * 7.5rem + 4 * 0.75rem);
   }
 
   .admin-display-checkbox-row {

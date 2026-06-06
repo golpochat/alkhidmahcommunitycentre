@@ -48,6 +48,8 @@ export async function PUT(request: NextRequest) {
         theme: validated.theme,
         pinCode: validated.pinCode ?? null,
         brightnessSchedule,
+        orientationOverride: validated.orientationOverride ?? null,
+        autoFullscreen: validated.autoFullscreen ?? false,
       },
     });
 
