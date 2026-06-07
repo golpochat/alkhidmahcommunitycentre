@@ -49,6 +49,8 @@ export async function POST(request: NextRequest) {
         schedule: validated.schedule ?? null,
         fee: validated.fee ?? null,
         teacher: validated.teacher ?? null,
+        publishAt: validated.publishAt ? new Date(validated.publishAt) : null,
+        unpublishAt: validated.unpublishAt ? new Date(validated.unpublishAt) : null,
       },
     });
 

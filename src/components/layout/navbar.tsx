@@ -17,6 +17,7 @@ const NAV_LINK_ITEMS = NAV_ITEMS.filter((item) => item.href !== "/donations");
 
 interface NavbarProps {
   authNav: SiteAuthNav;
+  logoPath?: string;
 }
 
 function NavDonateButton({
@@ -37,7 +38,7 @@ function NavDonateButton({
   );
 }
 
-export function Navbar({ authNav }: NavbarProps) {
+export function Navbar({ authNav, logoPath }: NavbarProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -108,7 +109,7 @@ export function Navbar({ authNav }: NavbarProps) {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       <div className="section-container flex min-h-[106px] items-center justify-between md:min-h-[7.5rem]">
-        <SiteLogo variant="navbar" />
+        <SiteLogo variant="navbar" logoPath={logoPath} />
 
         <nav className="hidden items-center gap-1 lg:flex">
           {NAV_LINK_ITEMS.flatMap((item) => renderDesktopNavItem(item))}
@@ -156,7 +157,7 @@ export function Navbar({ authNav }: NavbarProps) {
             <SheetContent side="right" className="w-80" showCloseButton={false}>
               <div className="flex flex-col gap-6 pt-8">
                 <div className="flex items-center justify-between">
-                  <SiteLogo variant="compact" link={false} />
+                  <SiteLogo variant="compact" link={false} logoPath={logoPath} />
                   <Button
                     variant="ghost"
                     size="icon"

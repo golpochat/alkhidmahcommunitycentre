@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { ensureDisplaySettings } from "@/lib/display-settings";
 import { startOfMonth, subDays, format, eachMonthOfInterval, subMonths } from "date-fns";
 
 export interface DashboardStats {
@@ -7,8 +8,13 @@ export interface DashboardStats {
   monthDonationTotal: number;
   allTimeDonationTotal: number;
   upcomingEvents: number;
+  publishedUpcomingEvents: number;
   newRegistrations: number;
   galleryImages: number;
+  publishedGalleryImages: number;
+  pendingContactMessages: number;
+  displayLastSeenAt: string | null;
+  displayLastOrientation: string | null;
 }
 
 export interface DonationTrendPoint {
@@ -27,11 +33,25 @@ export interface EventCategoryPoint {
   count: number;
 }
 
+export interface DonationCategoryPoint {
+  category: string;
+  amount: number;
+  count: number;
+}
+
+export interface DonationProviderPoint {
+  provider: string;
+  amount: number;
+  count: number;
+}
+
 export interface DashboardAnalytics {
   stats: DashboardStats;
   donationTrend: DonationTrendPoint[];
   registrationsByClass: RegistrationByClassPoint[];
   eventsByCategory: EventCategoryPoint[];
+  donationsByCategory: DonationCategoryPoint[];
+  donationsByProvider: DonationProviderPoint[];
 }
 
 export async function getDashboardAnalytics(): Promise<DashboardAnalytics> {
@@ -46,11 +66,17 @@ export async function getDashboardAnalytics(): Promise<DashboardAnalytics> {
     succeededDonations,
     monthSucceededDonations,
     upcomingEvents,
+    publishedUpcomingEvents,
     newRegistrations,
     galleryImages,
+    publishedGalleryImages,
+    pendingContactMessages,
+    displaySettings,
     recentDonations,
     registrationsWithClass,
     events,
+    donationsByCategoryRaw,
+    donationsByProviderRaw,
   ] = await Promise.all([
     db.donation.count(),
     db.donation.count({ where: { createdAt: { gte: monthStart } } }),
@@ -60,8 +86,12 @@ export async function getDashboardAnalytics(): Promise<DashboardAnalytics> {
       select: { amount: true },
     }),
     db.event.count({ where: { startAt: { gte: now } } }),
+    db.event.count({ where: { startAt: { gte: now }, published: true } }),
     db.registration.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
     db.galleryItem.count(),
+    db.galleryItem.count({ where: { published: true, album: { published: true } } }),
+    db.contactMessage.count({ where: { status: "pending" } }),
+    ensureDisplaySettings(),
     db.donation.findMany({
       where: { status: "succeeded", createdAt: { gte: sixMonthsAgo } },
       select: { amount: true, createdAt: true },
@@ -71,6 +101,18 @@ export async function getDashboardAnalytics(): Promise<DashboardAnalytics> {
       _count: { classId: true },
     }),
     db.event.findMany({ select: { category: true } }),
+    db.donation.groupBy({
+      by: ["category"],
+      where: { status: "succeeded" },
+      _sum: { amount: true },
+      _count: { category: true },
+    }),
+    db.donation.groupBy({
+      by: ["provider"],
+      where: { status: "succeeded" },
+      _sum: { amount: true },
+      _count: { provider: true },
+    }),
   ]);
 
   const months = eachMonthOfInterval({
@@ -81,7 +123,7 @@ export async function getDashboardAnalytics(): Promise<DashboardAnalytics> {
   const donationTrend = months.map((month) => {
     const monthKey = format(month, "yyyy-MM");
     const monthDonationsList = recentDonations.filter(
-      (donation) => format(donation.createdAt, "yyyy-MM") === monthKey
+      (donation) => format(donation.createdAt, "yyyy-MM") === monthKey,
     );
 
     return {
@@ -119,6 +161,22 @@ export async function getDashboardAnalytics(): Promise<DashboardAnalytics> {
     count,
   }));
 
+  const donationsByCategory = donationsByCategoryRaw
+    .map((item) => ({
+      category: item.category.replace(/-/g, " "),
+      amount: item._sum.amount ?? 0,
+      count: item._count.category,
+    }))
+    .sort((a, b) => b.amount - a.amount);
+
+  const donationsByProvider = donationsByProviderRaw
+    .map((item) => ({
+      provider: item.provider,
+      amount: item._sum.amount ?? 0,
+      count: item._count.provider,
+    }))
+    .sort((a, b) => b.amount - a.amount);
+
   return {
     stats: {
       totalDonations,
@@ -126,11 +184,18 @@ export async function getDashboardAnalytics(): Promise<DashboardAnalytics> {
       monthDonationTotal: monthSucceededDonations.reduce((sum, item) => sum + item.amount, 0),
       allTimeDonationTotal: succeededDonations.reduce((sum, item) => sum + item.amount, 0),
       upcomingEvents,
+      publishedUpcomingEvents,
       newRegistrations,
       galleryImages,
+      publishedGalleryImages,
+      pendingContactMessages,
+      displayLastSeenAt: displaySettings.lastSeenAt?.toISOString() ?? null,
+      displayLastOrientation: displaySettings.lastOrientation ?? null,
     },
     donationTrend,
     registrationsByClass,
     eventsByCategory,
+    donationsByCategory,
+    donationsByProvider,
   };
 }

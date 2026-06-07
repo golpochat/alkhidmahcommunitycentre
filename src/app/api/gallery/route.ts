@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
 
     const items = await db.galleryItem.findMany({
       where: {
-        ...(canViewUnpublished ? {} : { album: { published: true } }),
+        ...(canViewUnpublished ? {} : { published: true, album: { published: true } }),
         ...(albumId ? { albumId } : {}),
         ...(category && category !== "all"
           ? { category: { equals: category, mode: "insensitive" } }

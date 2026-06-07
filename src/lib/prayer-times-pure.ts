@@ -1,4 +1,5 @@
 import { format, nextFriday, parseISO } from "date-fns";
+import { DateTime } from "luxon";
 import type { AlAdhanResponse } from "@/types";
 import {
   buildDailyIqamaConfigFromOverride,
@@ -23,6 +24,8 @@ export {
 } from "@/lib/prayer-iqama";
 
 export const IQAMA_OFFSET_MINUTES = 15;
+
+export const DISPLAY_TIMEZONE = "Europe/Dublin";
 
 /** Default Jumu'ah times used when no override is saved (Fridays). */
 export const DEFAULT_JUMUAH_TIMES = [
@@ -91,12 +94,21 @@ export interface NextPrayer {
   time: string;
 }
 
+export interface DisplayTomorrowSchedule {
+  date: string;
+  englishDate: string | null;
+  hijriDate: string | null;
+  sunrise: string | null;
+  dhuhr: PrayerSlot | null;
+}
+
 export interface PrayerTimesResponse {
   date: string;
   englishDate: string | null;
   hijriDate: string | null;
   hijriDateArabic: string | null;
   sunrise: string | null;
+  tomorrow?: DisplayTomorrowSchedule | null;
   isFriday: boolean;
   prayers: {
     fajr: PrayerSlot;
@@ -128,34 +140,58 @@ export function getEidShortName(type: EidType) {
 }
 
 export function formatLiveClock(now: Date = new Date()) {
-  return now.toLocaleTimeString("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  });
+  return DateTime.fromJSDate(now, { zone: DISPLAY_TIMEZONE }).toFormat("HH:mm:ss");
+}
+
+export function getDisplayMinutes(now: Date = new Date()) {
+  const dt = DateTime.fromJSDate(now, { zone: DISPLAY_TIMEZONE });
+  return dt.hour * 60 + dt.minute;
+}
+
+function resolveSunriseTimeForCountdown(
+  schedule: PrayerTimesResponse,
+  now: Date
+): string | null {
+  if (!schedule.sunrise) return null;
+
+  const todaySunrise = normalizeTime(schedule.sunrise);
+  if (!todaySunrise) return null;
+
+  if (getDisplayMinutes(now) < parseTimeToMinutes(todaySunrise)) {
+    return todaySunrise;
+  }
+
+  return normalizeTime(schedule.tomorrow?.sunrise) ?? todaySunrise;
 }
 
 export function getCountdownToNextPrayer(
   nextPrayer: NextPrayer | null,
-  now: Date = new Date()
+  now: Date = new Date(),
+  schedule?: PrayerTimesResponse
 ) {
   if (!nextPrayer?.time) return null;
 
-  const normalized = normalizeTime(nextPrayer.time);
+  let normalized = normalizeTime(nextPrayer.time);
   if (!normalized) return null;
 
-  const [hours, minutes] = normalized.split(":").map(Number);
-  const target = new Date(now);
-  target.setHours(hours, minutes, 0, 0);
-
-  let diffMs = target.getTime() - now.getTime();
-  if (diffMs <= 0) {
-    target.setDate(target.getDate() + 1);
-    diffMs = target.getTime() - now.getTime();
+  if (nextPrayer.type === "sunrise" && schedule) {
+    normalized = resolveSunriseTimeForCountdown(schedule, now) ?? normalized;
   }
 
-  return Math.max(0, Math.floor(diffMs / 1000));
+  const [hours, minutes] = normalized.split(":").map(Number);
+  const nowDt = DateTime.fromJSDate(now, { zone: DISPLAY_TIMEZONE });
+  let target = nowDt.set({
+    hour: hours,
+    minute: minutes,
+    second: 0,
+    millisecond: 0,
+  });
+
+  if (target <= nowDt) {
+    target = target.plus({ days: 1 });
+  }
+
+  return Math.max(0, Math.floor(target.diff(nowDt, "seconds").seconds));
 }
 
 export function formatCountdown(totalSeconds: number) {
@@ -173,7 +209,7 @@ export function formatPrayerTime24h(time?: string | null) {
   const [hours, minutes] = normalized.split(":").map(Number);
   if (Number.isNaN(hours) || Number.isNaN(minutes)) return "—";
 
-  return `${hours}:${String(minutes).padStart(2, "0")}`;
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
 }
 
 export function parseDateParam(dateParam?: string | null) {
@@ -566,7 +602,7 @@ export function findNextPrayer(
   response: PrayerTimesResponse,
   now: Date = new Date()
 ): NextPrayer | null {
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const currentMinutes = getDisplayMinutes(now);
   const entries = buildScheduleEntries(response);
   const upcoming = entries.find((entry) => entry.minutes > currentMinutes);
 

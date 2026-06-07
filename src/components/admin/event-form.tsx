@@ -44,6 +44,8 @@ function createDefaultValues(event?: SerializedEvent): EventFormValues {
     endAt: event?.endAt ?? (event ? null : now),
     location: event?.location ?? CONTACT.address,
     imageUrl: event?.imageUrl ?? "",
+    publishAt: event?.publishAt ?? null,
+    unpublishAt: event?.unpublishAt ?? null,
   };
 }
 
@@ -178,6 +180,38 @@ export function EventForm({ event, mode }: EventFormProps) {
           {errors.endAt && (
             <p className="text-sm text-destructive">{errors.endAt.message}</p>
           )}
+        </div>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="publishAt">Scheduled Publish (optional)</Label>
+          <Input
+            id="publishAt"
+            type="datetime-local"
+            value={toDatetimeLocalValue(watch("publishAt"))}
+            onChange={(e) =>
+              setValue(
+                "publishAt",
+                e.target.value ? fromDatetimeLocalValue(e.target.value) : null,
+              )
+            }
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="unpublishAt">Scheduled Unpublish (optional)</Label>
+          <Input
+            id="unpublishAt"
+            type="datetime-local"
+            value={toDatetimeLocalValue(watch("unpublishAt"))}
+            onChange={(e) =>
+              setValue(
+                "unpublishAt",
+                e.target.value ? fromDatetimeLocalValue(e.target.value) : null,
+              )
+            }
+          />
         </div>
       </div>
 

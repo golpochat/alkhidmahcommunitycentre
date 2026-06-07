@@ -4,9 +4,15 @@ import type { PaymentGatewayType, Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { decryptSecret, encryptSecret } from "@/lib/encryption";
 import type { PaymentGatewayTypeId } from "@/lib/payment-gateway-presets";
+import {
+  DEFAULT_PAYPAL_FEE_CONFIG,
+  DEFAULT_STRIPE_FEE_CONFIG,
+  normalizeGatewayFeeConfig,
+  type GatewayFeeConfig,
+} from "@/lib/donation-processing-fee";
 import { SETTING_KEYS } from "@/lib/settings";
 
-export interface StripePublicConfig {
+export interface StripePublicConfig extends GatewayFeeConfig {
   publishableKey: string;
 }
 
@@ -15,7 +21,7 @@ export interface StripeSecrets {
   webhookSecret: string;
 }
 
-export interface PayPalPublicConfig {
+export interface PayPalPublicConfig extends GatewayFeeConfig {
   clientId: string;
   mode: "sandbox" | "live";
 }
@@ -57,6 +63,9 @@ export interface PublicPaymentGateway {
   iban?: string;
   bic?: string;
   referenceNote?: string;
+  feePercent?: number;
+  feeFixedCents?: number;
+  allowCoverFee?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -67,6 +76,7 @@ export interface ResolvedStripeGateway {
   publishableKey: string;
   secretKey: string;
   webhookSecret: string;
+  feeConfig: GatewayFeeConfig;
 }
 
 export interface ResolvedPayPalGateway {
@@ -75,6 +85,7 @@ export interface ResolvedPayPalGateway {
   clientId: string;
   clientSecret: string;
   mode: "sandbox" | "live";
+  feeConfig: GatewayFeeConfig;
 }
 
 export interface ResolvedBankTransferGateway {
@@ -94,32 +105,56 @@ function toTypeId(type: PaymentGatewayType): PaymentGatewayTypeId {
   return "STRIPE";
 }
 
+function readFeeFields(config: Record<string, unknown>, defaults: GatewayFeeConfig) {
+  return normalizeGatewayFeeConfig(
+    {
+      feePercent:
+        config.feePercent !== undefined && config.feePercent !== null
+          ? Number(config.feePercent)
+          : undefined,
+      feeFixedCents:
+        config.feeFixedCents !== undefined && config.feeFixedCents !== null
+          ? Number(config.feeFixedCents)
+          : undefined,
+      allowCoverFee:
+        config.allowCoverFee === undefined
+          ? defaults.allowCoverFee
+          : Boolean(config.allowCoverFee),
+    },
+    defaults,
+  );
+}
+
 function parsePublicConfig(
   type: PaymentGatewayType,
   publicConfig: Prisma.JsonValue
 ) {
   const config =
     publicConfig && typeof publicConfig === "object" && !Array.isArray(publicConfig)
-      ? (publicConfig as Record<string, string>)
+      ? (publicConfig as Record<string, unknown>)
       : {};
 
   if (type === "STRIPE") {
-    return { publishableKey: config.publishableKey ?? "" };
+    return {
+      publishableKey: String(config.publishableKey ?? ""),
+      ...readFeeFields(config, DEFAULT_STRIPE_FEE_CONFIG),
+    };
   }
 
   if (type === "PAYPAL") {
     return {
-      paypalClientId: config.clientId ?? "",
+      paypalClientId: String(config.clientId ?? ""),
       paypalMode: config.mode === "live" ? "live" : "sandbox",
+      ...readFeeFields(config, DEFAULT_PAYPAL_FEE_CONFIG),
     };
   }
 
   return {
-    accountName: config.accountName ?? "",
-    bankName: config.bankName ?? "",
-    iban: config.iban ?? "",
-    bic: config.bic ?? "",
-    referenceNote: config.referenceNote ?? "",
+    accountName: String(config.accountName ?? ""),
+    bankName: String(config.bankName ?? ""),
+    iban: String(config.iban ?? ""),
+    bic: String(config.bic ?? ""),
+    referenceNote: String(config.referenceNote ?? ""),
   };
 }
 
@@ -143,13 +178,21 @@ function encryptSecrets(secrets: Record<string, string>) {
 
 function buildPublicConfig(input: PaymentGatewayInput): Prisma.InputJsonValue {
   if (input.type === "STRIPE" && input.stripe) {
-    return { publishableKey: input.stripe.publishableKey.trim() };
+    return {
+      publishableKey: input.stripe.publishableKey.trim(),
+      feePercent: input.stripe.feePercent,
+      feeFixedCents: input.stripe.feeFixedCents,
+      allowCoverFee: input.stripe.allowCoverFee,
+    };
   }
 
   if (input.type === "PAYPAL" && input.paypal) {
     return {
       clientId: input.paypal.clientId.trim(),
       mode: input.paypal.mode,
+      feePercent: input.paypal.feePercent,
+      feeFixedCents: input.paypal.feeFixedCents,
+      allowCoverFee: input.paypal.allowCoverFee,
     };
   }
 
@@ -332,9 +375,12 @@ function resolveStripe(record: {
   publicConfig: Prisma.JsonValue;
   secretsEnc: string;
 }): ResolvedStripeGateway | null {
-  const publicFields = parsePublicConfig("STRIPE", record.publicConfig);
+  const rawConfig =
+    record.publicConfig && typeof record.publicConfig === "object" && !Array.isArray(record.publicConfig)
+      ? (record.publicConfig as Record<string, unknown>)
+      : {};
   const secrets = decryptSecrets(record.secretsEnc);
-  const publishableKey = publicFields.publishableKey ?? "";
+  const publishableKey = String(rawConfig.publishableKey ?? "");
 
   if (!publishableKey || !secrets.secretKey) {
     return null;
@@ -346,6 +392,7 @@ function resolveStripe(record: {
     publishableKey,
     secretKey: secrets.secretKey,
     webhookSecret: secrets.webhookSecret || "",
+    feeConfig: readFeeFields(rawConfig, DEFAULT_STRIPE_FEE_CONFIG),
   };
 }
 
@@ -355,9 +402,12 @@ function resolvePayPal(record: {
   publicConfig: Prisma.JsonValue;
   secretsEnc: string;
 }): ResolvedPayPalGateway | null {
-  const publicFields = parsePublicConfig("PAYPAL", record.publicConfig);
+  const rawConfig =
+    record.publicConfig && typeof record.publicConfig === "object" && !Array.isArray(record.publicConfig)
+      ? (record.publicConfig as Record<string, unknown>)
+      : {};
   const secrets = decryptSecrets(record.secretsEnc);
-  const clientId = publicFields.paypalClientId ?? "";
+  const clientId = String(rawConfig.clientId ?? "");
 
   if (!clientId || !secrets.clientSecret) {
     return null;
@@ -368,7 +418,8 @@ function resolvePayPal(record: {
     currency: record.currency,
     clientId,
     clientSecret: secrets.clientSecret,
-    mode: publicFields.paypalMode === "live" ? "live" : "sandbox",
+    mode: rawConfig.mode === "live" ? "live" : "sandbox",
+    feeConfig: readFeeFields(rawConfig, DEFAULT_PAYPAL_FEE_CONFIG),
   };
 }
 

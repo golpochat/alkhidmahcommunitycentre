@@ -1,7 +1,7 @@
 import "server-only";
 
 import { unstable_cache } from "next/cache";
-import { format } from "date-fns";
+import { addDays, format, parseISO } from "date-fns";
 import { db } from "@/lib/db";
 import { serializeEvent } from "@/lib/events";
 import { getPrayerTimesForDisplay } from "@/lib/prayer-times";
@@ -32,9 +32,20 @@ export const getCachedPrayerTimesForDisplay = unstable_cache(
 );
 
 export async function getDisplayTodayPayload() {
-  const [schedule, seasonal, weather] = await Promise.all([
-    getCachedPrayerTimesForDisplay(),
-    getCachedPrayerTimesForDisplay().then((data) => getSeasonalFlags(data)),
+  const schedule = await getCachedPrayerTimesForDisplay();
+  const tomorrowKey = format(addDays(parseISO(schedule.date), 1), "yyyy-MM-dd");
+  const tomorrowSchedule = await getPrayerTimesForDisplay(tomorrowKey);
+
+  schedule.tomorrow = {
+    date: tomorrowSchedule.date,
+    englishDate: tomorrowSchedule.englishDate,
+    hijriDate: tomorrowSchedule.hijriDate,
+    sunrise: tomorrowSchedule.sunrise,
+    dhuhr: tomorrowSchedule.prayers.dhuhr,
+  };
+
+  const [seasonal, weather] = await Promise.all([
+    getSeasonalFlags(schedule),
     getCachedWeather(),
   ]);
 

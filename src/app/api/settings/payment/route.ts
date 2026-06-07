@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { requirePermission, PERMISSIONS } from "@/lib/auth";
 import { isPasswordMask } from "@/lib/encryption";
 import {
+  DEFAULT_PAYPAL_FEE_CONFIG,
+  DEFAULT_STRIPE_FEE_CONFIG,
+  normalizeGatewayFeeConfig,
+} from "@/lib/donation-processing-fee";
+import {
   createPaymentGateway,
   listPublicPaymentGateways,
   type PaymentGatewayInput,
@@ -25,6 +30,15 @@ function toGatewayInput(
   };
 
   if (validated.type === "STRIPE") {
+    const feeConfig = normalizeGatewayFeeConfig(
+      {
+        feePercent: validated.feePercent,
+        feeFixedCents: validated.feeFixedCents,
+        allowCoverFee: validated.allowCoverFee,
+      },
+      DEFAULT_STRIPE_FEE_CONFIG,
+    );
+
     return {
       ...base,
       stripe: {
@@ -35,11 +49,21 @@ function toGatewayInput(
         webhookSecret: isPasswordMask(validated.webhookSecret)
           ? undefined
           : validated.webhookSecret,
+        ...feeConfig,
       },
     };
   }
 
   if (validated.type === "PAYPAL") {
+    const feeConfig = normalizeGatewayFeeConfig(
+      {
+        feePercent: validated.feePercent,
+        feeFixedCents: validated.feeFixedCents,
+        allowCoverFee: validated.allowCoverFee,
+      },
+      DEFAULT_PAYPAL_FEE_CONFIG,
+    );
+
     return {
       ...base,
       paypal: {
@@ -48,6 +72,7 @@ function toGatewayInput(
         clientSecret: isPasswordMask(validated.clientSecret)
           ? undefined
           : validated.clientSecret,
+        ...feeConfig,
       },
     };
   }

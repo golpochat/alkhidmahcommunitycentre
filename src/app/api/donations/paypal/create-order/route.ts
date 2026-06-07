@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { resolveDonationUserId } from "@/lib/donation-user-link";
 import { createPayPalOrder } from "@/lib/paypal";
+import { resolveDonationPaymentAmount } from "@/lib/donation-payment-amount";
 import { getEnabledPayPalGateway } from "@/lib/payment-gateway-store";
 import { assertActiveDonationCategory } from "@/lib/donation-categories";
 import { donationFormSchema } from "@/lib/validations";
@@ -22,11 +24,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "PayPal is not configured" }, { status: 500 });
     }
 
+    const payment = resolveDonationPaymentAmount(validated, paypalGateway.feeConfig);
+
+    const userId = await resolveDonationUserId();
+
     const donation = await db.donation.create({
       data: {
         donorName: validated.donorName?.trim() || null,
         donorEmail: validated.donorEmail.trim(),
-        amount: validated.amount,
+        userId,
+        amount: payment.donationData.amount,
+        processingFeeCents: payment.donationData.processingFeeCents,
+        coverFee: payment.donationData.coverFee,
         currency: paypalGateway.currency,
         category: validated.category,
         provider: "paypal",
@@ -35,7 +44,7 @@ export async function POST(request: NextRequest) {
     });
 
     const order = await createPayPalOrder({
-      amount: validated.amount,
+      amount: payment.chargeCents / 100,
       currency: paypalGateway.currency,
       category: validated.category,
       donationId: donation.id,

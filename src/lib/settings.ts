@@ -9,9 +9,9 @@ export const SETTING_KEYS = {
   socialFacebook: "social_facebook",
   socialInstagram: "social_instagram",
   socialYoutube: "social_youtube",
+  socialTwitter: "social_twitter",
   logoPath: "logo_path",
   faviconPath: "favicon_path",
-  prayerOverrideEnabled: "prayer_override_enabled",
   stripeEnabled: "stripe_enabled",
   stripePublishableKey: "stripe_publishable_key",
   stripeSecretKey: "stripe_secret_key",
@@ -44,9 +44,9 @@ export const DEFAULT_SETTINGS: Record<string, string> = {
   [SETTING_KEYS.socialFacebook]: "https://facebook.com/alkhidmahmosque",
   [SETTING_KEYS.socialInstagram]: "https://instagram.com/alkhidmahmosque",
   [SETTING_KEYS.socialYoutube]: "https://youtube.com/@alkhidmahmosque",
+  [SETTING_KEYS.socialTwitter]: "https://twitter.com/alkhidmahmosque",
   [SETTING_KEYS.logoPath]: "/logo/logo.png",
   [SETTING_KEYS.faviconPath]: "/favicon.png",
-  [SETTING_KEYS.prayerOverrideEnabled]: "false",
   [SETTING_KEYS.stripeEnabled]: "true",
   [SETTING_KEYS.stripePublishableKey]: "",
   [SETTING_KEYS.stripeSecretKey]: "",
@@ -85,6 +85,7 @@ export const ADMIN_SETTING_FIELDS = [
   { key: SETTING_KEYS.socialFacebook, label: "Facebook URL", type: "url" as const },
   { key: SETTING_KEYS.socialInstagram, label: "Instagram URL", type: "url" as const },
   { key: SETTING_KEYS.socialYoutube, label: "YouTube URL", type: "url" as const },
+  { key: SETTING_KEYS.socialTwitter, label: "X (Twitter) URL", type: "url" as const },
 ];
 
 export const PAYMENT_SETTING_FIELDS = [

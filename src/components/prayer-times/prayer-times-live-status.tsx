@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useLiveNow } from "@/hooks/useLiveNow";
 import {
   findNextPrayer,
   formatCountdown,
@@ -9,19 +9,6 @@ import {
   getCountdownToNextPrayer,
   type PrayerTimesResponse,
 } from "@/lib/prayer-times-client";
-
-/** Live clock that avoids SSR/client hydration mismatches. */
-function useLiveNow() {
-  const [now, setNow] = useState<Date | null>(null);
-
-  useEffect(() => {
-    setNow(new Date());
-    const interval = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return now;
-}
 
 interface PrayerTimesClockHeaderProps {
   englishDate: string | null;

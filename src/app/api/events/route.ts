@@ -59,6 +59,8 @@ export async function POST(request: NextRequest) {
         endAt: validated.endAt ? new Date(validated.endAt) : null,
         location: validated.location ?? null,
         imageUrl: validated.imageUrl ?? null,
+        publishAt: validated.publishAt ? new Date(validated.publishAt) : null,
+        unpublishAt: validated.unpublishAt ? new Date(validated.unpublishAt) : null,
       },
     });
 

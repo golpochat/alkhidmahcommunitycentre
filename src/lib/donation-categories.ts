@@ -1,6 +1,7 @@
 import "server-only";
 
 import { DONATION_CATEGORIES, DONATION_CATEGORY_ORDER, SITE_URL } from "@/lib/constants";
+import { slugify } from "@/lib/classes";
 import { db } from "@/lib/db";
 import type { PublicDonationCategory } from "@/lib/donations";
 import { getSettingsMap } from "@/lib/queries";
@@ -175,4 +176,65 @@ export async function refreshDonationCategoryUrls() {
       })
     )
   );
+}
+
+function buildUniqueCategorySlug(name: string, existingSlugs: string[]) {
+  let base = slugify(name).slice(0, 48) || "category";
+  let slug = base;
+  let suffix = 1;
+
+  while (existingSlugs.includes(slug)) {
+    slug = `${base}-${suffix}`;
+    suffix += 1;
+  }
+
+  return slug;
+}
+
+export async function createDonationCategory(input: {
+  name: string;
+  description: string;
+}) {
+  await ensureDonationCategoriesSeeded();
+
+  const siteUrl = await resolveSiteUrlForDonations();
+  const existing = await db.donationCategory.findMany({ select: { slug: true, sortOrder: true } });
+  const maxSortOrder = existing.reduce((max, row) => Math.max(max, row.sortOrder), -1);
+  const slug = buildUniqueCategorySlug(
+    input.name,
+    existing.map((row) => row.slug),
+  );
+
+  const row = await db.donationCategory.create({
+    data: {
+      name: input.name.trim(),
+      slug,
+      description: input.description.trim(),
+      donationUrl: buildDonationUrl(slug, siteUrl),
+      isActive: false,
+      sortOrder: maxSortOrder + 1,
+    },
+  });
+
+  return serializeDonationCategory(row);
+}
+
+export async function deleteDonationCategory(id: string) {
+  const category = await db.donationCategory.findUnique({ where: { id } });
+
+  if (!category) {
+    throw new Error("Category not found");
+  }
+
+  const donationCount = await db.donation.count({
+    where: { category: category.slug },
+  });
+
+  if (donationCount > 0) {
+    throw new Error(
+      "This category cannot be deleted because it has existing donations. Unpublish it instead.",
+    );
+  }
+
+  await db.donationCategory.delete({ where: { id } });
 }

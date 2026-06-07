@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { resolveDonationUserId } from "@/lib/donation-user-link";
 import { assertActiveDonationCategory } from "@/lib/donation-categories";
 import { getEnabledBankTransferGateway } from "@/lib/payment-gateway-store";
 import { donationFormSchema } from "@/lib/validations";
@@ -26,10 +27,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const userId = await resolveDonationUserId();
+
     const donation = await db.donation.create({
       data: {
         donorName: validated.donorName?.trim() || null,
         donorEmail: validated.donorEmail.trim(),
+        userId,
         amount: validated.amount,
         currency: gateway.currency,
         category: validated.category,

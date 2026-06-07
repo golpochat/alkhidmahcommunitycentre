@@ -399,6 +399,26 @@
     @apply flex items-center gap-3 py-6;
   }
 
+  .donation-fee-option {
+    @apply rounded-lg border border-border bg-card p-4;
+  }
+
+  .donation-fee-option-checkbox {
+    @apply flex cursor-pointer items-start gap-3 text-sm leading-relaxed;
+  }
+
+  .donation-fee-summary {
+    @apply space-y-2 border-t border-border pt-3;
+  }
+
+  .donation-fee-summary-row {
+    @apply flex items-center justify-between gap-4 text-sm;
+  }
+
+  .donation-fee-summary-row-total {
+    @apply border-t border-border pt-2 font-semibold text-gold;
+  }
+
   .donation-success-content {
     @apply space-y-6 p-8 md:p-10;
   }
@@ -461,6 +481,86 @@
 
   .admin-stat-card {
     @apply transition-all duration-200 hover:border-gold/30 hover:shadow-card-hover;
+  }
+
+  .admin-contact-pending-badge {
+    @apply rounded-full bg-gold/15 px-2 py-0.5 text-xs font-medium text-gold;
+  }
+
+  .admin-contact-status-pending {
+    @apply text-sm font-medium text-gold;
+  }
+
+  .admin-contact-status-handled {
+    @apply text-sm font-medium text-emerald;
+  }
+
+  .admin-contact-message-dialog {
+    @apply max-w-lg;
+  }
+
+  .admin-contact-message-meta {
+    @apply grid gap-3 text-sm;
+  }
+
+  .admin-contact-message-meta dt {
+    @apply text-muted-foreground;
+  }
+
+  .admin-contact-message-meta dd {
+    @apply font-medium;
+  }
+
+  .admin-contact-message-body {
+    @apply max-h-80 overflow-y-auto whitespace-pre-wrap rounded-lg border border-border bg-muted/40 p-4 text-sm leading-relaxed;
+  }
+
+  .admin-publish-checklist {
+    @apply border-gold/30 bg-gold/5;
+  }
+
+  .admin-publish-checklist-list {
+    @apply space-y-3;
+  }
+
+  .admin-publish-checklist-item {
+    @apply flex flex-col gap-3 rounded-lg border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between;
+  }
+
+  .admin-publish-status-overview {
+    @apply mb-8;
+  }
+
+  .admin-publish-status-summary {
+    @apply mb-6 grid gap-4 sm:grid-cols-2;
+  }
+
+  .admin-publish-status-summary-value {
+    @apply font-heading text-3xl font-bold;
+  }
+
+  .admin-publish-status-summary-label {
+    @apply text-sm text-muted-foreground;
+  }
+
+  .admin-publish-status-table-wrap {
+    @apply overflow-x-auto;
+  }
+
+  .admin-publish-status-table {
+    @apply w-full min-w-[32rem] text-sm;
+  }
+
+  .admin-publish-status-table th {
+    @apply border-b border-border px-3 py-2 text-left text-xs uppercase tracking-wide text-muted-foreground;
+  }
+
+  .admin-publish-status-table td {
+    @apply border-b border-border px-3 py-3 align-top;
+  }
+
+  .admin-publish-status-link {
+    @apply text-sm font-medium text-gold hover:underline;
   }
 
   .prayer-times-table-wrap {
@@ -996,6 +1096,28 @@
     @apply list-decimal pl-5;
   }
 
+  .ramadan-rich-text-content b,
+  .ramadan-rich-text-content strong {
+    @apply font-bold;
+  }
+
+  .ramadan-rich-text-content i,
+  .ramadan-rich-text-content em {
+    font-style: italic;
+  }
+
+  .ramadan-rich-text-content u {
+    text-decoration: underline;
+  }
+
+  .ramadan-rich-text-content div[data-align="center"] {
+    text-align: center;
+  }
+
+  .ramadan-rich-text-content div[data-align="right"] {
+    text-align: right;
+  }
+
   .ramadan-payment-qr-section {
     @apply w-full space-y-4 rounded-lg border border-border p-4;
     background-color: color-mix(in srgb, var(--secondary) 20%, transparent);
@@ -1200,12 +1322,18 @@
   }
 
   .role-status-switch[data-unchecked] {
-    background-color: color-mix(in srgb, var(--foreground) 18%, var(--background));
+    background-color: color-mix(
+      in srgb,
+      var(--foreground) 18%,
+      var(--background)
+    );
     border: 1px solid color-mix(in srgb, var(--foreground) 45%, transparent);
   }
 
   .role-status-switch [data-slot="switch-thumb"] {
-    transition: transform 0.2s ease, background-color 0.2s ease;
+    transition:
+      transform 0.2s ease,
+      background-color 0.2s ease;
   }
 
   .role-status-switch[data-checked] [data-slot="switch-thumb"] {
@@ -1215,7 +1343,11 @@
 
   .role-status-switch[data-unchecked] [data-slot="switch-thumb"] {
     transform: translateX(0);
-    background-color: color-mix(in srgb, var(--foreground) 75%, var(--background));
+    background-color: color-mix(
+      in srgb,
+      var(--foreground) 75%,
+      var(--background)
+    );
   }
 
   .role-status-switch::after {
@@ -1419,94 +1551,271 @@
   }
 
   .display-viewport {
-    @apply mx-auto aspect-video h-screen w-screen overflow-hidden;
+    @apply mx-auto box-border aspect-video h-screen w-screen max-w-full overflow-hidden;
   }
 
   .display-viewport-landscape {
-    @apply aspect-video;
+    @apply box-border aspect-auto h-screen w-full max-w-full overflow-hidden;
+  }
+
+  .display-viewport-landscape .display-landscape-root {
+    @apply h-full w-full;
   }
 
   .display-viewport-portrait {
-    @apply aspect-[9/16] max-h-screen max-w-[min(100vw,calc(100vh*9/16))];
+    @apply box-border flex aspect-auto h-screen w-full max-w-full items-stretch justify-center overflow-hidden;
   }
 
-  .display-landscape-layout {
-    @apply gap-[clamp(0.5rem,1vw,2rem)];
+  .display-viewport-portrait .display-portrait-root {
+    @apply h-full max-h-full w-full;
   }
 
-  .display-landscape-middle {
-    @apply flex min-h-0 flex-1 flex-col items-center justify-center gap-[clamp(0.5rem,1vw,2rem)] overflow-hidden;
+  .display-portrait-root {
+    @apply relative z-10 mx-auto box-border flex h-full max-h-full w-full min-h-0 max-w-full flex-col items-stretch overflow-hidden bg-black p-[clamp(0.75rem,2vw,1.5rem)] text-white;
   }
 
-  .display-landscape-grid-stage {
-    @apply flex min-h-0 flex-1 items-center justify-center overflow-hidden;
+  .display-portrait-header {
+    @apply mb-[clamp(0.75rem,2vw,1.5rem)] flex w-full max-w-full min-w-0 shrink-0 flex-col gap-[clamp(0.5rem,1.5vw,1rem)] overflow-hidden;
   }
 
-  .display-landscape-countdown-stage {
-    @apply flex w-full shrink-0 items-center justify-center;
+  .display-portrait-header-top {
+    @apply grid w-full max-w-full grid-cols-[minmax(0,1fr)_auto] items-start gap-[clamp(0.5rem,2vw,1rem)] overflow-hidden;
+  }
+
+  .display-portrait-header-top .display-portrait-logo {
+    @apply justify-self-start;
+  }
+
+  .display-portrait-header-top .display-top-bar-dates-right {
+    @apply justify-self-end self-start;
+  }
+
+  .display-portrait-header .display-top-bar-dates-right .display-clock-hijri,
+  .display-portrait-header .display-top-bar-dates-right .display-clock-english {
+    @apply text-[clamp(0.75rem,2.5vw,1.25rem)] font-bold leading-tight;
+  }
+
+  .display-portrait-logo {
+    @apply h-auto w-[clamp(120px,30vw,210px)] max-w-full min-w-0 object-contain;
+  }
+
+  .display-portrait-clock {
+    @apply w-full min-w-0 max-w-full overflow-hidden text-center font-heading text-[clamp(2rem,9vw,4rem)] font-bold tabular-nums leading-none tracking-wide text-white;
+  }
+
+  .display-portrait-table {
+    @apply mb-[clamp(0.5rem,1.5vw,1rem)] mt-[clamp(0.35rem,1vw,0.75rem)] box-border w-full max-w-full shrink-0 overflow-hidden pb-[clamp(0.5rem,1.5vw,1rem)] border-b border-gold/20;
+  }
+
+  .display-portrait-table-head {
+    @apply mb-[clamp(0.4rem,1.2vw,0.8rem)] grid grid-cols-3 gap-x-[clamp(0.5rem,1.5vw,1rem)] border-b border-gold/40 pb-[clamp(0.4rem,1.2vw,0.8rem)] text-[clamp(0.8rem,2.5vw,1rem)] font-semibold uppercase text-gold;
+  }
+
+  .display-portrait-table-head > :nth-child(2),
+  .display-portrait-table-head > :nth-child(3),
+  .display-portrait-table-row > :nth-child(2),
+  .display-portrait-table-row > :nth-child(3) {
+    @apply text-right tabular-nums;
+  }
+
+  .display-portrait-table-body {
+    @apply flex flex-col gap-[clamp(0.3rem,1vw,0.6rem)] text-[clamp(0.85rem,2.6vw,1.05rem)];
+  }
+
+  .display-portrait-table-row {
+    @apply grid grid-cols-3 items-start gap-x-[clamp(0.5rem,1.5vw,1rem)] rounded-sm border border-transparent px-[clamp(0.25rem,0.8vw,0.5rem)] py-[clamp(0.2rem,0.7vw,0.45rem)] transition-colors duration-300;
+  }
+
+  .display-portrait-table-row-active {
+    @apply border-gold/70 bg-gold/15 shadow-gold;
+    box-shadow:
+      0 0 22px rgba(212, 175, 55, 0.38),
+      inset 0 1px 0 rgba(212, 175, 55, 0.22);
+  }
+
+  .display-portrait-table-row-active > :nth-child(2),
+  .display-portrait-table-row-active > :nth-child(3) {
+    @apply font-semibold text-gold;
+  }
+
+  .display-portrait-table-prayer-cell {
+    @apply flex min-w-0 flex-col gap-[clamp(0.08rem,0.25vw,0.15rem)];
+  }
+
+  .display-portrait-table-prayer-name {
+    @apply leading-snug;
+  }
+
+  .display-portrait-table-prayer-suffix {
+    @apply block text-[clamp(0.5rem,1.4vw,0.62rem)] font-normal leading-snug text-gold/70;
+  }
+
+  .display-portrait-table-row-active .display-portrait-table-prayer-name {
+    @apply font-semibold text-gold;
+  }
+
+  .display-portrait-table-row-active .display-portrait-table-prayer-suffix {
+    @apply font-normal text-gold/75;
+  }
+
+  .display-portrait-table-iqama-label {
+    @apply text-[clamp(0.7rem,2.1vw,0.9rem)] leading-snug text-gold/90;
+  }
+
+  .display-portrait-middle {
+    @apply mb-[clamp(0.5rem,1.5vw,1rem)] box-border w-full max-w-full shrink-0 overflow-hidden border-b border-gold/20 pb-[clamp(0.5rem,1.5vw,1rem)];
+  }
+
+  .display-portrait-countdown-row {
+    @apply box-border grid w-full max-w-full items-center gap-[clamp(0.5rem,1.5vw,0.75rem)] overflow-hidden;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .display-portrait-countdown-row .display-countdown-ring {
+    grid-column: 1;
+    justify-self: center;
+  }
+
+  .display-portrait-countdown-row .display-landscape-weather-block {
+    grid-column: 2;
+    align-self: center;
+    justify-self: end;
+    width: clamp(7.5rem, 20vw, 10rem);
+    padding: clamp(0.5rem, 1vw, 0.85rem);
+  }
+
+  .display-portrait-info-section {
+    @apply mt-auto box-border w-full max-w-full shrink-0 overflow-hidden pt-[clamp(0.25rem,1vw,0.5rem)];
+  }
+
+  .display-portrait-info-panel {
+    @apply overflow-hidden rounded-md border border-gold/30 bg-white/5 p-[clamp(0.6rem,1.5vw,1rem)];
+  }
+
+  .display-portrait-info-panel-emergency {
+    @apply border-red-500/70 bg-red-900/70;
+  }
+
+  .display-portrait-panel-kicker {
+    @apply mb-[clamp(0.3rem,1vw,0.6rem)] text-[clamp(0.9rem,2.6vw,1.1rem)] font-semibold uppercase tracking-wide;
+  }
+
+  .display-portrait-panel-kicker-emergency {
+    @apply text-red-100;
+  }
+
+  .display-portrait-panel-kicker-gold {
+    @apply text-gold normal-case;
+  }
+
+  .display-portrait-panel-title {
+    @apply mb-[clamp(0.25rem,0.75vw,0.5rem)] text-[clamp(0.85rem,2.5vw,1rem)] font-semibold text-white;
+  }
+
+  .display-portrait-panel-body {
+    @apply overflow-hidden text-[clamp(0.8rem,2.4vw,1rem)] leading-snug text-white/90;
+  }
+
+  .display-portrait-panel-body-multiline {
+    @apply whitespace-pre-line;
+  }
+
+  .display-landscape-root {
+    @apply relative z-10 box-border grid h-full w-full max-w-full grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden bg-black p-[clamp(1rem,2vw,2rem)] text-white;
+    gap: clamp(0.75rem, 1.5vw, 1.25rem);
+  }
+
+  .display-landscape-section {
+    @apply box-border w-full max-w-full min-w-0 overflow-hidden;
+  }
+
+  .display-landscape-main {
+    @apply box-border min-h-0 w-full max-w-full overflow-hidden;
+  }
+
+  .display-landscape-main .display-seasonal-wrapper {
+    @apply flex h-full min-h-0 flex-col items-stretch;
+    gap: clamp(0.75rem, 1.5vw, 1.25rem);
   }
 
   .display-landscape-eid-banner {
     @apply mx-auto w-full max-w-4xl shrink-0;
   }
 
-  .display-landscape-bottom {
-    @apply flex shrink-0 flex-col justify-end overflow-hidden border-t border-gold/20;
-    flex: 0 0 clamp(5.4rem, 12vh, 7.8rem);
-    min-height: clamp(5.4rem, 12vh, 7.8rem);
-    max-height: clamp(5.4rem, 12vh, 7.8rem);
+  .display-landscape-countdown-stage {
+    @apply flex min-h-0 flex-1 items-center overflow-hidden;
   }
 
-  .display-landscape-bottom .display-rotating-panels {
-    @apply min-h-0 flex-1;
+  .display-landscape-countdown-row {
+    @apply box-border grid h-full w-full max-w-full min-h-0 items-center overflow-hidden;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   }
 
-  .display-landscape-bottom .display-rotating-panel {
-    @apply border-0 bg-transparent;
+  .display-landscape-countdown-row .display-countdown-ring {
+    grid-column: 2;
+    justify-self: center;
   }
 
-  .display-landscape-bottom .display-rotating-panel-title {
-    @apply font-bold text-gold/55;
+  .display-landscape-countdown-row .display-landscape-weather-block {
+    grid-column: 3;
+    align-self: center;
+    justify-self: end;
   }
 
-  .display-landscape-bottom .display-announcement-dot-active {
-    @apply bg-gold/55;
+  .display-landscape-bottom-panel {
+    @apply flex w-full max-w-full shrink-0 flex-col overflow-hidden;
   }
 
-  .display-landscape-bottom .display-events-list {
-    @apply gap-[clamp(0.35rem,0.75vw,0.875rem)];
+  .display-landscape-weather-block {
+    @apply box-border flex w-[clamp(9rem,14vw,16rem)] shrink-0 flex-col rounded-xl border border-gold/25 bg-black/40 p-[clamp(0.75rem,1.25vw,1.5rem)] text-right shadow-[inset_0_1px_0_rgba(212,175,55,0.12)];
   }
 
-  .display-landscape-bottom .display-event-date {
-    @apply text-[clamp(0.875rem,1.3vw,1.125rem)] text-gold/70;
+  .display-landscape-weather-body {
+    @apply mt-[clamp(0.35rem,0.6vw,0.5rem)] border-t border-gold/20 pt-[clamp(0.35rem,0.6vw,0.5rem)];
   }
 
-  .display-landscape-bottom .display-event-title {
-    @apply text-[clamp(1rem,1.5vw,1.375rem)] font-bold;
+  .display-landscape-weather-body .display-weather-widget-temp {
+    @apply text-[clamp(1.5rem,2.2vw,2.25rem)];
   }
 
-  .display-landscape-bottom .display-event-location {
-    @apply text-[clamp(0.8125rem,1.2vw,1rem)] text-white/55;
+  .display-landscape-weather-body .display-weather-widget-desc {
+    @apply mt-[clamp(0.25rem,0.4vw,0.35rem)] text-[clamp(0.95rem,1.25vw,1.1rem)] text-white;
   }
 
-  .display-portrait-layout {
-    @apply gap-[clamp(0.35rem,0.8vh,0.75rem)];
+  .display-landscape-weather-body .display-weather-widget-wind {
+    @apply mt-[clamp(0.15rem,0.3vw,0.25rem)] text-[clamp(0.8rem,1.05vw,0.9rem)] text-white/85;
   }
 
-  .display-portrait-countdown-stage {
-    @apply flex shrink-0 justify-center py-[clamp(0.25rem,0.5vh,0.5rem)];
+  .display-landscape-announcement-block {
+    @apply box-border w-full max-w-full rounded-xl border border-gold/20 bg-black/30 p-[clamp(0.75rem,1.5vw,1.75rem)] text-left leading-relaxed;
   }
 
-  .display-portrait-stack-stage {
-    @apply min-h-0 flex-1 overflow-hidden;
+  .display-landscape-announcement-priority {
+    @apply border-red-500/70 bg-red-900/70;
+  }
+
+  .display-landscape-announcement-kicker {
+    @apply mb-[clamp(0.35rem,0.75vw,0.75rem)] text-[clamp(0.75rem,1.2vw,1rem)] font-semibold uppercase tracking-wide text-red-100;
+  }
+
+  .display-landscape-announcement-title {
+    @apply mb-[clamp(0.35rem,0.75vw,0.75rem)] text-[clamp(1rem,1.4vw,1.5rem)] font-semibold text-gold;
+  }
+
+  .display-landscape-announcement-priority .display-landscape-announcement-title {
+    @apply text-white;
+  }
+
+  .display-landscape-announcement-message {
+    @apply text-[clamp(0.875rem,1.2vw,1.25rem)] text-white/90;
   }
 
   .display-prayer-times-stack {
-    @apply mx-auto h-full w-full max-w-md overflow-hidden;
+    @apply mx-auto box-border h-full w-full max-w-full overflow-hidden;
   }
 
   .display-prayer-times-stack .prayer-times-table-wrap {
-    @apply border-white/15 bg-black/20;
+    @apply box-border w-full max-w-full overflow-hidden border-white/15 bg-black/20;
   }
 
   .display-portrait-panels {
@@ -1536,7 +1845,7 @@
   }
 
   .display-prayer-screen {
-    @apply relative h-full w-full text-foreground transition-colors duration-700;
+    @apply relative h-full w-full overflow-hidden text-foreground transition-colors duration-700;
     --display-green: #0a2e1f;
     --display-green-light: #0f6b4a;
     --display-gold: #d4af37;
@@ -1544,7 +1853,12 @@
   }
 
   .display-theme-hybrid {
-    background: linear-gradient(160deg, var(--display-green) 0%, #061912 55%, #041008 100%);
+    background: linear-gradient(
+      160deg,
+      var(--display-green) 0%,
+      #061912 55%,
+      #041008 100%
+    );
     color: #f5f5f0;
   }
 
@@ -1571,7 +1885,7 @@
   }
 
   .display-prayer-screen-inner {
-    @apply relative z-10 flex h-full flex-col overflow-hidden p-[clamp(0.5rem,1vw,2rem)];
+    @apply relative z-10 flex h-full flex-col overflow-hidden p-[clamp(1rem,2vw,3rem)];
   }
 
   .display-top-bar {
@@ -1579,27 +1893,65 @@
   }
 
   .display-top-bar-landscape {
-    @apply grid grid-cols-3 items-center;
+    @apply grid w-full max-w-full shrink-0 grid-cols-3 items-center gap-[clamp(0.5rem,1vw,1.25rem)] overflow-hidden;
   }
 
   .display-top-bar-landscape .display-logo-block {
-    @apply justify-self-start;
+    @apply min-w-0 justify-self-start;
   }
 
-  .display-top-bar-dates {
-    @apply justify-self-center text-center;
+  .display-logo-block-landscape {
+    @apply flex items-center;
   }
 
-  .display-top-bar-time {
-    @apply justify-self-end text-[clamp(2rem,4vw,6rem)] font-bold text-white;
+  .display-logo-landscape-img {
+    @apply h-[clamp(3.5rem,8vh,5.5rem)] w-auto max-w-[clamp(180px,22vw,320px)] object-contain opacity-100;
   }
 
-  .display-top-bar-landscape .display-clock-english {
-    @apply text-[clamp(0.875rem,1.5vw,1.75rem)] font-bold text-white/75;
+  .display-top-bar-portrait {
+    @apply grid w-full max-w-full shrink-0 grid-cols-3 items-center gap-[clamp(0.35rem,1.5vw,1rem)] overflow-hidden;
   }
 
-  .display-top-bar-landscape .display-clock-hijri {
-    @apply text-[clamp(0.875rem,1.5vw,1.75rem)] font-bold text-gold/70;
+  .display-top-bar-portrait .display-logo-block {
+    @apply min-w-0 justify-self-start;
+  }
+
+  .display-logo-block-portrait {
+    @apply flex items-center;
+  }
+
+  .display-logo-portrait-img {
+    @apply h-auto w-[clamp(72px,16vw,140px)] max-w-full object-contain opacity-100;
+  }
+
+  .display-top-bar-portrait .display-top-bar-clock-center {
+    @apply text-[clamp(2rem,8vw,4.5rem)];
+  }
+
+  .display-top-bar-portrait .display-top-bar-dates-right .display-clock-english,
+  .display-top-bar-portrait .display-top-bar-dates-right .display-clock-hijri {
+    @apply text-[clamp(0.75rem,2.5vw,1.25rem)];
+  }
+
+  .display-top-bar-clock-center {
+    @apply box-border min-w-0 max-w-full justify-self-center overflow-hidden text-center font-heading text-[clamp(3.5rem,7vw,9rem)] font-bold tabular-nums leading-none tracking-wide text-white;
+  }
+
+  .display-top-bar-dates-right {
+    @apply box-border min-w-0 max-w-full justify-self-end overflow-hidden text-right leading-tight;
+  }
+
+  .display-top-bar-dates-right .display-clock-english,
+  .display-top-bar-dates-right .display-clock-hijri {
+    @apply text-[clamp(1.2rem,1.8vw,2.4rem)] font-bold leading-tight;
+  }
+
+  .display-top-bar-dates-right .display-clock-hijri {
+    @apply text-gold/80;
+  }
+
+  .display-top-bar-dates-right .display-clock-english {
+    @apply text-white/75;
   }
 
   .display-logo-block {
@@ -1797,72 +2149,58 @@
     @apply w-full;
   }
 
-  .display-prayer-times-grid {
-    display: grid;
-    grid-template-columns: repeat(var(--display-prayer-columns, 6), minmax(0, 1fr));
-    @apply w-full gap-[clamp(0.5rem,1vw,2rem)] text-center;
+  .display-landscape-main .display-prayer-times-panel {
+    @apply w-full shrink-0;
+  }
+
+  .display-prayer-times-grid-landscape {
+    @apply box-border grid w-full max-w-full grid-cols-6 gap-[clamp(0.5rem,1vw,1.25rem)] overflow-hidden text-center;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .display-prayer-times-grid-landscape .display-prayer-card {
+    @apply box-border w-full max-w-full p-[clamp(0.75rem,1.5vw,2rem)];
+  }
+
+  .display-prayer-times-grid-default {
+    @apply grid w-full grid-cols-5 gap-[clamp(0.5rem,1vw,2rem)] text-center;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .display-prayer-card-empty {
+    @apply pointer-events-none border-transparent bg-transparent opacity-0;
   }
 
   .display-prayer-card {
-    @apply flex min-w-0 flex-col items-center justify-between rounded-lg border border-white/10 bg-white/5 p-[clamp(0.5rem,1vw,2rem)] transition-all duration-300;
-  }
-
-  .display-prayer-card-divider {
-    @apply relative;
-  }
-
-  .display-prayer-card-divider::after {
-    content: "";
-    @apply absolute right-0 top-[10%] h-[80%] w-px bg-gold/30;
-    transform: translateX(calc(clamp(0.25rem, 0.5vw, 1rem)));
+    @apply box-border flex min-w-0 w-full max-w-full flex-col items-center justify-center rounded-xl border border-gold/30 bg-black/40 p-[clamp(1rem,2vw,3rem)] transition-all duration-300;
   }
 
   .display-prayer-card-next {
-    @apply border-gold/60 bg-gold/15 shadow-gold;
+    @apply border-gold/70 bg-gold/15 shadow-gold;
   }
 
   .display-prayer-card-name {
-    @apply font-heading text-[clamp(1.2rem,2vw,3rem)] font-bold uppercase tracking-wide text-gold;
+    @apply font-heading text-[clamp(1.6rem,2.4vw,3.2rem)] font-bold uppercase tracking-wide text-gold;
   }
 
-  .display-prayer-card-jumuah-slots {
-    @apply mt-[clamp(0.5rem,1vw,1.25rem)] flex w-full flex-col gap-[clamp(0.35rem,0.75vw,0.75rem)];
+  .display-jumuah-card-heading {
+    @apply font-heading text-[clamp(1rem,1.5vw,1.75rem)] font-bold uppercase tracking-wide text-gold;
   }
 
   .display-jumuah-card-list {
-    @apply mt-[clamp(0.5rem,1vw,1.25rem)] flex w-full flex-col gap-[clamp(0.35rem,0.75vw,0.875rem)];
+    @apply mt-[clamp(0.5rem,1vw,1rem)] flex flex-col gap-2 text-center text-[clamp(1.2rem,1.8vw,2.4rem)] font-bold tabular-nums leading-snug;
   }
 
   .display-jumuah-card-row {
-    @apply flex flex-col items-center gap-[clamp(0.15rem,0.35vw,0.35rem)] text-center;
+    @apply text-white/90;
   }
 
-  .display-jumuah-card-label {
-    @apply text-[clamp(0.75rem,1.1vw,0.9375rem)] font-bold uppercase tracking-wide text-white/65;
-  }
-
-  .display-jumuah-card-times {
-    @apply flex flex-wrap items-center justify-center gap-x-[clamp(0.35rem,0.75vw,0.75rem)] font-heading text-[clamp(1rem,1.5vw,2rem)] font-bold tabular-nums leading-tight;
-  }
-
-  .display-jumuah-card-separator {
-    @apply text-gold/40;
-  }
-
-  .display-prayer-card-sunrise .display-prayer-card-times {
-    @apply mt-[clamp(0.5rem,1vw,1.25rem)];
-  }
-
-  .display-prayer-card-jumuah-slots .display-prayer-card-times {
-    @apply mt-0;
+  .display-prayer-card-combined-note {
+    @apply mt-[clamp(0.25rem,0.5vw,0.5rem)] text-[clamp(0.75rem,1.1vw,1rem)] font-medium italic text-white/60;
   }
 
   .display-prayer-card-times {
-    @apply mt-[clamp(0.5rem,1vw,1.25rem)] flex w-full flex-col justify-between gap-[clamp(0.5rem,1vw,1rem)];
-  }
-
-  .display-prayer-card-jumuah-slots .display-prayer-card-times {
-    @apply mt-0;
+    @apply mt-[clamp(0.5rem,1vw,1.25rem)] flex w-full flex-col justify-center gap-[clamp(0.5rem,1vw,1rem)];
   }
 
   .display-prayer-card-time-block {
@@ -1870,26 +2208,117 @@
   }
 
   .display-prayer-card-time-label {
-    @apply text-[clamp(0.75rem,1vw,1rem)] font-bold uppercase tracking-wide text-white/60;
+    @apply text-[clamp(0.875rem,1.2vw,1.125rem)] font-bold uppercase tracking-wide text-white/60;
   }
 
   .display-prayer-card-time-value {
-    @apply font-heading text-[clamp(1rem,1.5vw,2rem)] font-bold tabular-nums leading-none;
+    @apply font-heading text-[clamp(1.2rem,1.8vw,2.4rem)] font-bold tabular-nums leading-none;
+  }
+
+  .display-prayer-card-sunrise-time {
+    @apply text-gold;
   }
 
   .display-prayer-card-iqama {
     @apply text-gold;
   }
 
-  .display-next-prayer-countdown {
-    @apply flex w-full shrink-0 items-center justify-center;
-    margin-top: clamp(1rem, 3vh, 4rem);
+  .display-prayer-card-iqama-label {
+    @apply text-[clamp(0.95rem,1.4vw,1.35rem)] leading-tight;
   }
 
   .display-countdown-ring {
-    width: clamp(120px, 20vw, 260px);
-    height: clamp(120px, 20vw, 260px);
+    width: clamp(140px, 22vw, 300px);
+    height: clamp(140px, 22vw, 300px);
+    container-type: size;
     @apply relative shrink-0;
+  }
+
+  .display-countdown-ring-landscape {
+    width: clamp(220px, 30vw, 400px);
+    height: clamp(220px, 30vw, 400px);
+  }
+
+  .display-countdown-ring-portrait {
+    width: clamp(96px, 22vw, 140px);
+    height: clamp(96px, 22vw, 140px);
+  }
+
+  .display-countdown-ring-label {
+    @apply max-w-[92%] text-[clamp(0.55rem,9cqmin,0.875rem)] font-bold uppercase tracking-wide text-white/70;
+  }
+
+  .display-countdown-ring-time {
+    @apply max-w-[92%] whitespace-nowrap font-heading font-bold tabular-nums leading-none text-gold;
+    font-size: clamp(0.85rem, 15cqmin, 2rem);
+    letter-spacing: -0.03em;
+  }
+
+  .display-countdown-ring-time-hms {
+    font-size: clamp(0.7rem, 11cqmin, 1.5rem);
+    letter-spacing: -0.04em;
+  }
+
+  .display-countdown-ring-landscape .display-countdown-ring-label {
+    @apply max-w-[94%] whitespace-normal text-center;
+    font-size: clamp(0.65rem, 11cqmin, 1rem);
+  }
+
+  .display-countdown-ring-landscape .display-countdown-ring-time {
+    font-size: clamp(1.8rem, 28cqmin, 4rem);
+  }
+
+  .display-countdown-ring-landscape .display-countdown-ring-time-hms {
+    font-size: clamp(1.5rem, 21cqmin, 3.3rem);
+  }
+
+  .display-countdown-ring-portrait .display-countdown-ring-label {
+    font-size: clamp(0.5rem, 8cqmin, 0.75rem);
+  }
+
+  .display-countdown-ring-portrait .display-countdown-ring-time {
+    font-size: clamp(0.85rem, 18cqmin, 1.35rem);
+  }
+
+  .display-countdown-ring-portrait .display-countdown-ring-time-hms {
+    font-size: clamp(0.7rem, 14cqmin, 1.1rem);
+  }
+
+  .display-weather-widget {
+    @apply pointer-events-none absolute bottom-[clamp(7.75rem,16vh,12rem)] right-[clamp(0.75rem,1.5vw,2rem)] z-10 max-w-[clamp(8rem,14vw,14rem)] text-right;
+  }
+
+  .display-weather-widget-footer {
+    @apply static z-auto max-w-[clamp(9rem,15vw,15rem)] shrink-0 self-start text-right;
+  }
+
+  .display-weather-widget-footer .display-weather-widget-temp {
+    @apply text-[clamp(1.05rem,1.6vw,2rem)];
+  }
+
+  .display-weather-widget-footer .display-weather-widget-sunrise-time {
+    @apply text-[clamp(1.05rem,1.6vw,2rem)];
+  }
+
+  .display-weather-widget-label {
+    @apply text-[clamp(0.75rem,1.1vw,0.9375rem)] font-bold uppercase tracking-[0.14em] text-gold/60;
+  }
+
+  .display-weather-widget-temp {
+    @apply font-heading text-[clamp(1.2rem,1.8vw,2.4rem)] font-bold tabular-nums leading-none text-gold;
+  }
+
+  .display-weather-widget-desc,
+  .display-weather-widget-wind {
+    @apply text-[clamp(0.875rem,1.2vw,1.125rem)] leading-snug text-white/70;
+  }
+
+  .display-weather-widget-sunrise-row {
+    @apply mt-[clamp(0.35rem,0.75vw,0.75rem)] border-t border-gold/20 pt-[clamp(0.35rem,0.75vw,0.75rem)];
+  }
+
+  .display-weather-widget-sunrise-time {
+    @apply font-heading text-[clamp(1.2rem,1.8vw,2.4rem)] font-bold tabular-nums leading-none text-gold;
   }
 
   .display-countdown-ring-svg {
@@ -1908,15 +2337,7 @@
   }
 
   .display-countdown-ring-content {
-    @apply absolute inset-0 flex flex-col items-center justify-center text-center;
-  }
-
-  .display-countdown-ring-label {
-    @apply text-[clamp(1rem,2vw,3rem)] uppercase tracking-wide text-white/70;
-  }
-
-  .display-countdown-ring-time {
-    @apply font-heading text-[clamp(1rem,2vw,3rem)] font-semibold tabular-nums leading-none text-gold;
+    @apply absolute inset-0 flex flex-col items-center justify-center gap-[clamp(0.15rem,3cqmin,0.35rem)] overflow-hidden px-[6%] text-center;
   }
 
   .display-emergency-alert {
@@ -2134,5 +2555,41 @@
 
   .admin-display-checkbox-row {
     @apply flex items-center gap-2 text-sm;
+  }
+
+  .user-portal-empty {
+    @apply rounded-lg border border-border bg-card p-8;
+  }
+
+  .user-portal-table-wrap {
+    @apply overflow-x-auto rounded-lg border border-border;
+  }
+
+  .user-portal-link {
+    @apply inline-flex items-center text-sm text-gold transition-colors hover:text-gold/80;
+  }
+
+  .admin-about-manager {
+    @apply max-w-5xl;
+  }
+
+  .admin-about-item {
+    @apply rounded-lg border border-border p-4;
+  }
+
+  .display-pin-gate {
+    @apply flex min-h-screen items-center justify-center bg-background p-6;
+  }
+
+  .display-pin-gate-form {
+    @apply flex w-full max-w-sm flex-col gap-4 rounded-lg border border-border bg-card p-6 text-center;
+  }
+
+  .display-pin-gate-input {
+    @apply text-center tracking-[0.35em];
+  }
+
+  .display-prayer-screen {
+    filter: brightness(var(--display-brightness, 1));
   }
 }

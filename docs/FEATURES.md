@@ -18,7 +18,7 @@
 | Gallery | `/gallery` | Live — photos from published albums |
 | Donations | `/donations` | Live — Stripe, PayPal, bank transfer |
 | Contact | `/contact` | Live — form + site contact info |
-| Eid | `/eid` | Built — not in main nav (banner component exists but not on homepage) |
+| Eid | `/eid` | Live — homepage banner when Eid overrides active |
 
 ### Home sections
 
@@ -47,10 +47,13 @@
 | **Dashboard** | Donation stats, charts, recent activity |
 | **Events** | Create, edit, delete; **publish/unpublish toggle** |
 | **Gallery** | Albums, upload photos, rename; **album publish toggle** |
-| **Donations** | **Transactions** tab — filter, paginate, export CSV/XLSX/PDF; **Categories** tab — edit name/description, **publish/unpublish toggle** |
+| **Donations** | **Transactions** tab — filter, paginate, export CSV/XLSX/PDF; **Categories** tab — create, edit, delete (guarded), **publish/unpublish toggle** |
 | **Education** | Create, edit, delete; **publish/unpublish toggle** |
 | **Registrations** | View/filter/export class sign-ups |
+| **Contact Messages** | Inbox — read, mark handled, export CSV |
+| **About Page** | CMS for Values + Committee sections |
 | **Prayer Timetable** | Daily overrides, Jumu'ah, Eid, Ramadan timetable (PDF, QR, notes, moon sighting), Monthly timetable (PDF + homepage publish) |
+| **TV Display** | Notices, ayat rotation, display settings, orientation — public screen at `/display/prayer` |
 | **Profile** | Name, password, email |
 
 ### Publish / unpublish model (consistent pattern)
@@ -84,8 +87,8 @@
 | Module | Status |
 |--------|--------|
 | Dashboard | Live — links to other sections |
-| My Donations | **Placeholder** — not linked to user account |
-| My Registrations | **Placeholder** — not linked to user email |
+| My Donations | Live — email-linked history with retroactive linking |
+| My Registrations | Live — class sign-ups matched by account email |
 | Profile | Live |
 
 ---
@@ -97,12 +100,25 @@
 - Stripe (embedded checkout + webhook)
 - PayPal (create order + capture)
 - Bank transfer (instructions + pending donation record)
+- Optional donor processing-fee cover (Stripe / PayPal — configurable per gateway)
 - Donation receipt PDF
+
+### Scheduled tasks
+
+- Vercel cron (`vercel.json`) — hourly `GET /api/system/cron` (requires `CRON_SECRET`)
+- Expires display notices, refreshes ayat cache, maintains prayer cache
+
+### TV Display (public)
+
+- Route: `/display/prayer` (landscape + portrait auto-detect)
+- Live prayer table, countdown ring, weather (Open-Meteo), rotating announcements/events/ayat
+- Priority notices pinned while valid; admin managed at `/admin/display`
 
 ### Email (SMTP)
 
 - Contact form notification + auto-reply
-- Registration confirmation
+- Registration confirmation + staff notification
+- Donation receipt (donor) + staff notification on successful payment
 - Staff invitation emails
 
 ### PDF generation
@@ -136,46 +152,76 @@ Users, Roles, Permissions, Invitations, Events, Classes, Registrations, Gallery 
 
 | Item | Notes |
 |------|--------|
-| **About — Our Values & Committee** | Hidden via `ABOUT_PAGE_VISIBILITY` flags; committee is static seed data, not CMS |
-| **Contact inbox** | Messages saved to DB; **no admin UI** to read/reply |
-| **Member donation history** | Donations have no `userId` |
-| **Member registrations** | Registrations not tied to logged-in user |
-| **Eid homepage banner** | Component exists; not mounted on home |
-| **Seed content** | Events, classes, albums, categories seed as **unpublished** — must be published in admin |
+| **About — Our Values & Committee** | CMS at `/admin/about`; toggle visibility per section |
 | **Editor role gap** | Can manage lists but blocked from create/edit/upload without `content.write` |
-| **Legacy config** | Some hardcoded values in constants/flyers vs DB settings |
-| **Twitter social link** | In constants; not wired to footer/social builder |
+| **Legacy config** | Display/TV components may still read some constants — migrate as needed |
 | **Email verification on register** | Only used for email *change*, not new sign-ups |
+| **Display PIN / scrolling ticker** | Stored or built but not enforced on TV UI |
 
 ---
 
-## 7. Suggested Future Updates (priority order)
+## 7. Product Roadmap (3 phases)
 
-### High priority (operational gaps)
+> Phase 1 items below were implemented June 2026 unless marked otherwise.
 
-1. **Contact messages admin** — inbox under admin or super-admin (read, mark handled, export)
-2. **Publish seed content workflow** — first-run checklist or “Publish all defaults” for new installs
-3. **Member portal completion** — link donations/registrations to user email or account
-4. **About page CMS** — dynamic Values + Committee (or merge into Site Settings)
+### Phase 1 — Operational Essentials (Foundation) ✓
 
-### Medium priority (content & UX)
+**Goal:** Fix gaps that block day-to-day mosque operations and reduce confusion for staff after deploy.
 
-5. **Homepage Eid banner** — enable when Eid overrides are active
-6. **Event categories** — align seed/admin filters (e.g. lecture vs community/youth/sisters)
-7. **Gallery item-level publish** — optional, if you need photos live before whole album is ready
-8. **Donation category create/delete** — today only edit + toggle existing seeded categories
-9. **Admin notification emails** — new registration, new donation, contact form digest
-10. **SEO** — sitemap already includes education/events; add gallery/donations landing metadata tuning
+1. **Contact messages admin** — inbox to read, mark handled, export. ✓
+2. **First-run publish checklist** — seed content unpublished by default. ✓
+3. **Update FEATURES.md** — document TV Display, fee cover, cron job. ✓
+4. **Technical housekeeping** — remove unused `storage.ts`; fix dead settings. ✓
+5. **Align donation category seeding** — consistent `isActive` defaults. ✓
+6. **Env/deployment doc consolidation** — one clear list of required env vars. ✓
+7. **Publish Status Overview (NEW)** — dashboard showing published/unpublished items. ✓
 
-### Lower priority (polish & scale)
+**Outcome:** Staff can manage inbound contact, new deployments aren't blank, and documentation matches the product.
 
-11. **Unified site config** — single source for contact, branding, flyers, PDFs (reduce constants vs DB drift)
-12. **Audit trail for content** — who published/unpublished events, categories, etc.
-13. **Scheduled publish** — auto-publish events/programmes on a date
-14. **Multi-language** — English + Arabic for public pages / PDFs
-15. **Analytics dashboard** — donation trends by category, registration funnel
-16. **PWA / offline** — prayer times on home screen
-17. **Volunteer / newsletter module** — if needed later
+---
+
+### Phase 2 — Member Experience & Staff Workflows ✓
+
+**Goal:** Complete self-service for members and tighten admin notifications and content control.
+
+1. **Member portal — My Donations** — email-linked + retroactive linking. ✓
+2. **Member portal — My Registrations**. ✓
+3. **About page CMS** — Dynamic Values + Committee. ✓
+4. **Homepage Eid banner** — mount when Eid overrides active. ✓
+5. **Admin donation notifications** — email staff on successful donations. ✓
+6. **Donation category CRUD** — create/delete; prevent deletion if category has donations. ✓
+7. **Unify site config** — single source for contact, branding, social links, PDFs. ✓
+8. **Twitter/X in site settings** — wired into footer. ✓
+
+**Outcome:** Members see their own history; staff get timely alerts; public site content is easier to manage.
+
+---
+
+### Phase 3 — Scale, Polish & Long-Term Growth ✓
+
+**Goal:** Improve reach, automation, analytics, and reduce manual work.
+
+1. **Content audit trail** — log publish/unpublish actions. ✓
+2. **Scheduled publish** — auto-publish events/programmes. ✓
+3. **Gallery item-level publish** — optional. ✓
+4. **SEO expansion** — metadata/sitemap tuning. ✓
+5. **Analytics dashboard** — donation trends, registration funnel, display usage. ✓
+6. **PWA / offline prayer times** — home-screen install, cached widget. ✓
+7. **Automated Ramadan Timetable (NEW)** — auto-generate timetable + daily Suhoor/Iftar auto-publish. ✓
+8. **Display enhancements** — PIN lock, ticker, brightness scheduling. ✓
+
+**Outcome:** Less manual work, better visibility into usage, and long-term scalability.
+
+---
+
+### Future updates (not in current phases)
+
+Items kept for later — **not** part of Phase 1–3 implementation until explicitly prioritised.
+
+| # | Item | Benefit | Effort / notes |
+|---|------|---------|----------------|
+| 6 | **EN / AR (multi-language)** | Reach Arabic-speaking community | Large, ongoing translations + RTL |
+| 8 | **Volunteer / newsletter** | Organise helpers + bulk communication | New modules + GDPR/consent |
 
 ---
 
@@ -184,6 +230,10 @@ Users, Roles, Permissions, Invitations, Events, Classes, Registrations, Gallery 
 - **Unpublished by default** — new events, programmes, albums, and categories do not appear on the public site until toggled on in admin
 - **Donations vs Categories** — same sidebar item, two tabs; category “Published” = `isActive` in the database
 - **Prayer Timetable** — sidebar label is “Prayer Timetable”; URL is still `/admin/special-prayers`
+- **Contact Messages** — uses `registrations.manage` permission; route `/admin/contact`
+- **About Page CMS** — `/admin/about` (requires `content.write`); toggles Values/Committee visibility
+- **Member portal** — `/user/donations` and `/user/registrations` match by account email
+- **Publish checklist** — admin dashboard shows unpublished content after seed/deploy
 - **Database commands** — use `npm run db:push`, `npm run db:deploy`, `npm run db:migrate` (not raw `npx prisma`); env loads from `.env.local`
 - **Ramadan QR** — uses published donation categories from the Categories tab
 - **Flyer generator** — super admin only; uses active donation categories
@@ -193,10 +243,10 @@ Users, Roles, Permissions, Invitations, Events, Classes, Registrations, Gallery 
 
 ## 9. Technical Debt / Housekeeping
 
-- Remove unused `src/lib/storage.ts` (legacy JSON helpers)
-- Wire or remove `prayer_override_enabled` setting
+- ~~Remove unused `src/lib/storage.ts` (legacy JSON helpers)~~ — removed
+- ~~Remove unused `prayer_override_enabled` setting~~ — removed from defaults/seed
 - Consolidate super-admin email settings (tab vs duplicate route)
-- Document deployment env vars in one place (`DATABASE_URL`, JWT, encryption keys, SMTP, payment keys)
+- See [DEPLOYMENT.md](../DEPLOYMENT.md) for the full environment variable list
 
 ---
 

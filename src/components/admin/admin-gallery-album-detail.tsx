@@ -9,6 +9,7 @@ import { GalleryUploadForm } from "@/components/admin/gallery-upload-form";
 import { Lightbox } from "@/components/gallery/lightbox";
 import { Button } from "@/components/ui/button";
 import { ButtonLink } from "@/components/ui/button-link";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -104,6 +105,31 @@ export function AdminGalleryAlbumDetail({ albumId }: AdminGalleryAlbumDetailProp
           }
         : current
     );
+  }
+
+  async function handlePublishedChange(id: string, published: boolean) {
+    const response = await fetch(`/api/gallery/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ published }),
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      toast.error(data.error || "Failed to update image status");
+      return;
+    }
+
+    const updated = await response.json();
+    setAlbum((current) =>
+      current
+        ? {
+            ...current,
+            items: current.items.map((item) => (item.id === id ? updated : item)),
+          }
+        : current,
+    );
+    toast.success(published ? "Image published" : "Image hidden");
   }
 
   const goToPrevious = useCallback(() => {
@@ -202,6 +228,20 @@ export function AdminGalleryAlbumDetail({ albumId }: AdminGalleryAlbumDetailProp
                 <p className="text-xs text-muted-foreground">
                   {format(parseISO(item.createdAt), "d MMM yyyy")}
                 </p>
+                {canManage ? (
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={item.published}
+                      onCheckedChange={(checked) =>
+                        handlePublishedChange(item.id, Boolean(checked))
+                      }
+                      aria-label={`${item.published ? "Published" : "Hidden"} image`}
+                    />
+                    <span className="text-xs text-muted-foreground">
+                      {item.published ? "Published" : "Hidden"}
+                    </span>
+                  </div>
+                ) : null}
                 <div className="flex gap-2">
                   <Button
                     type="button"

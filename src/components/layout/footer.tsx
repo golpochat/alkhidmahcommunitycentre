@@ -10,7 +10,7 @@ import {
   getSiteContactSettings,
 } from "@/lib/site-contact-settings";
 
-export async function Footer() {
+export async function Footer({ logoPath }: { logoPath?: string }) {
   const site = await getSiteContactSettings();
   const socialLinks = buildSiteSocialLinks(site);
   const phoneHref = buildTelHref(site.phone);
@@ -21,7 +21,7 @@ export async function Footer() {
       <div className="footer-main section-container">
         <div className="footer-main-grid">
           <div className="footer-brand">
-            <SiteLogo variant="footer" link={false} className="footer-logo" />
+            <SiteLogo variant="footer" link={false} className="footer-logo" logoPath={logoPath} />
             <p className="footer-brand-text">
               Prayer, education, and community services for Clondalkin and
               surrounding areas.

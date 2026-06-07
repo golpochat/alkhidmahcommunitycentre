@@ -13,7 +13,7 @@ interface DisplayPriorityCountdownProps {
   schedule: PrayerTimesResponse;
   seasonal: SeasonalFlags;
   notices: SerializedDisplayNotice[];
-  now: Date;
+  now: Date | null;
   variant?: "default" | "large";
 }
 
@@ -24,6 +24,8 @@ export function DisplayPriorityCountdown({
   now,
   variant = "default",
 }: DisplayPriorityCountdownProps) {
+  if (!now) return null;
+
   const active = resolveDisplayCountdown(schedule, seasonal, notices, now);
 
   if (active.type === "none" || active.type === "prayer") {

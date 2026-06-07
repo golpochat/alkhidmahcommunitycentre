@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { db } from "@/lib/db";
-import { sendDonationReceipt } from "@/lib/email";
+import { sendDonationAdminNotification, sendDonationReceipt } from "@/lib/email";
 import { getStripe, getStripeWebhookSecret } from "@/lib/stripe";
 
 export async function POST(request: NextRequest) {
@@ -44,6 +44,7 @@ export async function POST(request: NextRequest) {
       });
 
       await sendDonationReceipt(donation);
+      await sendDonationAdminNotification(donation);
     }
   }
 

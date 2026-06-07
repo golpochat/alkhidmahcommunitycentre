@@ -88,6 +88,7 @@ model User {
   authTokens     AuthToken[]
   adminLogs      UserAdminLog[]
   displayNotices DisplayNotice[]
+  donations      Donation[]
 
   @@index([roleId])
 }
@@ -129,6 +130,24 @@ model AuthToken {
   @@index([userId, type])
 }
 
+enum ContentAuditAction {
+  PUBLISH
+  UNPUBLISH
+}
+
+model ContentAuditLog {
+  id          String             @id @default(cuid())
+  entityType  String
+  entityId    String
+  entityTitle String
+  action      ContentAuditAction
+  actorEmail  String?
+  createdAt   DateTime           @default(now())
+
+  @@index([entityType, createdAt])
+  @@index([createdAt])
+}
+
 model Event {
   id          String    @id @default(cuid())
   title       String
@@ -140,8 +159,13 @@ model Event {
   location    String?
   imageUrl    String?
   published   Boolean   @default(false)
+  publishAt   DateTime?
+  unpublishAt DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+
+  @@index([published, publishAt])
+  @@index([published, unpublishAt])
 }
 
 model Class {
@@ -154,9 +178,14 @@ model Class {
   fee           Int?
   teacher       String?
   published     Boolean        @default(false)
+  publishAt     DateTime?
+  unpublishAt   DateTime?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   registrations Registration[]
+
+  @@index([published, publishAt])
+  @@index([published, unpublishAt])
 }
 
 model Registration {
@@ -185,25 +214,34 @@ model GalleryItem {
   title     String?
   category  String?
   imageUrl  String
+  published Boolean      @default(true)
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
   album     GalleryAlbum @relation(fields: [albumId], references: [id], onDelete: Cascade)
 
   @@index([albumId])
+  @@index([published])
 }
 
 model Donation {
-  id         String   @id @default(cuid())
-  donorName  String?
-  donorEmail String?
-  amount     Int
-  currency   String   @default("EUR")
-  category   String
-  provider   String
-  providerId String?
-  status     String   @default("pending")
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id                 String   @id @default(cuid())
+  donorName          String?
+  donorEmail         String?
+  userId             String?
+  amount             Int
+  processingFeeCents Int      @default(0)
+  coverFee           Boolean  @default(false)
+  currency           String   @default("EUR")
+  category           String
+  provider           String
+  providerId         String?
+  status             String   @default("pending")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  user               User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([donorEmail])
 }
 
 model DonationCategory {
@@ -334,13 +372,17 @@ model JumuahOverride {
 }
 
 model ContactMessage {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   name      String
   email     String
   phone     String?
   subject   String
   message   String
-  createdAt DateTime @default(now())
+  status    String    @default("pending")
+  handledAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([status, createdAt])
 }
 
 model RamadanTimetable {
@@ -438,16 +480,18 @@ model DisplayNotice {
 }
 
 model DisplaySettings {
-  id                  String   @id @default(cuid())
-  rotationSpeed       Int      @default(10)
+  id                  String    @id @default(cuid())
+  rotationSpeed       Int       @default(10)
   enabledPanels       String[]
-  theme               String   @default("hybrid")
+  theme               String    @default("hybrid")
   pinCode             String?
   brightnessSchedule  Json?
   orientationOverride String?
-  autoFullscreen      Boolean  @default(false)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  autoFullscreen      Boolean   @default(false)
+  lastSeenAt          DateTime?
+  lastOrientation     String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 }
 
 model AyahRotation {

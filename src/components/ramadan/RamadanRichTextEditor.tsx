@@ -14,15 +14,21 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
+  normalizeNotesEditorDom,
   readNotesLengthFromEditor,
   serializeNotesEditorElement,
 } from "@/lib/ramadan-notes-editor";
+import {
+  normalizeRamadanNotesValue,
+  prepareNotesForEditorHtml,
+} from "@/lib/ramadan-notes-html";
 import { RAMADAN_NOTES_MAX_LENGTH } from "@/lib/ramadan-settings-types";
 
 interface RamadanRichTextEditorProps {
   value: string;
   onChange: (value: string) => void;
   onLengthChange?: (length: number) => void;
+  onRegisterSync?: (sync: () => string) => void;
   disabled?: boolean;
 }
 
@@ -49,6 +55,7 @@ export function RamadanRichTextEditor({
   value,
   onChange,
   onLengthChange,
+  onRegisterSync,
   disabled = false,
 }: RamadanRichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
@@ -77,32 +84,47 @@ export function RamadanRichTextEditor({
     }
 
     if (isFocusedRef.current) return;
-    if (editor.innerHTML === value) {
+
+    normalizeNotesEditorDom(editor);
+    const currentNormalized = normalizeRamadanNotesValue(
+      serializeNotesEditorElement(editor),
+    );
+    const storedNormalized = normalizeRamadanNotesValue(value);
+
+    if (currentNormalized === storedNormalized) {
       updateLength(editor);
       return;
     }
 
-    editor.innerHTML = value || "";
+    editor.innerHTML = prepareNotesForEditorHtml(value);
     updateLength(editor);
   }, [value, updateLength]);
 
-  const syncValue = useCallback(() => {
+  const syncValue = useCallback((): string => {
     const editor = editorRef.current;
-    if (!editor) return;
+    if (!editor) return value;
 
-    const serialized = serializeNotesEditorElement(editor);
+    normalizeNotesEditorDom(editor);
+    const serialized = normalizeRamadanNotesValue(
+      serializeNotesEditorElement(editor),
+    );
     const plainLength = readNotesLengthFromEditor(editor);
 
     setDisplayLength(plainLength);
     onLengthChange?.(plainLength);
 
     if (plainLength > RAMADAN_NOTES_MAX_LENGTH) {
-      return;
+      return serialized;
     }
 
     skipExternalSyncRef.current = true;
     onChange(serialized);
-  }, [onChange, onLengthChange]);
+    return serialized;
+  }, [onChange, onLengthChange, value]);
+
+  useEffect(() => {
+    onRegisterSync?.(syncValue);
+  }, [onRegisterSync, syncValue]);
 
   useEffect(() => {
     const editor = editorRef.current;
@@ -150,6 +172,10 @@ export function RamadanRichTextEditor({
     };
   }, [disabled, syncValue, updateLength]);
 
+  function handleToolbarMouseDown(event: React.MouseEvent) {
+    event.preventDefault();
+  }
+
   function runCommand(command: string) {
     if (disabled) return;
     editorRef.current?.focus();
@@ -183,6 +209,7 @@ export function RamadanRichTextEditor({
           size="icon"
           variant="outline"
           disabled={disabled}
+          onMouseDown={handleToolbarMouseDown}
           onClick={() => runCommand("bold")}
           aria-label="Bold"
         >
@@ -193,6 +220,7 @@ export function RamadanRichTextEditor({
           size="icon"
           variant="outline"
           disabled={disabled}
+          onMouseDown={handleToolbarMouseDown}
           onClick={() => runCommand("italic")}
           aria-label="Italic"
         >
@@ -203,6 +231,7 @@ export function RamadanRichTextEditor({
           size="icon"
           variant="outline"
           disabled={disabled}
+          onMouseDown={handleToolbarMouseDown}
           onClick={() => runCommand("underline")}
           aria-label="Underline"
         >
@@ -213,6 +242,7 @@ export function RamadanRichTextEditor({
           size="icon"
           variant="outline"
           disabled={disabled}
+          onMouseDown={handleToolbarMouseDown}
           onClick={() => runAlignCommand("left")}
           aria-label="Align left"
         >
@@ -223,6 +253,7 @@ export function RamadanRichTextEditor({
           size="icon"
           variant="outline"
           disabled={disabled}
+          onMouseDown={handleToolbarMouseDown}
           onClick={() => runAlignCommand("center")}
           aria-label="Align center"
         >
@@ -233,6 +264,7 @@ export function RamadanRichTextEditor({
           size="icon"
           variant="outline"
           disabled={disabled}
+          onMouseDown={handleToolbarMouseDown}
           onClick={() => runAlignCommand("right")}
           aria-label="Align right"
         >
@@ -243,6 +275,7 @@ export function RamadanRichTextEditor({
           size="icon"
           variant="outline"
           disabled={disabled}
+          onMouseDown={handleToolbarMouseDown}
           onClick={() => runCommand("insertUnorderedList")}
           aria-label="Bullet list"
         >
@@ -253,6 +286,7 @@ export function RamadanRichTextEditor({
           size="icon"
           variant="outline"
           disabled={disabled}
+          onMouseDown={handleToolbarMouseDown}
           onClick={() => runCommand("insertOrderedList")}
           aria-label="Numbered list"
         >

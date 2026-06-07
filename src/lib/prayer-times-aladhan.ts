@@ -9,7 +9,7 @@ import {
 import type { AlAdhanResponse } from "@/types";
 
 function alAdhanLocationQuery() {
-  return `latitude=${CLONDLAKIN_COORDS.latitude}&longitude=${CLONDLAKIN_COORDS.longitude}&method=2`;
+  return `latitude=${CLONDLAKIN_COORDS.latitude}&longitude=${CLONDLAKIN_COORDS.longitude}&method=4`;
 }
 
 function toGToHParam(dateKey: string) {
@@ -19,7 +19,8 @@ function toGToHParam(dateKey: string) {
 
 export async function fetchAlAdhan(date: Date): Promise<AlAdhanResponse> {
   const dateKey = toDateKey(date);
-  const url = `https://api.aladhan.com/v1/timings/${dateKey}?latitude=${CLONDLAKIN_COORDS.latitude}&longitude=${CLONDLAKIN_COORDS.longitude}&method=2`;
+  const alAdhanDate = toGToHParam(dateKey);
+  const url = `https://api.aladhan.com/v1/timings/${alAdhanDate}?latitude=${CLONDLAKIN_COORDS.latitude}&longitude=${CLONDLAKIN_COORDS.longitude}&method=4`;
   return fetchAlAdhanJson<AlAdhanResponse>(url, `timings:${dateKey}`);
 }
 

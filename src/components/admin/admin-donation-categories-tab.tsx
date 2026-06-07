@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, Pencil } from "lucide-react";
+import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,9 +32,11 @@ export function AdminDonationCategoriesTab() {
   const [publishedById, setPublishedById] = useState<Record<string, boolean>>({});
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<"create" | "edit">("edit");
   const [editingCategory, setEditingCategory] = useState<SerializedDonationCategory | null>(
     null
   );
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
@@ -69,23 +71,32 @@ export function AdminDonationCategoriesTab() {
   }
 
   function openEditDialog(category: SerializedDonationCategory) {
+    setDialogMode("edit");
     setEditingCategory(category);
     setName(category.name);
     setDescription(category.description ?? "");
     setDialogOpen(true);
   }
 
+  function openCreateDialog() {
+    setDialogMode("create");
+    setEditingCategory(null);
+    setName("");
+    setDescription("");
+    setDialogOpen(true);
+  }
+
   async function handleSaveCategory(event: React.FormEvent) {
     event.preventDefault();
-
-    if (!editingCategory) return;
 
     setSaving(true);
     try {
       const response = await fetch(
-        `/api/admin/donation-categories/${editingCategory.id}`,
+        dialogMode === "create"
+          ? "/api/admin/donation-categories"
+          : `/api/admin/donation-categories/${editingCategory!.id}`,
         {
-          method: "PUT",
+          method: dialogMode === "create" ? "POST" : "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name, description }),
         }
@@ -93,16 +104,40 @@ export function AdminDonationCategoriesTab() {
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || "Failed to update category");
+        throw new Error(data.error || "Failed to save category");
       }
 
-      toast.success("Category updated");
+      toast.success(dialogMode === "create" ? "Category created" : "Category updated");
       setDialogOpen(false);
       await loadCategories();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to update category");
+      toast.error(error instanceof Error ? error.message : "Failed to save category");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleDeleteCategory(category: SerializedDonationCategory) {
+    const confirmed = window.confirm(
+      `Delete "${category.name}"? This cannot be undone. Categories with donations cannot be deleted.`,
+    );
+    if (!confirmed) return;
+
+    setDeletingId(category.id);
+    try {
+      const response = await fetch(`/api/admin/donation-categories/${category.id}`, {
+        method: "DELETE",
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to delete category");
+      }
+      toast.success("Category deleted");
+      await loadCategories();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to delete category");
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -149,12 +184,18 @@ export function AdminDonationCategoriesTab() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h2 className="font-heading text-xl font-semibold">Donation Categories</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Manage the donation cards shown on the public donations page. Unpublished
-          categories are hidden from visitors but remain available in donation history.
-        </p>
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h2 className="font-heading text-xl font-semibold">Donation Categories</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Manage the donation cards shown on the public donations page. Unpublished
+            categories are hidden from visitors but remain available in donation history.
+          </p>
+        </div>
+        <Button type="button" className="btn-gold" onClick={openCreateDialog}>
+          <Plus className="mr-2 h-4 w-4" />
+          Add Category
+        </Button>
       </div>
 
       <div className="rounded-lg border border-border">
@@ -203,15 +244,27 @@ export function AdminDonationCategoriesTab() {
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => openEditDialog(category)}
-                        aria-label={`Edit ${category.name}`}
-                      >
-                        <Pencil className="h-4 w-4 text-gold" />
-                      </Button>
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openEditDialog(category)}
+                          aria-label={`Edit ${category.name}`}
+                        >
+                          <Pencil className="h-4 w-4 text-gold" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          disabled={deletingId === category.id}
+                          onClick={() => handleDeleteCategory(category)}
+                          aria-label={`Delete ${category.name}`}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
@@ -225,9 +278,13 @@ export function AdminDonationCategoriesTab() {
         <DialogContent>
           <form onSubmit={handleSaveCategory}>
             <DialogHeader>
-              <DialogTitle className="font-heading">Edit Category</DialogTitle>
+              <DialogTitle className="font-heading">
+                {dialogMode === "create" ? "Add Category" : "Edit Category"}
+              </DialogTitle>
               <DialogDescription>
-                Update the title and description shown on the donations page.
+                {dialogMode === "create"
+                  ? "Create a new donation category. It starts unpublished until you toggle it on."
+                  : "Update the title and description shown on the donations page."}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
@@ -261,7 +318,7 @@ export function AdminDonationCategoriesTab() {
               </Button>
               <Button type="submit" className="btn-gold" disabled={saving}>
                 {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Save Changes
+                {dialogMode === "create" ? "Create Category" : "Save Changes"}
               </Button>
             </DialogFooter>
           </form>

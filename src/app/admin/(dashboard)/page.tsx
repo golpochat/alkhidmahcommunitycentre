@@ -1,22 +1,32 @@
-import { format } from "date-fns";
-import { Calendar, ClipboardList, Heart, Image } from "lucide-react";
+import { format, formatDistanceToNow, parseISO } from "date-fns";
+import { Calendar, ClipboardList, Heart, Image, Monitor, Mail } from "lucide-react";
 import { AdminDashboardCharts } from "@/components/admin/admin-dashboard-charts";
+import {
+  AdminPublishChecklist,
+  AdminPublishStatusOverview,
+} from "@/components/admin/admin-publish-overview";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getPublishStatusOverview } from "@/lib/admin-publish-status";
 import { getDashboardAnalytics } from "@/lib/admin-analytics";
 import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage() {
-  let analytics = {
+  let analytics: Awaited<ReturnType<typeof getDashboardAnalytics>> = {
     stats: {
       totalDonations: 0,
       monthDonations: 0,
       monthDonationTotal: 0,
       allTimeDonationTotal: 0,
       upcomingEvents: 0,
+      publishedUpcomingEvents: 0,
       newRegistrations: 0,
       galleryImages: 0,
+      publishedGalleryImages: 0,
+      pendingContactMessages: 0,
+      displayLastSeenAt: null,
+      displayLastOrientation: null,
     },
     donationTrend: [] as Awaited<ReturnType<typeof getDashboardAnalytics>>["donationTrend"],
     registrationsByClass: [] as Awaited<
@@ -25,6 +35,12 @@ export default async function AdminDashboardPage() {
     eventsByCategory: [] as Awaited<
       ReturnType<typeof getDashboardAnalytics>
     >["eventsByCategory"],
+    donationsByCategory: [] as Awaited<
+      ReturnType<typeof getDashboardAnalytics>
+    >["donationsByCategory"],
+    donationsByProvider: [] as Awaited<
+      ReturnType<typeof getDashboardAnalytics>
+    >["donationsByProvider"],
   };
 
   let recentEvents: { title: string; startAt: Date }[] = [];
@@ -33,10 +49,17 @@ export default async function AdminDashboardPage() {
     amount: number;
     category: string;
   }[] = [];
+  let publishOverview = {
+    rows: [],
+    totalPublished: 0,
+    totalUnpublished: 0,
+    hasUnpublishedContent: false,
+  } as Awaited<ReturnType<typeof getPublishStatusOverview>>;
 
   try {
     if (process.env.DATABASE_URL) {
       analytics = await getDashboardAnalytics();
+      publishOverview = await getPublishStatusOverview();
 
       recentEvents = await db.event.findMany({
         where: { startAt: { gte: new Date() } },
@@ -100,7 +123,11 @@ export default async function AdminDashboardPage() {
         Overview of donations, events, registrations, and gallery activity.
       </p>
 
-      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
+      <AdminPublishChecklist overview={publishOverview} />
+
+      <AdminPublishStatusOverview overview={publishOverview} />
+
+      <div className="mb-8 grid gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
         {stats.map((stat) => (
           <Card key={stat.title} className="admin-stat-card">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -121,7 +148,63 @@ export default async function AdminDashboardPage() {
         donationTrend={analytics.donationTrend}
         registrationsByClass={analytics.registrationsByClass}
         eventsByCategory={analytics.eventsByCategory}
+        donationsByCategory={analytics.donationsByCategory}
+        donationsByProvider={analytics.donationsByProvider}
       />
+
+      <div className="mt-8 grid gap-6 lg:grid-cols-3">
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-heading flex items-center gap-2 text-lg">
+              <Monitor className="h-5 w-5 text-gold" />
+              TV Display
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              {analytics.stats.displayLastSeenAt
+                ? `Last active ${formatDistanceToNow(parseISO(analytics.stats.displayLastSeenAt), { addSuffix: true })}`
+                : "No heartbeat recorded yet"}
+            </p>
+            {analytics.stats.displayLastOrientation ? (
+              <p className="mt-2 text-sm capitalize">
+                Orientation: {analytics.stats.displayLastOrientation}
+              </p>
+            ) : null}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-heading flex items-center gap-2 text-lg">
+              <Mail className="h-5 w-5 text-emerald" />
+              Contact Inbox
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="font-heading text-2xl font-bold">
+              {analytics.stats.pendingContactMessages}
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">Pending messages</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-heading text-lg">Published Content</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm text-muted-foreground">
+            <p>
+              {analytics.stats.publishedUpcomingEvents} of {analytics.stats.upcomingEvents}{" "}
+              upcoming events published
+            </p>
+            <p>
+              {analytics.stats.publishedGalleryImages} of {analytics.stats.galleryImages}{" "}
+              gallery images published
+            </p>
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <Card>

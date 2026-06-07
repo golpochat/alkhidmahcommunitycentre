@@ -149,15 +149,21 @@ export function AdminRamadanTimetableTab() {
   const selectedSeason =
     seasonOptions.find((option) => option.hijriYear === year) ?? null;
 
-  async function persistTimetable(options?: { successMessage?: string }) {
+  async function persistTimetable(options?: {
+    successMessage?: string;
+    settingsOverride?: Partial<RamadanSettingsData>;
+  }) {
     if (year == null) return;
+    const payloadSettings = options?.settingsOverride
+      ? { ...settings, ...options.settingsOverride }
+      : settings;
     const response = await fetch("/api/ramadan/save", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         year,
         rows,
-        settings,
+        settings: payloadSettings,
       }),
     });
     const data = await parseJsonResponse<{
@@ -169,6 +175,8 @@ export function AdminRamadanTimetableTab() {
     setRows(data.rows ?? rows);
     if (data.settings) {
       setSettings(data.settings);
+    } else if (options?.settingsOverride) {
+      setSettings((current) => ({ ...current, ...options.settingsOverride }));
     }
     toast.success(options?.successMessage ?? "Ramadan timetable saved");
   }
@@ -210,11 +218,14 @@ export function AdminRamadanTimetableTab() {
     }
   }
 
-  async function handleSaveNotes() {
+  async function handleSaveNotes(latestNotes: string) {
     if (year == null) return;
     setSavingNotes(true);
     try {
-      await persistTimetable({ successMessage: "Ramadan notes saved" });
+      await persistTimetable({
+        successMessage: "Ramadan notes saved",
+        settingsOverride: { notesMessage: latestNotes },
+      });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Save failed");
     } finally {

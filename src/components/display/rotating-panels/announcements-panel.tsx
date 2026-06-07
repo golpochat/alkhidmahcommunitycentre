@@ -1,16 +1,25 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { DisplayLandscapePanelShell } from "@/components/display/display-landscape-panel-shell";
 import type { SerializedDisplayNotice } from "@/lib/display-types";
 
 interface AnnouncementsPanelProps {
   notices: SerializedDisplayNotice[];
   rotationSpeed?: number;
+  hideDots?: boolean;
+  variant?: "default" | "landscape";
+}
+
+function formatPriorityLabel(priority: string) {
+  return priority.charAt(0).toUpperCase() + priority.slice(1);
 }
 
 export function AnnouncementsPanel({
   notices,
   rotationSpeed = 10,
+  hideDots = false,
+  variant = "default",
 }: AnnouncementsPanelProps) {
   const items = useMemo(
     () => notices.filter((notice) => notice.priority !== "high"),
@@ -35,6 +44,14 @@ export function AnnouncementsPanel({
   }, [items.length, rotationSpeed, itemsKey]);
 
   if (!items.length) {
+    if (variant === "landscape") {
+      return (
+        <DisplayLandscapePanelShell kicker="Announcements">
+          <p className="display-landscape-panel-empty">No announcements at this time</p>
+        </DisplayLandscapePanelShell>
+      );
+    }
+
     return (
       <div className="display-rotating-panel display-rotating-panel-empty">
         <h3 className="display-rotating-panel-title">Announcements</h3>
@@ -45,6 +62,18 @@ export function AnnouncementsPanel({
 
   const notice = items[activeIndex % items.length];
 
+  if (variant === "landscape") {
+    return (
+      <DisplayLandscapePanelShell kicker="Announcements">
+        <p className="display-landscape-panel-headline">
+          <span className="display-landscape-panel-emphasis">{notice.title}</span>
+          <span className="display-landscape-panel-separator"> · </span>
+          <span className="display-landscape-panel-detail">{notice.message}</span>
+        </p>
+      </DisplayLandscapePanelShell>
+    );
+  }
+
   return (
     <div className="display-rotating-panel">
       <h3 className="display-rotating-panel-title">Announcements</h3>
@@ -52,12 +81,12 @@ export function AnnouncementsPanel({
         <span
           className={`display-announcement-priority display-announcement-priority-${notice.priority}`}
         >
-          {notice.priority}
+          {formatPriorityLabel(notice.priority)}
         </span>
         <p className="display-announcement-title">{notice.title}</p>
         <p className="display-announcement-message">{notice.message}</p>
       </article>
-      {items.length > 1 && (
+      {items.length > 1 && !hideDots && (
         <div className="display-announcement-dots">
           {items.map((item, index) => (
             <span

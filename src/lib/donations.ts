@@ -1,5 +1,6 @@
 import type { Donation } from "@prisma/client";
 import { DONATION_CATEGORIES } from "@/lib/constants";
+import { getDonationTotalCents } from "@/lib/donation-processing-fee";
 
 export type DonationProvider = "stripe" | "paypal";
 export type DonationStatus = "pending" | "succeeded" | "failed";
@@ -36,6 +37,9 @@ export interface SerializedDonation {
   donorName: string | null;
   donorEmail: string | null;
   amount: number;
+  processingFeeCents: number;
+  coverFee: boolean;
+  totalCents: number;
   currency: string;
   category: string;
   provider: DonationProvider;
@@ -51,6 +55,9 @@ export function serializeDonation(donation: Donation): SerializedDonation {
     donorName: donation.donorName,
     donorEmail: donation.donorEmail,
     amount: donation.amount,
+    processingFeeCents: donation.processingFeeCents,
+    coverFee: donation.coverFee,
+    totalCents: getDonationTotalCents(donation),
     currency: donation.currency,
     category: donation.category,
     provider: donation.provider as DonationProvider,

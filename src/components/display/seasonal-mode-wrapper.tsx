@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { getDisplayEffectiveNow } from "@/lib/display-time";
 import { shouldShowJumuahCountdown } from "@/lib/seasonal-client";
 import type { SeasonalFlags } from "@/lib/seasonal-types";
 import type { PrayerTimesResponse } from "@/lib/prayer-times-client";
@@ -8,7 +9,7 @@ import type { PrayerTimesResponse } from "@/lib/prayer-times-client";
 interface SeasonalModeWrapperProps {
   seasonal: SeasonalFlags;
   schedule: PrayerTimesResponse;
-  now: Date;
+  now: Date | null;
   children: ReactNode;
 }
 
@@ -18,7 +19,8 @@ export function SeasonalModeWrapper({
   now,
   children,
 }: SeasonalModeWrapperProps) {
-  const showJumuahBanner = shouldShowJumuahCountdown(schedule, now);
+  const effectiveNow = getDisplayEffectiveNow(schedule, now);
+  const showJumuahBanner = shouldShowJumuahCountdown(schedule, effectiveNow);
 
   const modeClass = seasonal.isEid
     ? "display-mode-eid"

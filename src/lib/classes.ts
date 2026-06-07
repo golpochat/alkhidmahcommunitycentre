@@ -8,6 +8,8 @@ export interface SerializedClass {
   fee: number | null;
   teacher: string | null;
   published: boolean;
+  publishAt: string | null;
+  unpublishAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -43,6 +45,8 @@ export function serializeClass(cls: {
   fee: number | null;
   teacher: string | null;
   published: boolean;
+  publishAt: Date | null;
+  unpublishAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }): SerializedClass {
@@ -56,6 +60,8 @@ export function serializeClass(cls: {
     fee: cls.fee,
     teacher: cls.teacher,
     published: cls.published,
+    publishAt: cls.publishAt?.toISOString() ?? null,
+    unpublishAt: cls.unpublishAt?.toISOString() ?? null,
     createdAt: cls.createdAt.toISOString(),
     updatedAt: cls.updatedAt.toISOString(),
   };

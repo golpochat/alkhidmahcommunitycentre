@@ -24,6 +24,8 @@ export interface SerializedDisplaySettings {
   brightnessSchedule: unknown;
   orientationOverride: OrientationOverride;
   autoFullscreen: boolean;
+  lastSeenAt: string | null;
+  lastOrientation: string | null;
 }
 
 const DEFAULT_SETTINGS = {
@@ -71,5 +73,7 @@ export function serializeDisplaySettings(
         ? settings.orientationOverride
         : null,
     autoFullscreen: settings.autoFullscreen ?? false,
+    lastSeenAt: settings.lastSeenAt?.toISOString() ?? null,
+    lastOrientation: settings.lastOrientation ?? null,
   };
 }

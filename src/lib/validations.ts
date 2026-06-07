@@ -28,6 +28,8 @@ export const classSchema = z.object({
   schedule: z.string().min(3).optional().nullable(),
   fee: z.number().int().min(0).optional().nullable(),
   teacher: z.string().min(2).optional().nullable(),
+  publishAt: z.string().datetime().optional().nullable(),
+  unpublishAt: z.string().datetime().optional().nullable(),
 });
 
 export const registrationSchema = z.object({
@@ -44,6 +46,7 @@ export const donationFormSchema = z.object({
   donorName: z.string().optional(),
   donorEmail: z.string().email("Please enter a valid email address"),
   provider: z.enum(["stripe", "paypal", "bank_transfer"]),
+  coverProcessingFee: z.boolean().optional(),
 });
 
 const paymentGatewayTypeSchema = z.enum(["STRIPE", "PAYPAL", "BANK_TRANSFER"]);
@@ -65,6 +68,9 @@ export const paymentGatewaySchema = z
     iban: z.string().optional(),
     bic: z.string().optional(),
     referenceNote: z.string().optional(),
+    feePercent: z.number().min(0).max(100).optional(),
+    feeFixedCents: z.number().int().min(0).optional(),
+    allowCoverFee: z.boolean().optional(),
   })
   .superRefine((data, ctx) => {
     if (data.type === "STRIPE") {
@@ -218,6 +224,8 @@ export const eventFormSchema = z
       .union([storedImageUrlSchema, z.literal("")])
       .optional()
       .nullable(),
+    publishAt: z.string().datetime().optional().nullable(),
+    unpublishAt: z.string().datetime().optional().nullable(),
   })
   .refine(
     (data) => {
@@ -244,6 +252,8 @@ export const donationCategoryUpdateSchema = z.object({
     .min(10, "Description must be at least 10 characters")
     .max(500),
 });
+
+export const donationCategoryCreateSchema = donationCategoryUpdateSchema;
 
 export const galleryAlbumSchema = z.object({
   name: z

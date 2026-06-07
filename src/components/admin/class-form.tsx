@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { slugify, type SerializedClass } from "@/lib/classes";
 import { ADMIN_EDUCATION_PATH, EDUCATION_API_PATH } from "@/lib/constants";
+import { fromDatetimeLocalValue, toDatetimeLocalValue } from "@/lib/events";
 import { classSchema, type ClassFormValues } from "@/lib/validations";
 
 interface ClassFormProps {
@@ -40,6 +41,8 @@ export function ClassForm({ classItem, mode }: ClassFormProps) {
       schedule: classItem?.schedule ?? "",
       fee: classItem?.fee ?? null,
       teacher: classItem?.teacher ?? "",
+      publishAt: classItem?.publishAt ?? null,
+      unpublishAt: classItem?.unpublishAt ?? null,
     },
   });
 
@@ -165,6 +168,38 @@ export function ClassForm({ classItem, mode }: ClassFormProps) {
           {errors.fee && (
             <p className="text-sm text-destructive">{errors.fee.message}</p>
           )}
+        </div>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="publishAt">Scheduled Publish (optional)</Label>
+          <Input
+            id="publishAt"
+            type="datetime-local"
+            value={toDatetimeLocalValue(watch("publishAt"))}
+            onChange={(e) =>
+              setValue(
+                "publishAt",
+                e.target.value ? fromDatetimeLocalValue(e.target.value) : null,
+              )
+            }
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="unpublishAt">Scheduled Unpublish (optional)</Label>
+          <Input
+            id="unpublishAt"
+            type="datetime-local"
+            value={toDatetimeLocalValue(watch("unpublishAt"))}
+            onChange={(e) =>
+              setValue(
+                "unpublishAt",
+                e.target.value ? fromDatetimeLocalValue(e.target.value) : null,
+              )
+            }
+          />
         </div>
       </div>
 

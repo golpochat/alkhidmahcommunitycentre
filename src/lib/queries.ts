@@ -85,6 +85,7 @@ export async function getRelatedGalleryForEvent(category: string | null, limit =
   return safe(async () => {
     const items = await db.galleryItem.findMany({
       where: {
+        published: true,
         album: { published: true },
         ...(category
           ? { category: { equals: category, mode: "insensitive" } }
@@ -124,7 +125,7 @@ export async function getGalleryAlbums() {
 export async function getRecentGallery(limit = 8): Promise<SerializedGalleryItem[]> {
   return safe(async () => {
     const items = await db.galleryItem.findMany({
-      where: { album: { published: true } },
+      where: { published: true, album: { published: true } },
       orderBy: { createdAt: "desc" },
       include: { album: { select: { id: true, name: true } } },
       take: limit,
@@ -147,7 +148,7 @@ export async function getRecentGallery(limit = 8): Promise<SerializedGalleryItem
 export async function getAllGallery(): Promise<SerializedGalleryItem[]> {
   return safe(async () => {
     const items = await db.galleryItem.findMany({
-      where: { album: { published: true } },
+      where: { published: true, album: { published: true } },
       orderBy: { createdAt: "desc" },
       include: { album: { select: { id: true, name: true } } },
     });

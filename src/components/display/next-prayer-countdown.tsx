@@ -16,8 +16,8 @@ interface NextPrayerCountdownProps {
   schedule: PrayerTimesResponse;
   seasonal: SeasonalFlags;
   notices: SerializedDisplayNotice[];
-  now: Date;
-  variant?: "default" | "large" | "landscape";
+  now: Date | null;
+  variant?: "default" | "large" | "landscape" | "portrait";
 }
 
 export function NextPrayerCountdown({
@@ -27,14 +27,21 @@ export function NextPrayerCountdown({
   now,
   variant = "default",
 }: NextPrayerCountdownProps) {
-  if (variant === "landscape") {
-    const active = resolveDisplayCountdown(schedule, seasonal, notices, now);
+  if (!now) return null;
+
+  if (variant === "landscape" || variant === "portrait") {
+    const active = resolveDisplayCountdown(
+      schedule,
+      seasonal,
+      [],
+      now
+    );
 
     if (active.type === "none") return null;
 
     if (active.type === "emergency") {
       return (
-        <section className="display-emergency-alert display-countdown-below-grid">
+        <section className="display-emergency-alert">
           <p className="display-emergency-alert-label">Important Notice</p>
           <p className="display-emergency-alert-title">{active.title}</p>
           <p className="display-emergency-alert-message">{active.message}</p>
@@ -50,14 +57,12 @@ export function NextPrayerCountdown({
       active.type === "prayer" ? 3600 : active.totalSeconds;
 
     return (
-      <section className="display-countdown-footer display-countdown-footer-landscape">
-        <CountdownRing
-          seconds={seconds}
-          totalSeconds={totalSeconds}
-          label={label}
-        />
-        <p className="display-countdown-footer-time">{formatCountdown(seconds)}</p>
-      </section>
+      <CountdownRing
+        seconds={seconds}
+        totalSeconds={totalSeconds}
+        label={label}
+        variant={variant}
+      />
     );
   }
 

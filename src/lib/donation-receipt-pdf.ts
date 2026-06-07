@@ -2,6 +2,10 @@ import { format } from "date-fns";
 import { PDFDocument, rgb } from "pdf-lib";
 import type { Donation } from "@prisma/client";
 import { getCategoryLabel } from "@/lib/donations";
+import {
+  formatDonationCents,
+  getDonationTotalCents,
+} from "@/lib/donation-processing-fee";
 import type { DonationStatementBranding } from "@/lib/donation-statement-branding";
 import {
   BRAND_GOLD,
@@ -19,6 +23,8 @@ export interface DonationReceiptInput {
   donorName: string | null;
   donorEmail: string | null;
   amount: number;
+  processingFeeCents: number;
+  coverFee: boolean;
   currency: string;
   category: string;
   provider: string;
@@ -33,6 +39,8 @@ export function donationFromRecord(donation: Donation): DonationReceiptInput {
     donorName: donation.donorName,
     donorEmail: donation.donorEmail,
     amount: donation.amount,
+    processingFeeCents: donation.processingFeeCents,
+    coverFee: donation.coverFee,
     currency: donation.currency,
     category: donation.category,
     provider: donation.provider,
@@ -91,19 +99,34 @@ export async function donationReceiptToPdfBuffer(
   const categoryLabel = getCategoryLabel(donation.category);
   const donorLabel = donation.donorName?.trim() || "Anonymous";
   const donationDate = format(donation.createdAt, "d MMMM yyyy 'at' HH:mm");
-  const currencySymbol = donation.currency.toUpperCase() === "EUR" ? "€" : "";
-  const amountLabel = `${currencySymbol}${donation.amount.toFixed(2)} ${donation.currency}`;
+  const totalCents = getDonationTotalCents(donation);
+  const amountLabel = formatDonationCents(totalCents, donation.currency);
 
   const details: Array<{ label: string; value: string }> = [
     { label: "Donor", value: donorLabel },
     { label: "Email", value: donation.donorEmail?.trim() || "Not provided" },
-    { label: "Amount", value: amountLabel },
+  ];
+
+  if (donation.coverFee && donation.processingFeeCents > 0) {
+    details.push(
+      { label: "Donation", value: formatDonationCents(donation.amount * 100, donation.currency) },
+      {
+        label: "Processing fee",
+        value: formatDonationCents(donation.processingFeeCents, donation.currency),
+      },
+      { label: "Total paid", value: amountLabel },
+    );
+  } else {
+    details.push({ label: "Amount", value: amountLabel });
+  }
+
+  details.push(
     { label: "Category", value: categoryLabel },
     { label: "Payment method", value: donation.provider },
     { label: "Status", value: donation.status },
     { label: "Transaction ID", value: donation.providerId || "—" },
     { label: "Donation date", value: donationDate },
-  ];
+  );
 
   const boxTop = y;
   const rowHeight = 22;

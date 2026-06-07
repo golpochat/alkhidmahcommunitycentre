@@ -2,6 +2,7 @@ import { format } from "date-fns";
 import type { Donation } from "@prisma/client";
 import { SITE_NAME } from "@/lib/constants";
 import { getCategoryLabel } from "@/lib/donations";
+import { getDonationTotalCents } from "@/lib/donation-processing-fee";
 import { generateDonationReceiptPdf } from "@/lib/generate-donation-receipt";
 import { getDonationStatementBranding } from "@/lib/donation-statement-branding";
 import {
@@ -108,6 +109,41 @@ export async function sendDonationReceipt(donation: Donation) {
         contentType: "application/pdf",
       },
     ],
+  });
+
+  return result !== "failed";
+}
+
+export async function sendDonationAdminNotification(donation: Donation) {
+  const notificationEmail = await getNotificationEmail();
+
+  if (!notificationEmail) {
+    console.warn("Email not configured — donation stored without staff notification.");
+    return false;
+  }
+
+  const categoryLabel = getCategoryLabel(donation.category);
+  const donorLabel = donation.donorName || "Anonymous";
+  const donorEmail = donation.donorEmail || "Not provided";
+  const formattedDate = format(donation.createdAt, "d MMMM yyyy HH:mm");
+  const transactionId = donation.providerId || "—";
+  const totalEuros = getDonationTotalCents(donation) / 100;
+
+  const result = await sendEmail({
+    to: notificationEmail,
+    replyTo: donation.donorEmail || undefined,
+    subject: `[Donation] ${categoryLabel} — €${totalEuros.toFixed(2)}`,
+    text: `Donor: ${donorLabel}\nEmail: ${donorEmail}\nAmount: ${donation.currency} ${totalEuros.toFixed(2)}\nCategory: ${categoryLabel}\nProvider: ${donation.provider}\nDate: ${formattedDate}\nTransaction ID: ${transactionId}`,
+    html: `
+      <h2>New Donation Received</h2>
+      <p><strong>Donor:</strong> ${donorLabel}</p>
+      <p><strong>Email:</strong> ${donorEmail}</p>
+      <p><strong>Amount:</strong> ${donation.currency} ${totalEuros.toFixed(2)}</p>
+      <p><strong>Category:</strong> ${categoryLabel}</p>
+      <p><strong>Provider:</strong> ${donation.provider}</p>
+      <p><strong>Date:</strong> ${formattedDate}</p>
+      <p><strong>Transaction ID:</strong> ${transactionId}</p>
+    `,
   });
 
   return result !== "failed";

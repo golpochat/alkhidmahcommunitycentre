@@ -2,6 +2,7 @@ import type { ComponentType } from "react";
 import {
   FacebookIcon,
   InstagramIcon,
+  TwitterIcon,
   WhatsAppIcon,
   YouTubeIcon,
 } from "@/components/layout/social-icons";
@@ -14,6 +15,7 @@ const SOCIAL_ICONS: Record<
   facebook: FacebookIcon,
   instagram: InstagramIcon,
   youtube: YouTubeIcon,
+  twitter: TwitterIcon,
   whatsapp: WhatsAppIcon,
 };
 

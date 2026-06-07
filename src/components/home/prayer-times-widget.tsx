@@ -13,10 +13,14 @@ import { SITE_NAME } from "@/lib/constants";
 import type { PrayerTimesResponse } from "@/lib/prayer-times-client";
 import { withJumuahTablePreview } from "@/lib/prayer-times-client";
 
+const PRAYER_CACHE_KEY = "alkhidmah-prayer-cache-v1";
+
 export function PrayerTimesWidget() {
   const [schedule, setSchedule] = useState<PrayerTimesResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [offline, setOffline] = useState(false);
+  const [cachedAt, setCachedAt] = useState<string | null>(null);
 
   const fetchPrayerTimes = useCallback(async () => {
     try {
@@ -24,10 +28,33 @@ export function PrayerTimesWidget() {
       if (!response.ok) throw new Error("Failed to fetch prayer times");
       const data: PrayerTimesResponse = await response.json();
       setSchedule(data);
+      setOffline(false);
+      setCachedAt(new Date().toISOString());
+      localStorage.setItem(
+        PRAYER_CACHE_KEY,
+        JSON.stringify({ data, cachedAt: new Date().toISOString() }),
+      );
       setError("");
     } catch {
+      const cached = localStorage.getItem(PRAYER_CACHE_KEY);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached) as {
+            data: PrayerTimesResponse;
+            cachedAt: string;
+          };
+          setSchedule(parsed.data);
+          setCachedAt(parsed.cachedAt);
+          setOffline(true);
+          setError("");
+          return;
+        } catch {
+          // fall through
+        }
+      }
+
       setError(
-        "Unable to load prayer times right now. Please refresh the page or visit the centre for today's schedule."
+        "Unable to load prayer times right now. Please refresh the page or visit the centre for today's schedule.",
       );
     } finally {
       setLoading(false);
@@ -76,6 +103,12 @@ export function PrayerTimesWidget() {
 
             {!loading && !error && schedule && displaySchedule && (
               <>
+                {offline && cachedAt ? (
+                  <p className="mb-4 text-center text-sm text-muted-foreground">
+                    Showing cached prayer times from{" "}
+                    {new Date(cachedAt).toLocaleString()}. Connect to refresh live times.
+                  </p>
+                ) : null}
                 {schedule.degraded && schedule.warning && (
                   <p className="mb-4 text-center text-sm text-amber-600 dark:text-amber-400">
                     {schedule.warning}

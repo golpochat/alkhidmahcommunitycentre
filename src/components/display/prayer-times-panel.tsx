@@ -1,8 +1,10 @@
 "use client";
 
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
 import { JumuahCard } from "@/components/display/jumuah-card";
 import { PrayerCard } from "@/components/display/prayer-card";
+import { SunriseCard } from "@/components/display/sunrise-card";
+import { getDisplayEffectiveNow } from "@/lib/display-time";
 import {
   filterValidJumuahSlots,
   isBeforeLastJumuah,
@@ -12,182 +14,158 @@ import {
   isCombinedMaghribIsha,
   type PrayerTimesResponse,
 } from "@/lib/prayer-times-client";
+import { FOLLOWS_MAGHRIB_LABEL } from "@/lib/prayer-iqama";
 
 interface PrayerTimesPanelProps {
   schedule: PrayerTimesResponse;
-  now?: Date;
+  now?: Date | null;
+  variant?: "default" | "landscape";
 }
-
-type PanelColumn =
-  | {
-      key: string;
-      kind: "prayer";
-      name: string;
-      adhan: string | null;
-      iqama: string | null;
-      iqamaDisplay?: string | null;
-      variant?: "default" | "sunrise";
-      isNext?: boolean;
-    }
-  | {
-      key: string;
-      kind: "jumuah";
-      slots: Array<{ index: number; adhan: string | null; iqama: string | null }>;
-      isNext?: boolean;
-    };
 
 export function PrayerTimesPanel({
   schedule,
-  now = new Date(),
+  now = null,
+  variant = "default",
 }: PrayerTimesPanelProps) {
-  const nextPrayer = findNextPrayer(schedule, now);
+  const effectiveNow = getDisplayEffectiveNow(schedule, now);
+  const nextPrayer = findNextPrayer(schedule, effectiveNow);
   const validJumuah = filterValidJumuahSlots(schedule);
   const showJumuah =
     schedule.isFriday &&
-    isBeforeLastJumuah(schedule, now) &&
+    isBeforeLastJumuah(schedule, effectiveNow) &&
     validJumuah.length > 0;
   const combinedMaghribIsha = isCombinedMaghribIsha(schedule);
 
-  const columns: PanelColumn[] = [
-    {
-      key: "fajr",
-      kind: "prayer",
-      name: "Fajr",
-      adhan: schedule.prayers.fajr.adhan,
-      iqama: schedule.prayers.fajr.iqama,
-      iqamaDisplay: schedule.prayers.fajr.iqamaDisplay,
-      isNext:
-        nextPrayer?.type === "fard" &&
-        nextPrayer.name.toLowerCase() === "fajr",
-    },
-  ];
+  const isNextFard = (name: string) =>
+    nextPrayer?.type === "fard" &&
+    nextPrayer.name.toLowerCase() === name.toLowerCase();
 
-  if (schedule.sunrise) {
-    columns.push({
-      key: "sunrise",
-      kind: "prayer",
-      name: "Sunrise",
-      adhan: schedule.sunrise,
-      iqama: null,
-      variant: "sunrise",
-      isNext: nextPrayer?.type === "sunrise",
-    });
-  }
+  let dhuhrColumn: ReactNode;
 
   if (showJumuah) {
-    columns.push({
-      key: "jumuah",
-      kind: "jumuah",
-      slots: validJumuah.map((slot) => ({
-        index: slot.index,
-        adhan: slot.adhan,
-        iqama: slot.iqama,
-      })),
-      isNext: nextPrayer?.type === "jumuah",
-    });
-  } else {
-    columns.push({
-      key: "dhuhr",
-      kind: "prayer",
-      name: "Dhuhr",
-      adhan: schedule.prayers.dhuhr?.adhan ?? null,
-      iqama: schedule.prayers.dhuhr?.iqama ?? null,
-      iqamaDisplay: schedule.prayers.dhuhr?.iqamaDisplay,
-      isNext:
-        nextPrayer?.type === "fard" &&
-        nextPrayer.name.toLowerCase() === "dhuhr",
-    });
-  }
-
-  columns.push({
-    key: "asr",
-    kind: "prayer",
-    name: "Asr",
-    adhan: schedule.prayers.asr.adhan,
-    iqama: schedule.prayers.asr.iqama,
-    iqamaDisplay: schedule.prayers.asr.iqamaDisplay,
-    isNext:
-      nextPrayer?.type === "fard" &&
-      nextPrayer.name.toLowerCase() === "asr",
-  });
-
-  if (combinedMaghribIsha) {
-    columns.push({
-      key: "maghrib-isha-combined",
-      kind: "prayer",
-      name: "Maghrib + Isha (Combined)",
-      adhan: schedule.prayers.maghrib.adhan,
-      iqama: schedule.prayers.isha.iqama,
-      isNext:
-        nextPrayer?.type === "fard" &&
-        (nextPrayer.name.toLowerCase() === "maghrib" ||
-          nextPrayer.name.toLowerCase() === "isha"),
-    });
-  } else {
-    columns.push({
-      key: "maghrib",
-      kind: "prayer",
-      name: "Maghrib",
-      adhan: schedule.prayers.maghrib.adhan,
-      iqama: schedule.prayers.maghrib.iqama,
-      iqamaDisplay: schedule.prayers.maghrib.iqamaDisplay,
-      isNext:
-        nextPrayer?.type === "fard" &&
-        nextPrayer.name.toLowerCase() === "maghrib",
-    });
-
-    columns.push({
-      key: "isha",
-      kind: "prayer",
-      name: "Isha",
-      adhan: schedule.prayers.isha.adhan,
-      iqama: schedule.prayers.isha.iqama,
-      iqamaDisplay: schedule.prayers.isha.iqamaDisplay,
-      isNext:
-        nextPrayer?.type === "fard" &&
-        nextPrayer.name.toLowerCase() === "isha",
-    });
-  }
-
-  const renderColumn = (column: PanelColumn, index: number): ReactNode => {
-    const showDivider = index < columns.length - 1;
-
-    if (column.kind === "jumuah") {
-      return (
-        <JumuahCard
-          key={column.key}
-          slots={column.slots}
-          isNext={column.isNext}
-          showDivider={showDivider}
-        />
-      );
-    }
-
-    return (
-      <PrayerCard
-        key={column.key}
-        name={column.name}
-        adhan={column.adhan}
-        iqama={column.iqama}
-        iqamaDisplay={column.iqamaDisplay}
-        variant={column.variant}
-        isNext={column.isNext}
-        showDivider={showDivider}
+    dhuhrColumn = (
+      <JumuahCard
+        slots={validJumuah.map((slot) => ({
+          index: slot.index,
+          adhan: slot.adhan,
+          iqama: slot.iqama,
+        }))}
+        isNext={nextPrayer?.type === "jumuah"}
       />
     );
-  };
+  } else if (schedule.isFriday) {
+    dhuhrColumn = (
+      <div className="display-prayer-card display-prayer-card-empty" aria-hidden="true" />
+    );
+  } else {
+    dhuhrColumn = (
+      <PrayerCard
+        name="Dhuhr"
+        adhan={schedule.prayers.dhuhr?.adhan ?? null}
+        iqama={schedule.prayers.dhuhr?.iqama ?? null}
+        iqamaDisplay={schedule.prayers.dhuhr?.iqamaDisplay}
+        isNext={isNextFard("dhuhr")}
+      />
+    );
+  }
+
+  const gridClass =
+    variant === "landscape"
+      ? "display-prayer-times-grid display-prayer-times-grid-landscape"
+      : "display-prayer-times-grid display-prayer-times-grid-default";
+
+  if (variant === "landscape") {
+    return (
+      <section className="display-prayer-times-panel display-landscape-section">
+        <div className={gridClass}>
+          <PrayerCard
+            name="Fajr"
+            adhan={schedule.prayers.fajr.adhan}
+            iqama={schedule.prayers.fajr.iqama}
+            iqamaDisplay={schedule.prayers.fajr.iqamaDisplay}
+            isNext={isNextFard("fajr")}
+          />
+
+          <SunriseCard
+            time={schedule.sunrise}
+            isNext={nextPrayer?.type === "sunrise"}
+          />
+
+          {dhuhrColumn}
+
+          <PrayerCard
+            name="Asr"
+            adhan={schedule.prayers.asr.adhan}
+            iqama={schedule.prayers.asr.iqama}
+            iqamaDisplay={schedule.prayers.asr.iqamaDisplay}
+            isNext={isNextFard("asr")}
+          />
+
+          <PrayerCard
+            name="Maghrib"
+            adhan={schedule.prayers.maghrib.adhan}
+            iqama={schedule.prayers.maghrib.iqama}
+            iqamaDisplay={schedule.prayers.maghrib.iqamaDisplay}
+            isNext={isNextFard("maghrib")}
+          />
+
+          <PrayerCard
+            name="Isha"
+            adhan={schedule.prayers.isha.adhan}
+            iqama={schedule.prayers.isha.iqama}
+            iqamaDisplay={schedule.prayers.isha.iqamaDisplay}
+            iqamaLabel={
+              combinedMaghribIsha ||
+              schedule.prayers.isha.iqamaDisplay === FOLLOWS_MAGHRIB_LABEL
+                ? FOLLOWS_MAGHRIB_LABEL
+                : null
+            }
+            isNext={isNextFard("isha")}
+          />
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="display-prayer-times-panel">
-      <div
-        className="display-prayer-times-grid"
-        style={
-          {
-            "--display-prayer-columns": columns.length,
-          } as CSSProperties
-        }
-      >
-        {columns.map(renderColumn)}
+      <div className={gridClass}>
+        <PrayerCard
+          name="Fajr"
+          adhan={schedule.prayers.fajr.adhan}
+          iqama={schedule.prayers.fajr.iqama}
+          iqamaDisplay={schedule.prayers.fajr.iqamaDisplay}
+          isNext={isNextFard("fajr")}
+        />
+
+        {dhuhrColumn}
+
+        <PrayerCard
+          name="Asr"
+          adhan={schedule.prayers.asr.adhan}
+          iqama={schedule.prayers.asr.iqama}
+          iqamaDisplay={schedule.prayers.asr.iqamaDisplay}
+          isNext={isNextFard("asr")}
+        />
+
+        <PrayerCard
+          name="Maghrib"
+          adhan={schedule.prayers.maghrib.adhan}
+          iqama={schedule.prayers.maghrib.iqama}
+          iqamaDisplay={schedule.prayers.maghrib.iqamaDisplay}
+          isNext={isNextFard("maghrib")}
+        />
+
+        <PrayerCard
+          name="Isha"
+          adhan={schedule.prayers.isha.adhan}
+          iqama={schedule.prayers.isha.iqama}
+          iqamaDisplay={schedule.prayers.isha.iqamaDisplay}
+          combinedNote={
+            combinedMaghribIsha ? "(Combined with Maghrib)" : null
+          }
+          isNext={isNextFard("isha")}
+        />
       </div>
     </section>
   );

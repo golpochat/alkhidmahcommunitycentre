@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { sendDonationReceipt } from "@/lib/email";
+import { sendDonationAdminNotification, sendDonationReceipt } from "@/lib/email";
 import { getStripe } from "@/lib/stripe";
 
 export async function POST(request: NextRequest) {
@@ -55,6 +55,7 @@ export async function POST(request: NextRequest) {
     });
 
     await sendDonationReceipt(updated);
+    await sendDonationAdminNotification(updated);
 
     return NextResponse.json({ success: true, status: updated.status });
   } catch (error) {

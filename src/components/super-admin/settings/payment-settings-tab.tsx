@@ -45,6 +45,9 @@ export interface PaymentGatewayRecord {
   iban?: string;
   bic?: string;
   referenceNote?: string;
+  feePercent?: number;
+  feeFixedCents?: number;
+  allowCoverFee?: boolean;
 }
 
 function gatewaySummary(gateway: PaymentGatewayRecord) {

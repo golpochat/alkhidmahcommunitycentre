@@ -1,4 +1,4 @@
-import { SITE_URL } from "@/lib/constants";
+import { resolveSiteUrlForDonations } from "@/lib/donation-categories";
 import { getEnabledPayPalGateway } from "@/lib/payment-gateway-store";
 
 function getPayPalApiBase(mode: "sandbox" | "live") {
@@ -50,6 +50,7 @@ export async function createPayPalOrder(input: {
   }
 
   const accessToken = await getAccessToken();
+  const siteUrl = (await resolveSiteUrlForDonations()).replace(/\/$/, "");
 
   const response = await fetch(
     `${getPayPalApiBase(gateway.mode)}/v2/checkout/orders`,
@@ -75,8 +76,8 @@ export async function createPayPalOrder(input: {
           brand_name: "Al Khidmah Community Centre",
           landing_page: "NO_PREFERENCE",
           user_action: "PAY_NOW",
-          return_url: `${SITE_URL}/donations/success?provider=paypal&donationId=${input.donationId}`,
-          cancel_url: `${SITE_URL}/donations/error?provider=paypal`,
+          return_url: `${siteUrl}/donations/success?provider=paypal&donationId=${input.donationId}`,
+          cancel_url: `${siteUrl}/donations/error?provider=paypal`,
         },
       }),
     }

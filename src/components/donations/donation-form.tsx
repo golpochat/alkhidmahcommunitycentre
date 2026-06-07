@@ -1,15 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Building2, CreditCard, Loader2 } from "lucide-react";
 import { DonationAmountSelector } from "@/components/donations/donation-amount-selector";
+import { DonationProcessingFeeOption } from "@/components/donations/donation-processing-fee-option";
 import { DonationStripeEmbedded } from "@/components/donations/donation-stripe-embedded";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import type { GatewayFeeConfig } from "@/lib/donation-processing-fee";
 import type { BankTransferDetails } from "@/lib/payment-gateway-types";
 import {
   donationFormSchema,
@@ -29,11 +31,16 @@ interface BankTransferResult {
 
 interface DonationFormProps {
   category: DonationFormValues["category"];
+  donationCurrency: string;
   stripeEnabled: boolean;
   stripePublishableKey: string;
+  stripeFee: GatewayFeeConfig | null;
   paypalEnabled: boolean;
+  paypalFee: GatewayFeeConfig | null;
   bankTransferEnabled: boolean;
   bankTransfer: BankTransferDetails | null;
+  defaultDonorEmail?: string;
+  defaultDonorName?: string;
   onSubmitting?: (submitting: boolean) => void;
   onError?: (message: string) => void;
 }
@@ -51,10 +58,15 @@ function defaultProvider(
 
 export function DonationForm({
   category,
+  donationCurrency,
   stripeEnabled,
   stripePublishableKey,
+  stripeFee,
   paypalEnabled,
+  paypalFee,
   bankTransferEnabled,
+  defaultDonorEmail = "",
+  defaultDonorName = "",
   onSubmitting,
   onError,
 }: DonationFormProps) {
@@ -83,14 +95,27 @@ export function DonationForm({
     defaultValues: {
       category,
       amount: 20,
-      donorName: "",
-      donorEmail: "",
+      donorName: defaultDonorName,
+      donorEmail: defaultDonorEmail,
       provider: defaultProvider(stripeEnabled, paypalEnabled, bankTransferEnabled),
+      coverProcessingFee: false,
     },
   });
 
   const amount = watch("amount");
   const provider = watch("provider");
+  const coverProcessingFee = watch("coverProcessingFee");
+
+  const activeFeeConfig =
+    provider === "stripe" ? stripeFee : provider === "paypal" ? paypalFee : null;
+
+  useEffect(() => {
+    setShowStripeCheckout(false);
+    setStripeClientSecret(null);
+    setStripeDonationId(null);
+    setStripeSessionId(null);
+    setCheckoutError(null);
+  }, [amount, provider, coverProcessingFee]);
 
   async function onPayPalSubmit(data: DonationFormValues) {
     onSubmitting?.(true);
@@ -200,6 +225,9 @@ export function DonationForm({
 
   function handleProviderChange(next: DonationFormValues["provider"]) {
     setValue("provider", next, { shouldValidate: true });
+    if (next === "bank_transfer") {
+      setValue("coverProcessingFee", false);
+    }
     setShowStripeCheckout(false);
     setStripeClientSecret(null);
     setStripeDonationId(null);
@@ -281,6 +309,19 @@ export function DonationForm({
       {errors.amount && (
         <p className="text-sm text-destructive">{errors.amount.message}</p>
       )}
+
+      {activeFeeConfig ? (
+        <DonationProcessingFeeOption
+          amount={amount}
+          currency={donationCurrency}
+          feeConfig={activeFeeConfig}
+          coverProcessingFee={Boolean(coverProcessingFee)}
+          disabled={showStripeCheckout}
+          onCoverProcessingFeeChange={(value) =>
+            setValue("coverProcessingFee", value, { shouldValidate: true })
+          }
+        />
+      ) : null}
 
       <div className="space-y-2">
         <Label htmlFor="donorName">Donor Name (optional)</Label>

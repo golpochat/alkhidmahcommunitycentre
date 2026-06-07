@@ -93,7 +93,7 @@ function convertStyleFormattingToSemanticTags(html: string): string {
       (_match, attrs: string, inner: string) => {
         const style = attrs.toLowerCase();
         const bold = /font-weight:\s*(?:bold|700)/i.test(style);
-        const italic = /font-style:\s*italic/i.test(style);
+        const italic = /font-style:\s*(?:italic|oblique)/i.test(style);
         if (bold && italic) return `<b><i>${inner}</i></b>`;
         if (bold) return `<b>${inner}</b>`;
         if (italic) return `<i>${inner}</i>`;
@@ -112,13 +112,15 @@ export function sanitizeRamadanNotesHtml(html: string): string {
     convertStyleFormattingToSemanticTags(html)
       .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "")
       .replace(/<style[\s\S]*?>[\s\S]*?<\/style>/gi, "")
-      .replace(/<\/p>/gi, "</div>")
-      .replace(/<p(\s[^>]*)?>/gi, (_match, attrs = "") => openingBlockTag(attrs))
-      .replace(/<div(\s[^>]*)?>/gi, (_match, attrs = "") => openingBlockTag(attrs))
-      .replace(/<(\/?)([\w]+)([^>]*)>/g, (match, closing, tagName) => {
+      .replace(/<(\/?)([\w]+)([^>]*)>/g, (_match, closing, tagName, attrs = "") => {
         const upper = tagName.toUpperCase();
-        if (upper === "P" || upper === "DIV") return "";
+        if (upper === "P") {
+          return closing ? "</div>" : openingBlockTag(attrs);
+        }
         if (!ALLOWED_TAGS.has(upper)) return "";
+        if (upper === "DIV") {
+          return closing ? "</div>" : openingBlockTag(attrs);
+        }
         if (closing) return `</${upper.toLowerCase()}>`;
         return `<${upper.toLowerCase()}>`;
       }),
@@ -132,6 +134,42 @@ export function isHtmlNotes(value: string): boolean {
 export function normalizeRamadanNotesValue(value: string): string {
   if (!value.trim()) return "";
   return isHtmlNotes(value) ? sanitizeRamadanNotesHtml(value) : value;
+}
+
+function escapeHtmlText(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+/** Turn stored notes into HTML the contenteditable editor can render reliably. */
+export function prepareNotesForEditorHtml(value: string): string {
+  const normalized = normalizeRamadanNotesValue(value);
+  if (!normalized.trim()) return "";
+
+  if (!isHtmlNotes(normalized)) {
+    return normalized
+      .split(/\r?\n/)
+      .map((line) => `<div>${line ? escapeHtmlText(line) : "<br>"}</div>`)
+      .join("");
+  }
+
+  if (!/<(?:div|p|ul|ol)\b/i.test(normalized)) {
+    return `<div>${normalized}</div>`;
+  }
+
+  return normalized;
+}
+
+export function notesEditorContentEquals(
+  editorHtml: string,
+  storedValue: string,
+): boolean {
+  return (
+    normalizeRamadanNotesValue(editorHtml) ===
+    normalizeRamadanNotesValue(storedValue)
+  );
 }
 
 function blockHasVisibleText(block: string): boolean {

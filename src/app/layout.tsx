@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { Cinzel, Poppins } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/layout/theme-provider";
-import { defaultMetadata } from "@/lib/metadata";
+import { buildDefaultMetadata } from "@/lib/metadata";
+import { getSiteBranding } from "@/lib/site-branding";
 import { cn } from "@/lib/utils";
 import "./globals.css";
 
@@ -20,7 +21,8 @@ const poppins = Poppins({
 });
 
 export async function generateMetadata(): Promise<Metadata> {
-  return defaultMetadata;
+  const branding = await getSiteBranding();
+  return buildDefaultMetadata(branding);
 }
 
 export default function RootLayout({

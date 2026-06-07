@@ -5,10 +5,10 @@ interface PrayerCardProps {
   adhan: string | null;
   iqama: string | null;
   iqamaDisplay?: string | null;
-  variant?: "default" | "sunrise";
+  iqamaLabel?: string | null;
+  combinedNote?: string | null;
   isActive?: boolean;
   isNext?: boolean;
-  showDivider?: boolean;
 }
 
 export function PrayerCard({
@@ -16,24 +16,22 @@ export function PrayerCard({
   adhan,
   iqama,
   iqamaDisplay,
-  variant = "default",
+  iqamaLabel,
+  combinedNote,
   isActive,
   isNext,
-  showDivider,
 }: PrayerCardProps) {
   const iqamaTime = iqamaDisplay ?? iqama;
-  const showIqamah = variant !== "sunrise" && Boolean(iqamaTime);
+  const showIqamah = Boolean(iqamaLabel || iqamaTime);
 
   return (
     <article
-      className={`display-prayer-card${isNext ? " display-prayer-card-next" : ""}${isActive ? " display-prayer-card-active" : ""}${showDivider ? " display-prayer-card-divider" : ""}${variant === "sunrise" ? " display-prayer-card-sunrise" : ""}`}
+      className={`display-prayer-card${isNext ? " display-prayer-card-next" : ""}${isActive ? " display-prayer-card-active" : ""}`}
     >
       <h3 className="display-prayer-card-name">{name}</h3>
       <div className="display-prayer-card-times">
         <div className="display-prayer-card-time-block">
-          {variant !== "sunrise" && (
-            <span className="display-prayer-card-time-label">Adhan</span>
-          )}
+          <span className="display-prayer-card-time-label">Adhan</span>
           <span className="display-prayer-card-time-value">
             {formatPrayerTime24h(adhan)}
           </span>
@@ -41,10 +39,15 @@ export function PrayerCard({
         {showIqamah && (
           <div className="display-prayer-card-time-block">
             <span className="display-prayer-card-time-label">Iqamah</span>
-            <span className="display-prayer-card-time-value display-prayer-card-iqama">
-              {formatPrayerTime24h(iqamaTime)}
+            <span
+              className={`display-prayer-card-time-value display-prayer-card-iqama${iqamaLabel ? " display-prayer-card-iqama-label" : ""}`}
+            >
+              {iqamaLabel ?? formatPrayerTime24h(iqamaTime)}
             </span>
           </div>
+        )}
+        {combinedNote && (
+          <p className="display-prayer-card-combined-note">{combinedNote}</p>
         )}
       </div>
     </article>

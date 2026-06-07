@@ -13,9 +13,15 @@ export interface SiteContactSettings {
   socialFacebook: string;
   socialInstagram: string;
   socialYoutube: string;
+  socialTwitter: string;
 }
 
-export type SiteSocialLinkId = "facebook" | "instagram" | "youtube" | "whatsapp";
+export type SiteSocialLinkId =
+  | "facebook"
+  | "instagram"
+  | "youtube"
+  | "twitter"
+  | "whatsapp";
 
 export interface SiteSocialLink {
   id: SiteSocialLinkId;
@@ -41,6 +47,7 @@ export const getSiteContactSettings = cache(
       socialFacebook: settingValue(map, SETTING_KEYS.socialFacebook),
       socialInstagram: settingValue(map, SETTING_KEYS.socialInstagram),
       socialYoutube: settingValue(map, SETTING_KEYS.socialYoutube),
+      socialTwitter: settingValue(map, SETTING_KEYS.socialTwitter),
     };
   }
 );
@@ -87,6 +94,14 @@ export function buildSiteSocialLinks(
       id: "youtube",
       href: settings.socialYoutube,
       label: "Subscribe on YouTube",
+    });
+  }
+
+  if (settings.socialTwitter) {
+    links.push({
+      id: "twitter",
+      href: settings.socialTwitter,
+      label: "Follow us on X",
     });
   }
 

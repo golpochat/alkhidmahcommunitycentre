@@ -25,6 +25,7 @@ export interface SerializedGalleryItem {
   title: string | null;
   category: string | null;
   imageUrl: string;
+  published: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -55,6 +56,7 @@ export function serializeGalleryItem(item: {
   title: string | null;
   category: string | null;
   imageUrl: string;
+  published: boolean;
   createdAt: Date;
   updatedAt: Date;
   album?: { id: string; name: string };
@@ -66,6 +68,7 @@ export function serializeGalleryItem(item: {
     title: item.title,
     category: item.category,
     imageUrl: item.imageUrl,
+    published: item.published,
     createdAt: item.createdAt.toISOString(),
     updatedAt: item.updatedAt.toISOString(),
   };

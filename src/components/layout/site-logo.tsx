@@ -7,6 +7,7 @@ interface SiteLogoProps {
   className?: string;
   variant?: "navbar" | "footer" | "compact";
   link?: boolean;
+  logoPath?: string;
 }
 
 const footerSizeClasses = "h-12 w-auto md:h-14";
@@ -19,12 +20,13 @@ export function SiteLogo({
   className,
   variant = "navbar",
   link = true,
+  logoPath = LOGO_PATH,
 }: SiteLogoProps) {
   const headerLogo = isHeaderVariant(variant);
 
   const image = (
     <Image
-      src={LOGO_PATH}
+      src={logoPath}
       alt="Al Khidmah Community Centre"
       width={420}
       height={150}

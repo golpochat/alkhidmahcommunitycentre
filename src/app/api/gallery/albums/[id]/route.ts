@@ -7,6 +7,7 @@ import {
   serializeGalleryItem,
 } from "@/lib/gallery";
 import { galleryAlbumUpdateSchema, publishStatusSchema } from "@/lib/validations";
+import { logContentPublishAction } from "@/lib/content-audit-log";
 
 export async function GET(
   _request: NextRequest,
@@ -81,7 +82,7 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    await requirePermission(PERMISSIONS.gallery.manage);
+    const session = await requirePermission(PERMISSIONS.gallery.manage);
 
     const existing = await db.galleryAlbum.findUnique({ where: { id: params.id } });
     if (!existing) {
@@ -96,6 +97,16 @@ export async function PATCH(
       data: { published },
       include: { _count: { select: { items: true } } },
     });
+
+    if (existing.published !== published) {
+      await logContentPublishAction({
+        entityType: "gallery_album",
+        entityId: album.id,
+        entityTitle: album.name,
+        published,
+        actorEmail: session.email,
+      });
+    }
 
     return NextResponse.json(serializeGalleryAlbum(album));
   } catch (error) {

@@ -10,8 +10,11 @@ import {
   ClipboardList,
   Clock,
   Heart,
+  History,
   Image,
+  Info,
   LayoutDashboard,
+  Mail,
   Menu,
   Monitor,
 } from "lucide-react";
@@ -30,6 +33,7 @@ import {
   canManageGallery,
   canManagePrayerTimes,
   canManageRegistrations,
+  canWriteAdminContent,
 } from "@/lib/rbac";
 import { cn } from "@/lib/utils";
 
@@ -41,10 +45,22 @@ const navLinks = [
     canAccess: () => true,
   },
   {
+    href: "/admin/audit",
+    label: "Content Audit",
+    icon: History,
+    canAccess: () => true,
+  },
+  {
     href: "/admin/events",
     label: "Events",
     icon: Calendar,
     canAccess: canManageEvents,
+  },
+  {
+    href: "/admin/about",
+    label: "About Page",
+    icon: Info,
+    canAccess: canWriteAdminContent,
   },
   {
     href: "/admin/gallery",
@@ -68,6 +84,12 @@ const navLinks = [
     href: "/admin/registrations",
     label: "Registrations",
     icon: ClipboardList,
+    canAccess: canManageRegistrations,
+  },
+  {
+    href: "/admin/contact",
+    label: "Contact Messages",
+    icon: Mail,
     canAccess: canManageRegistrations,
   },
   {

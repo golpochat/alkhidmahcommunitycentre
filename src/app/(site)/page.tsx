@@ -1,4 +1,5 @@
 import { HeroSection } from "@/components/home/hero-section";
+import { EidHomeBanner } from "@/components/home/eid-home-banner";
 import { TimetableHomeBanner } from "@/components/home/timetable-home-banner";
 import { PrayerTimesWidget } from "@/components/home/prayer-times-widget";
 import { DonationHighlights } from "@/components/home/donation-highlights";
@@ -13,6 +14,7 @@ export default function HomePage() {
   return (
     <>
       <HeroSection />
+      <EidHomeBanner />
       <TimetableHomeBanner />
       <PrayerTimesWidget />
       <DonationHighlights />

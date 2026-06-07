@@ -37,7 +37,7 @@ export function DisplayLiveTime({ className = "" }: DisplayLiveTimeProps) {
 
   return (
     <p
-      className={`display-clock-time${className ? ` ${className}` : ""}`}
+      className={className ?? "display-clock-time"}
       aria-live="off"
     >
       {now ? formatLiveClock(now) : "--:--:--"}

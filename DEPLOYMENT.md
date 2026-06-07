@@ -8,19 +8,63 @@
 
 ## 1. Environment variables
 
-Copy `.env.example` to your host and set all values. Required:
+Copy `.env.example` to `.env.local` (local) or your host’s env settings (production).
 
-| Variable | Notes |
-|----------|--------|
-| `DATABASE_URL` | Neon **pooler** host (`-pooler` in hostname), `?sslmode=require&pgbouncer=true` |
-| `DIRECT_URL` | Optional. Neon **direct** host override for migrations; auto-derived from `DATABASE_URL` if omitted |
-| `JWT_SECRET` | Min 32 random characters |
-| `SETTINGS_ENCRYPTION_KEY` | Min 32 random characters |
-| `NEXT_PUBLIC_SITE_URL` | Production URL, e.g. `https://alkhidmah.ie` |
-| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Initial super-admin (seed only) |
-| SMTP vars | Or configure later in Super Admin → Email |
+### Required
 
-Optional: Stripe / PayPal keys (can be set in Super Admin → Payment).
+| Variable | Purpose |
+|----------|---------|
+| `DATABASE_URL` | PostgreSQL connection string. Neon: use **pooler** host with `?sslmode=require&pgbouncer=true&connect_timeout=15` |
+| `JWT_SECRET` | Session signing secret — min 32 random characters |
+| `SETTINGS_ENCRYPTION_KEY` | Encrypts payment gateway & SMTP secrets in DB — min 32 random characters |
+| `NEXT_PUBLIC_SITE_URL` | Public site URL (emails, sitemap, donation redirects), e.g. `https://alkhidmah.ie` |
+
+### Required for first seed only
+
+| Variable | Purpose |
+|----------|---------|
+| `ADMIN_EMAIL` | Initial super-admin login email |
+| `ADMIN_PASSWORD` | Initial super-admin password (`npm run db:seed`) |
+
+### Email (contact form, receipts, invitations)
+
+Configure via env **or** Super Admin → Settings → Email after deploy.
+
+| Variable | Purpose |
+|----------|---------|
+| `SMTP_HOST` | SMTP server hostname |
+| `SMTP_PORT` | Usually `587` |
+| `SMTP_SECURE` | `true` for SSL (465), else `false` |
+| `SMTP_USER` | SMTP username |
+| `SMTP_PASS` | SMTP password / app password |
+| `SMTP_FROM` | From address on outbound mail |
+| `CONTACT_EMAIL` | Staff inbox for contact form notifications |
+
+### Payments (optional — prefer Super Admin → Payment)
+
+| Variable | Purpose |
+|----------|---------|
+| `STRIPE_SECRET_KEY` | Stripe secret (legacy; use Payment Gateway in admin) |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe publishable key |
+| `PAYPAL_CLIENT_SECRET` | PayPal secret (legacy) |
+| `NEXT_PUBLIC_PAYPAL_CLIENT_ID` | PayPal client ID |
+| `PAYPAL_MODE` | `sandbox` or `live` |
+
+### Cron (Vercel scheduled tasks)
+
+| Variable | Purpose |
+|----------|---------|
+| `CRON_SECRET` | Bearer token for `GET /api/system/cron` — min 32 random characters |
+
+Configured in `vercel.json` (hourly). Required on Vercel; optional locally.
+
+### Optional
+
+| Variable | Purpose |
+|----------|---------|
+| `DIRECT_URL` | Neon direct host for migrations; auto-derived if omitted |
+| `NEXT_PUBLIC_CHARITY_NUMBER` | Displayed on public site where configured |
 
 Local fix for Neon URLs:
 
@@ -74,6 +118,8 @@ Add `STRIPE_WEBHOOK_SECRET` to env or configure in Super Admin → Payment.
 - [ ] Log in as super-admin (`ADMIN_EMAIL` / seed password — change immediately)
 - [ ] Super Admin → Settings: site name, logo, SMTP, payment
 - [ ] Super Admin → Roles: review permissions
+- [ ] Admin → Dashboard: review **Publish status overview** and publish seed content
+- [ ] Admin → Contact Messages: confirm inbox access for staff with registrations permission
 - [ ] Test public site, donations (test mode), admin login
 - [ ] Confirm `NEXT_PUBLIC_SITE_URL` matches live domain (sitemap, emails, redirects)
 

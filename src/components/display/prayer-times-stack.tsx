@@ -10,7 +10,7 @@ interface PrayerTimesStackProps {
 
 export function PrayerTimesStack({ schedule }: PrayerTimesStackProps) {
   return (
-    <section className="display-prayer-times-stack">
+    <section className="display-prayer-times-stack display-portrait-section">
       {schedule.eid.type && <EidPrayerBanner eid={schedule.eid} compact />}
       <PrayerTimesDisplay schedule={schedule} showEidBanner={false} showBadges />
     </section>

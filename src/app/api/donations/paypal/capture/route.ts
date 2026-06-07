@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { sendDonationReceipt } from "@/lib/email";
+import { sendDonationAdminNotification, sendDonationReceipt } from "@/lib/email";
 import { capturePayPalOrder } from "@/lib/paypal";
 
 export async function POST(request: NextRequest) {
@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
     });
 
     await sendDonationReceipt(updated);
+    await sendDonationAdminNotification(updated);
 
     return NextResponse.json({ success: true, donationId });
   } catch (error) {

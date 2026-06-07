@@ -24,6 +24,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  DEFAULT_PAYPAL_FEE_CONFIG,
+  DEFAULT_STRIPE_FEE_CONFIG,
+} from "@/lib/donation-processing-fee";
 import { PASSWORD_MASK } from "@/lib/encryption";
 import {
   PAYMENT_GATEWAY_PRESETS,
@@ -60,6 +64,9 @@ const emptyValues: PaymentGatewayFormValues = {
   iban: "",
   bic: "",
   referenceNote: "",
+  feePercent: DEFAULT_STRIPE_FEE_CONFIG.feePercent,
+  feeFixedCents: DEFAULT_STRIPE_FEE_CONFIG.feeFixedCents,
+  allowCoverFee: DEFAULT_STRIPE_FEE_CONFIG.allowCoverFee,
 };
 
 export function PaymentGatewayModal({
@@ -85,6 +92,7 @@ export function PaymentGatewayModal({
   const type = watch("type");
   const isEnabled = watch("isEnabled");
   const paypalMode = watch("paypalMode");
+  const allowCoverFee = watch("allowCoverFee");
 
   useEffect(() => {
     if (!open) return;
@@ -106,6 +114,21 @@ export function PaymentGatewayModal({
         iban: gateway.iban ?? "",
         bic: gateway.bic ?? "",
         referenceNote: gateway.referenceNote ?? "",
+        feePercent:
+          gateway.feePercent ??
+          (gateway.type === "PAYPAL"
+            ? DEFAULT_PAYPAL_FEE_CONFIG.feePercent
+            : DEFAULT_STRIPE_FEE_CONFIG.feePercent),
+        feeFixedCents:
+          gateway.feeFixedCents ??
+          (gateway.type === "PAYPAL"
+            ? DEFAULT_PAYPAL_FEE_CONFIG.feeFixedCents
+            : DEFAULT_STRIPE_FEE_CONFIG.feeFixedCents),
+        allowCoverFee:
+          gateway.allowCoverFee ??
+          (gateway.type === "PAYPAL"
+            ? DEFAULT_PAYPAL_FEE_CONFIG.allowCoverFee
+            : DEFAULT_STRIPE_FEE_CONFIG.allowCoverFee),
       });
       return;
     }
@@ -122,6 +145,13 @@ export function PaymentGatewayModal({
     setValue("type", nextType);
     if (mode === "create" && preset) {
       setValue("name", preset.label);
+    }
+    const defaults =
+      nextType === "PAYPAL" ? DEFAULT_PAYPAL_FEE_CONFIG : DEFAULT_STRIPE_FEE_CONFIG;
+    if (nextType === "STRIPE" || nextType === "PAYPAL") {
+      setValue("feePercent", defaults.feePercent);
+      setValue("feeFixedCents", defaults.feeFixedCents);
+      setValue("allowCoverFee", defaults.allowCoverFee);
     }
   }
 
@@ -213,6 +243,42 @@ export function PaymentGatewayModal({
                 </Label>
                 <PasswordInput id="webhookSecret" {...register("webhookSecret")} />
               </div>
+              <div className="email-setting-form-row">
+                <div className="space-y-2">
+                  <Label htmlFor="feePercent" className="text-gold">
+                    Processing fee (%)
+                  </Label>
+                  <Input
+                    id="feePercent"
+                    type="number"
+                    min={0}
+                    max={100}
+                    step="0.1"
+                    {...register("feePercent", { valueAsNumber: true })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="feeFixedCents" className="text-gold">
+                    Fixed fee (cents)
+                  </Label>
+                  <Input
+                    id="feeFixedCents"
+                    type="number"
+                    min={0}
+                    step="1"
+                    {...register("feeFixedCents", { valueAsNumber: true })}
+                  />
+                </div>
+              </div>
+              <label className="email-setting-default-row">
+                <Checkbox
+                  checked={Boolean(allowCoverFee)}
+                  onCheckedChange={(checked) =>
+                    setValue("allowCoverFee", Boolean(checked))
+                  }
+                />
+                <span>Let donors optionally cover processing fees on the donation page</span>
+              </label>
             </>
           )}
 
@@ -251,6 +317,42 @@ export function PaymentGatewayModal({
                   </SelectContent>
                 </Select>
               </div>
+              <div className="email-setting-form-row">
+                <div className="space-y-2">
+                  <Label htmlFor="paypal-feePercent" className="text-gold">
+                    Processing fee (%)
+                  </Label>
+                  <Input
+                    id="paypal-feePercent"
+                    type="number"
+                    min={0}
+                    max={100}
+                    step="0.1"
+                    {...register("feePercent", { valueAsNumber: true })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="paypal-feeFixedCents" className="text-gold">
+                    Fixed fee (cents)
+                  </Label>
+                  <Input
+                    id="paypal-feeFixedCents"
+                    type="number"
+                    min={0}
+                    step="1"
+                    {...register("feeFixedCents", { valueAsNumber: true })}
+                  />
+                </div>
+              </div>
+              <label className="email-setting-default-row">
+                <Checkbox
+                  checked={Boolean(allowCoverFee)}
+                  onCheckedChange={(checked) =>
+                    setValue("allowCoverFee", Boolean(checked))
+                  }
+                />
+                <span>Let donors optionally cover processing fees on the donation page</span>
+              </label>
             </>
           )}
 

@@ -3,6 +3,7 @@ import {
   getEnabledPayPalGateway,
   getEnabledStripeGateway,
 } from "@/lib/payment-gateway-store";
+import type { GatewayFeeConfig } from "@/lib/donation-processing-fee";
 import type { BankTransferDetails } from "@/lib/payment-gateway-types";
 
 export interface PaymentSettings {
@@ -46,19 +47,25 @@ export interface DonationPaymentOptions {
   donationCurrency: string;
   stripeEnabled: boolean;
   stripePublishableKey: string;
+  stripeFee: GatewayFeeConfig | null;
   paypalEnabled: boolean;
+  paypalFee: GatewayFeeConfig | null;
   bankTransferEnabled: boolean;
   bankTransfer: BankTransferDetails | null;
 }
 
 export async function getDonationPaymentOptions(): Promise<DonationPaymentOptions> {
   const settings = await getPaymentSettings();
+  const stripe = await getEnabledStripeGateway();
+  const paypal = await getEnabledPayPalGateway();
 
   return {
     donationCurrency: settings.donationCurrency,
     stripeEnabled: settings.stripeEnabled,
     stripePublishableKey: settings.stripePublishableKey,
+    stripeFee: stripe?.feeConfig ?? null,
     paypalEnabled: settings.paypalEnabled,
+    paypalFee: paypal?.feeConfig ?? null,
     bankTransferEnabled: settings.bankTransferEnabled,
     bankTransfer: settings.bankTransfer,
   };

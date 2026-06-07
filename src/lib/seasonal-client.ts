@@ -2,6 +2,7 @@ import {
   findNextPrayer,
   formatNextPrayerCountdownLabel,
   getCountdownToNextPrayer,
+  getDisplayMinutes,
   isFriday,
   normalizeTime,
   type JumuahSlot,
@@ -86,7 +87,7 @@ export function isBeforeLastJumuah(
   const lastMinutes = parseTimeMinutes(getLastJumuahIqamah(schedule));
   if (lastMinutes === null) return false;
 
-  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const nowMinutes = getDisplayMinutes(now);
   return nowMinutes < lastMinutes;
 }
 
@@ -99,7 +100,7 @@ export function shouldShowJumuahCountdown(
   const slots = filterValidJumuahSlots(schedule);
   if (!slots.length) return false;
 
-  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const nowMinutes = getDisplayMinutes(now);
   const lastMinutes = parseTimeMinutes(getLastJumuahIqamah(schedule));
   if (lastMinutes === null) return false;
 
@@ -145,7 +146,7 @@ export function getJumuahCountdown(
   if (!shouldShowJumuahCountdown(schedule, now)) return null;
 
   const slots = filterValidJumuahSlots(schedule);
-  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const nowMinutes = getDisplayMinutes(now);
 
   for (const slot of slots) {
     const iqamaMinutes = parseTimeMinutes(slot.iqama);
@@ -231,7 +232,7 @@ export function resolveDisplayCountdown(
   const nextPrayer = findNextPrayer(schedule, now);
   if (!nextPrayer) return { type: "none" };
 
-  const seconds = getCountdownToNextPrayer(nextPrayer, now);
+  const seconds = getCountdownToNextPrayer(nextPrayer, now, schedule);
   if (seconds === null) return { type: "none" };
 
   return {

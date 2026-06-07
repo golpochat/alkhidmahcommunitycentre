@@ -1,54 +1,37 @@
-import { Award, BookOpen, Heart, Users } from "lucide-react";
+import { Award } from "lucide-react";
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { PageHero } from "@/components/layout/page-hero";
+import { AboutValuesSection } from "@/components/about/about-values-section";
+import { AboutCommitteeSection } from "@/components/about/about-committee-section";
+import { getAboutPageContent } from "@/lib/about-content";
+import { getSiteBranding } from "@/lib/site-branding";
 import { IMAGES } from "@/lib/images";
-import { CONTACT, ABOUT_PAGE_VISIBILITY, SITE_NAME } from "@/lib/constants";
-import { COMMITTEE_MEMBERS } from "@/lib/seed-data";
 import { createPageMetadata } from "@/lib/metadata";
 
-export const metadata = createPageMetadata(
-  "About Us",
-  `Learn about ${SITE_NAME}'s mission, history, and committee serving the Muslim community of Clondalkin.`
-);
+export async function generateMetadata() {
+  const branding = await getSiteBranding();
+  return createPageMetadata(
+    "About Us",
+    `Learn about ${branding.siteName}'s mission, history, and committee serving the Muslim community of Clondalkin.`,
+  );
+}
 
-const values = [
-  {
-    icon: BookOpen,
-    title: "Education",
-    description:
-      "Providing Quran and Islamic education for children and adults of all backgrounds.",
-  },
-  {
-    icon: Heart,
-    title: "Charity",
-    description:
-      "Supporting the needy through zakah, sadaqah, and community welfare programmes.",
-  },
-  {
-    icon: Users,
-    title: "Community",
-    description:
-      "Building a welcoming space for worship, fellowship, and cultural connection.",
-  },
-  {
-    icon: Award,
-    title: "Excellence",
-    description:
-      "Upholding the highest standards as a registered and verified charity.",
-  },
-];
+export default async function AboutPage() {
+  const [content, branding] = await Promise.all([
+    getAboutPageContent(),
+    getSiteBranding(),
+  ]);
 
-export default function AboutPage() {
   return (
     <>
       <PageHero
         badge="About Us"
-        title={`About ${SITE_NAME}`}
-        description={`${SITE_NAME} has been a cornerstone of the Muslim community in Clondalkin since 2010, providing a spiritual home for worship, learning, and charitable service.`}
+        title={`About ${branding.siteName}`}
+        description={`${branding.siteName} has been a cornerstone of the Muslim community in Clondalkin since 2010, providing a spiritual home for worship, learning, and charitable service.`}
         image={IMAGES.heroes.about}
-        imageAlt={`${SITE_NAME} masjid`}
+        imageAlt={`${branding.siteName} masjid`}
       />
 
       <section className="section-padding">
@@ -70,7 +53,7 @@ export default function AboutPage() {
           <div className="image-frame-card relative aspect-video overflow-hidden rounded-lg">
             <Image
               src={IMAGES.communityGathering}
-              alt={`${SITE_NAME} community gathering`}
+              alt={`${branding.siteName} community gathering`}
               fill
               className="object-cover brightness-105"
               sizes="(max-width: 1024px) 100vw, 50vw"
@@ -107,7 +90,7 @@ export default function AboutPage() {
                   Verified Charity
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Registered Charity Number: {CONTACT.charityNumber}
+                  Registered Charity Number: {branding.charityNumber}
                 </p>
                 <p className="text-xs text-gold">Revenue Commissioners Approved</p>
               </div>
@@ -116,59 +99,10 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {ABOUT_PAGE_VISIBILITY.values && (
-      <section className="section-padding">
-        <div className="section-container">
-          <h2 className="heading-section mb-10 text-center">Our Values</h2>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {values.map((value) => (
-              <Card key={value.title} className="card-mosque text-center">
-                <CardContent className="pt-6">
-                  <value.icon className="mx-auto mb-4 h-10 w-10 text-gold" />
-                  <h3 className="mb-2 font-heading text-lg font-semibold">
-                    {value.title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {value.description}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-      )}
-
-      {ABOUT_PAGE_VISIBILITY.committee && (
-      <section className="section-padding bg-secondary/30">
-        <div className="section-container">
-          <h2 className="heading-section mb-10 text-center">
-            Mosque Committee
-          </h2>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {COMMITTEE_MEMBERS.map((member) => (
-              <Card key={member.id} className="card-mosque text-center">
-                <CardContent className="pt-6">
-                  <Avatar className="avatar-islamic mx-auto mb-4 h-24 w-24">
-                    <AvatarFallback className="avatar-islamic text-lg font-semibold">
-                      {member.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
-                    </AvatarFallback>
-                  </Avatar>
-                  <h3 className="font-heading text-lg font-semibold">
-                    {member.name}
-                  </h3>
-                  <p className="mb-2 text-sm text-gold">{member.role}</p>
-                  <p className="text-sm text-muted-foreground">{member.bio}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-      )}
+      {content.valuesVisible ? <AboutValuesSection values={content.values} /> : null}
+      {content.committeeVisible ? (
+        <AboutCommitteeSection committee={content.committee} />
+      ) : null}
     </>
   );
 }

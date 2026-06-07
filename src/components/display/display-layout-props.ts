@@ -20,5 +20,5 @@ export interface DisplayLayoutProps {
   ayat: CachedAyah[];
   weather: WeatherPayload;
   settings: SerializedDisplaySettings;
-  now: Date;
+  now: Date | null;
 }

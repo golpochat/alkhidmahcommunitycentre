@@ -39,7 +39,7 @@ async function main() {
         slug: category.id,
         description: category.description,
         donationUrl,
-        isActive: true,
+        isActive: false,
         sortOrder: index,
       },
       update: {

@@ -12,30 +12,19 @@ interface JumuahSlotDisplay {
 interface JumuahCardProps {
   slots: JumuahSlotDisplay[];
   isNext?: boolean;
-  showDivider?: boolean;
 }
 
-export function JumuahCard({ slots, isNext, showDivider }: JumuahCardProps) {
+export function JumuahCard({ slots, isNext }: JumuahCardProps) {
   return (
     <article
-      className={`display-prayer-card display-jumuah-card${isNext ? " display-prayer-card-next" : ""}${showDivider ? " display-prayer-card-divider" : ""}`}
+      className={`display-prayer-card display-jumuah-card${isNext ? " display-prayer-card-next" : ""}`}
     >
-      <h3 className="display-prayer-card-name">Jumu&apos;ah</h3>
+      <h3 className="display-jumuah-card-heading">Jumu&apos;ah Prayers</h3>
       <ul className="display-jumuah-card-list">
         {slots.map((slot) => (
           <li key={slot.index} className="display-jumuah-card-row">
-            <span className="display-jumuah-card-label">
-              {formatJamaahLabel(slot.index)}
-            </span>
-            <span className="display-jumuah-card-times">
-              <span>Adhan {formatPrayerTime24h(slot.adhan)}</span>
-              {slot.iqama && (
-                <>
-                  <span className="display-jumuah-card-separator">|</span>
-                  <span>Iqamah {formatPrayerTime24h(slot.iqama)}</span>
-                </>
-              )}
-            </span>
+            {formatJamaahLabel(slot.index)} —{" "}
+            {formatPrayerTime24h(slot.iqama ?? slot.adhan)}
           </li>
         ))}
       </ul>

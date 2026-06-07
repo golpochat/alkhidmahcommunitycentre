@@ -16,6 +16,8 @@ interface RotatingPanelsProps {
   events: SerializedEvent[];
   ayat: CachedAyah[];
   weather: WeatherPayload;
+  hideAnnouncementDots?: boolean;
+  variant?: "default" | "landscape";
 }
 
 export function RotatingPanels({
@@ -25,6 +27,8 @@ export function RotatingPanels({
   events,
   ayat,
   weather,
+  hideAnnouncementDots = false,
+  variant = "default",
 }: RotatingPanelsProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [ayahIndex, setAyahIndex] = useState(0);
@@ -37,20 +41,25 @@ export function RotatingPanels({
       list.push({
         key: "announcements",
         node: (
-          <AnnouncementsPanel notices={notices} rotationSpeed={rotationSpeed} />
+          <AnnouncementsPanel
+            notices={notices}
+            rotationSpeed={rotationSpeed}
+            hideDots={hideAnnouncementDots}
+            variant={variant}
+          />
         ),
       });
     }
     if (enabledPanels.includes("events")) {
       list.push({
         key: "events",
-        node: <EventsPanel events={events} />,
+        node: <EventsPanel events={events} variant={variant} />,
       });
     }
     if (enabledPanels.includes("ayat")) {
       list.push({
         key: "ayat",
-        node: <AyahPanel ayat={ayat} index={ayahIndex} />,
+        node: <AyahPanel ayat={ayat} index={ayahIndex} variant={variant} />,
       });
     }
     if (enabledPanels.includes("weather")) {
@@ -61,7 +70,7 @@ export function RotatingPanels({
     }
 
     return list;
-  }, [enabledPanels, notices, events, ayat, ayahIndex, weather, rotationSpeed]);
+  }, [enabledPanels, notices, events, ayat, ayahIndex, weather, rotationSpeed, hideAnnouncementDots, variant]);
 
   useEffect(() => {
     if (panels.length <= 1) return;

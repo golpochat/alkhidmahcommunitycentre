@@ -11,6 +11,7 @@ import {
   getCategoryLabel,
   type SerializedDonation,
 } from "@/lib/donations";
+import { formatDonationCents } from "@/lib/donation-processing-fee";
 
 interface DonationSuccessProps {
   provider?: string;
@@ -34,9 +35,8 @@ function formatReference(id: string) {
   return id.slice(0, 8).toUpperCase();
 }
 
-function formatAmount(amount: number, currency: string) {
-  const symbol = currency.toUpperCase() === "EUR" ? "€" : `${currency.toUpperCase()} `;
-  return `${symbol}${amount}`;
+function formatAmount(donation: DonationStatusResponse) {
+  return formatDonationCents(donation.totalCents, donation.currency);
 }
 
 export function DonationSuccess({ provider, donationId }: DonationSuccessProps) {
@@ -127,12 +127,35 @@ export function DonationSuccess({ provider, donationId }: DonationSuccessProps) 
                 {getCategoryLabel(donation.category)}
               </dd>
             </div>
-            <div className="donation-success-summary-row">
-              <dt className="donation-success-summary-label">Amount</dt>
-              <dd className="donation-success-summary-value text-gold">
-                {formatAmount(donation.amount, donation.currency)}
-              </dd>
-            </div>
+            {donation.coverFee && donation.processingFeeCents > 0 ? (
+              <>
+                <div className="donation-success-summary-row">
+                  <dt className="donation-success-summary-label">Donation</dt>
+                  <dd className="donation-success-summary-value">
+                    {formatDonationCents(donation.amount * 100, donation.currency)}
+                  </dd>
+                </div>
+                <div className="donation-success-summary-row">
+                  <dt className="donation-success-summary-label">Processing fee</dt>
+                  <dd className="donation-success-summary-value">
+                    {formatDonationCents(donation.processingFeeCents, donation.currency)}
+                  </dd>
+                </div>
+                <div className="donation-success-summary-row">
+                  <dt className="donation-success-summary-label">Total paid</dt>
+                  <dd className="donation-success-summary-value text-gold">
+                    {formatAmount(donation)}
+                  </dd>
+                </div>
+              </>
+            ) : (
+              <div className="donation-success-summary-row">
+                <dt className="donation-success-summary-label">Amount</dt>
+                <dd className="donation-success-summary-value text-gold">
+                  {formatAmount(donation)}
+                </dd>
+              </div>
+            )}
             <div className="donation-success-summary-row">
               <dt className="donation-success-summary-label">Reference</dt>
               <dd className="donation-success-summary-value">

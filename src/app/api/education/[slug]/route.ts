@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requirePermission, PERMISSIONS } from "@/lib/auth";
 import { serializeClass } from "@/lib/classes";
+import { logContentPublishAction } from "@/lib/content-audit-log";
 import { classSchema, publishStatusSchema } from "@/lib/validations";
 
 export async function GET(
@@ -53,6 +54,8 @@ export async function PUT(
         schedule: validated.schedule ?? null,
         fee: validated.fee ?? null,
         teacher: validated.teacher ?? null,
+        publishAt: validated.publishAt ? new Date(validated.publishAt) : null,
+        unpublishAt: validated.unpublishAt ? new Date(validated.unpublishAt) : null,
       },
     });
 
@@ -70,7 +73,7 @@ export async function PATCH(
   { params }: { params: { slug: string } }
 ) {
   try {
-    await requirePermission(PERMISSIONS.education.manage);
+    const session = await requirePermission(PERMISSIONS.education.manage);
 
     const existing = await db.class.findUnique({ where: { id: params.slug } });
     if (!existing) {
@@ -84,6 +87,16 @@ export async function PATCH(
       where: { id: params.slug },
       data: { published },
     });
+
+    if (existing.published !== published) {
+      await logContentPublishAction({
+        entityType: "class",
+        entityId: cls.id,
+        entityTitle: cls.title,
+        published,
+        actorEmail: session.email,
+      });
+    }
 
     return NextResponse.json(serializeClass(cls));
   } catch (error) {

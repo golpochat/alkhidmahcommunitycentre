@@ -1,9 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useLiveNow } from "@/hooks/useLiveNow";
+import { useDisplayBrightness } from "@/hooks/useDisplayBrightness";
 import { LandscapeDisplayLayout } from "@/app/display/prayer/landscape";
 import { PortraitDisplayLayout } from "@/app/display/prayer/portrait";
 import { BackgroundPattern } from "@/components/display/background-pattern";
+import { DisplayPinGate } from "@/components/display/display-pin-gate";
 import type { DisplayTodayResponse } from "@/components/display/display-layout-props";
 import type { CachedAyah } from "@/lib/display-cache";
 import type { SerializedDisplayNotice, WeatherPayload } from "@/lib/display-types";
@@ -38,7 +41,7 @@ export function DisplayRouter({
   const [ayat, setAyat] = useState(initialAyat);
   const [weather, setWeather] = useState(initialWeather);
   const [settings, setSettings] = useState(initialSettings);
-  const [now, setNow] = useState(() => new Date());
+  const now = useLiveNow();
 
   const orientation = resolveDisplayOrientation(
     settings.orientationOverride,
@@ -78,9 +81,20 @@ export function DisplayRouter({
   }, [refreshData]);
 
   useEffect(() => {
-    const clockInterval = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(clockInterval);
-  }, []);
+    function sendHeartbeat() {
+      fetch("/api/analytics/display-heartbeat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orientation }),
+      }).catch(() => undefined);
+    }
+
+    sendHeartbeat();
+    const heartbeatInterval = setInterval(sendHeartbeat, 5 * 60_000);
+    return () => clearInterval(heartbeatInterval);
+  }, [orientation]);
+
+  useDisplayBrightness(settings.brightnessSchedule);
 
   useEffect(() => {
     if (!settings.autoFullscreen) return;
@@ -94,7 +108,7 @@ export function DisplayRouter({
   const themeClass = useMemo(() => {
     const base = `display-theme-${settings.theme}`;
     const night =
-      settings.theme === "hybrid" && isAfterIsha(schedule, now)
+      settings.theme === "hybrid" && now && isAfterIsha(schedule, now)
         ? " display-theme-night"
         : "";
     return `${base}${night}`;
@@ -117,15 +131,17 @@ export function DisplayRouter({
       : "display-viewport display-viewport-landscape";
 
   return (
-    <div className={`display-prayer-screen ${themeClass}`}>
-      <BackgroundPattern />
-      <div className={viewportClass}>
-        {orientation === "portrait" ? (
-          <PortraitDisplayLayout {...layoutProps} />
-        ) : (
-          <LandscapeDisplayLayout {...layoutProps} />
-        )}
+    <DisplayPinGate pinCode={settings.pinCode}>
+      <div className={`display-prayer-screen ${themeClass}`}>
+        <BackgroundPattern />
+        <div className={viewportClass}>
+          {orientation === "portrait" ? (
+            <PortraitDisplayLayout {...layoutProps} />
+          ) : (
+            <LandscapeDisplayLayout {...layoutProps} />
+          )}
+        </div>
       </div>
-    </div>
+    </DisplayPinGate>
   );
 }

@@ -15,12 +15,16 @@ interface DonationsPageContentProps {
   categories: PublicDonationCategory[];
   initialCategory?: string;
   paymentOptions: DonationPaymentOptions;
+  defaultDonorEmail?: string;
+  defaultDonorName?: string;
 }
 
 export function DonationsPageContent({
   categories,
   initialCategory,
   paymentOptions,
+  defaultDonorEmail,
+  defaultDonorName,
 }: DonationsPageContentProps) {
   const defaultCategory =
     initialCategory && isDonationCategory(initialCategory, categories)
@@ -85,11 +89,16 @@ export function DonationsPageContent({
                     <DonationForm
                       key={selectedCategory}
                       category={selectedCategory}
+                      donationCurrency={paymentOptions.donationCurrency}
                       stripeEnabled={paymentOptions.stripeEnabled}
                       stripePublishableKey={paymentOptions.stripePublishableKey}
+                      stripeFee={paymentOptions.stripeFee}
                       paypalEnabled={paymentOptions.paypalEnabled}
+                      paypalFee={paymentOptions.paypalFee}
                       bankTransferEnabled={paymentOptions.bankTransferEnabled}
                       bankTransfer={paymentOptions.bankTransfer}
+                      defaultDonorEmail={defaultDonorEmail}
+                      defaultDonorName={defaultDonorName}
                       onError={(message) => {
                         toast.error(message);
                       }}

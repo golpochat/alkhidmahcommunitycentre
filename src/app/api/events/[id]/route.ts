@@ -6,6 +6,7 @@ import {
   generateUniqueEventSlug,
 } from "@/lib/events-server";
 import { serializeEvent } from "@/lib/events";
+import { logContentPublishAction } from "@/lib/content-audit-log";
 import { eventFormSchema, eventPublishSchema } from "@/lib/validations";
 
 export async function GET(
@@ -59,6 +60,8 @@ export async function PUT(
         endAt: validated.endAt ? new Date(validated.endAt) : null,
         location: validated.location ?? null,
         imageUrl: validated.imageUrl ?? null,
+        publishAt: validated.publishAt ? new Date(validated.publishAt) : null,
+        unpublishAt: validated.unpublishAt ? new Date(validated.unpublishAt) : null,
       },
     });
 
@@ -83,7 +86,7 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    await requirePermission(PERMISSIONS.events.manage);
+    const session = await requirePermission(PERMISSIONS.events.manage);
 
     const existing = await db.event.findUnique({ where: { id: params.id } });
     if (!existing) {
@@ -97,6 +100,16 @@ export async function PATCH(
       where: { id: params.id },
       data: { published },
     });
+
+    if (existing.published !== published) {
+      await logContentPublishAction({
+        entityType: "event",
+        entityId: event.id,
+        entityTitle: event.title,
+        published,
+        actorEmail: session.email,
+      });
+    }
 
     return NextResponse.json(serializeEvent(event));
   } catch (error) {

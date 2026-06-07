@@ -5,6 +5,8 @@ import {
 } from "@/lib/display-api";
 import { getSeasonalFlags } from "@/lib/seasonal";
 import { getCachedPrayerTimesForDisplay } from "@/lib/display-api";
+import { runRamadanAutomation } from "@/lib/ramadan-cron";
+import { runScheduledPublish } from "@/lib/scheduled-publish";
 
 export const dynamic = "force-dynamic";
 
@@ -29,12 +31,16 @@ export async function GET(request: NextRequest) {
     const seasonal = await getSeasonalFlags(schedule);
     const expired = await expireDisplayNotices();
     const ayat = await refreshAyatCache();
+    const scheduledPublish = await runScheduledPublish();
+    const ramadan = await runRamadanAutomation();
 
     return NextResponse.json({
       ok: true,
       seasonal,
       expired,
       ayatCount: ayat.length,
+      scheduledPublish,
+      ramadan,
       ranAt: new Date().toISOString(),
     });
   } catch (error) {

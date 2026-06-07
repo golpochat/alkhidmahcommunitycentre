@@ -37,6 +37,35 @@ function isEmptyBlock(element: HTMLElement) {
   return !text && !hasBr;
 }
 
+function readInlineFormatting(element: HTMLElement) {
+  const styleAttr = (element.getAttribute("style") ?? "").toLowerCase();
+  const bold =
+    /font-weight:\s*(?:bold|700)/.test(styleAttr) ||
+    element.style.fontWeight === "bold" ||
+    Number.parseInt(element.style.fontWeight, 10) >= 700;
+  const italic =
+    /font-style:\s*(?:italic|oblique)/.test(styleAttr) ||
+    element.style.fontStyle === "italic" ||
+    element.style.fontStyle === "oblique";
+  const underline =
+    /text-decoration(?:-line)?:\s*[^;]*underline/.test(styleAttr) ||
+    element.style.textDecorationLine === "underline" ||
+    element.style.textDecoration.includes("underline");
+
+  return { bold, italic, underline };
+}
+
+function wrapInlineFormatting(inner: string, element: HTMLElement) {
+  const { bold, italic, underline } = readInlineFormatting(element);
+  let result = inner;
+
+  if (underline) result = `<u>${result}</u>`;
+  if (italic) result = `<i>${result}</i>`;
+  if (bold) result = `<b>${result}</b>`;
+
+  return result;
+}
+
 function serializeInlineNodes(parent: Node): string {
   let html = "";
 
@@ -72,8 +101,8 @@ function serializeInlineNodes(parent: Node): string {
       return;
     }
 
-    if (tag === "SPAN") {
-      html += serializeInlineNodes(node);
+    if (tag === "SPAN" || tag === "FONT") {
+      html += wrapInlineFormatting(serializeInlineNodes(node), node);
       return;
     }
 
@@ -123,6 +152,58 @@ function serializeBlockElement(element: HTMLElement) {
   }
 
   return segments.join("");
+}
+
+function replaceElementTag(element: Element, tagName: string) {
+  const replacement = document.createElement(tagName);
+  while (element.firstChild) {
+    replacement.appendChild(element.firstChild);
+  }
+  element.replaceWith(replacement);
+}
+
+/** Convert browser contenteditable markup into semantic b/i/u tags before saving. */
+export function normalizeNotesEditorDom(root: HTMLElement) {
+  root.querySelectorAll("em").forEach((element) => replaceElementTag(element, "i"));
+  root.querySelectorAll("strong").forEach((element) => replaceElementTag(element, "b"));
+
+  const spans = Array.from(root.querySelectorAll("span, font")).reverse();
+  for (const span of spans) {
+    if (!(span instanceof HTMLElement)) continue;
+    const { bold, italic, underline } = readInlineFormatting(span);
+    const fragment = document.createDocumentFragment();
+
+    while (span.firstChild) {
+      fragment.appendChild(span.firstChild);
+    }
+
+    if (!bold && !italic && !underline) {
+      span.replaceWith(fragment);
+      continue;
+    }
+
+    let wrapped: Node = fragment;
+
+    if (underline) {
+      const underlineTag = document.createElement("u");
+      underlineTag.appendChild(wrapped);
+      wrapped = underlineTag;
+    }
+
+    if (italic) {
+      const italicTag = document.createElement("i");
+      italicTag.appendChild(wrapped);
+      wrapped = italicTag;
+    }
+
+    if (bold) {
+      const boldTag = document.createElement("b");
+      boldTag.appendChild(wrapped);
+      wrapped = boldTag;
+    }
+
+    span.replaceWith(wrapped);
+  }
 }
 
 export function serializeNotesEditorElement(editor: HTMLElement): string {

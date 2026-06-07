@@ -48,6 +48,8 @@ export interface SerializedEvent {
   location: string | null;
   imageUrl: string | null;
   published: boolean;
+  publishAt: string | null;
+  unpublishAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -72,6 +74,8 @@ export function serializeEvent(event: {
   location: string | null;
   imageUrl: string | null;
   published: boolean;
+  publishAt: Date | null;
+  unpublishAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }): SerializedEvent {
@@ -86,6 +90,8 @@ export function serializeEvent(event: {
     location: event.location,
     imageUrl: event.imageUrl,
     published: event.published,
+    publishAt: event.publishAt?.toISOString() ?? null,
+    unpublishAt: event.unpublishAt?.toISOString() ?? null,
     createdAt: event.createdAt.toISOString(),
     updatedAt: event.updatedAt.toISOString(),
   };

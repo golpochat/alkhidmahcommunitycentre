@@ -5,6 +5,7 @@ export const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL || "https://alkhidmah.ie";
 
 export const LOGO_PATH = "/logo/logo.png";
+export const LOGO_SVG_PATH = "/logo/logo.svg";
 export const FAVICON_PATH = "/favicon.png";
 export const FAVICON_HREF = "/favicon.png?v=7";
 
@@ -20,15 +21,14 @@ export const SOCIAL_LINKS = {
   facebook: "https://facebook.com/alkhidmahmosque",
   instagram: "https://instagram.com/alkhidmahmosque",
   youtube: "https://youtube.com/@alkhidmahmosque",
-  twitter: "https://twitter.com/alkhidmahmosque",
-};
+} as const;
 
 export const EDUCATION_NAV_LABEL = "Education";
 export const EDUCATION_PATH = "/education";
 export const EDUCATION_API_PATH = "/api/education";
 export const ADMIN_EDUCATION_PATH = "/admin/education";
 
-/** About page sections — set to true when ready to show or wire to CMS/settings */
+/** @deprecated Use About CMS settings — visibility controlled in admin */
 export const ABOUT_PAGE_VISIBILITY = {
   values: false,
   committee: false,
