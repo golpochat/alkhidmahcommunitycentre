@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button-link";
 import type { SerializedEvent } from "@/lib/events";
 import { getGalleryCategoryLabel } from "@/lib/gallery";
-import { SITE_NAME } from "@/lib/constants";
 
 interface GalleryStripItem {
   id: string;
@@ -18,9 +17,10 @@ interface GalleryStripItem {
 interface EventDetailProps {
   event: SerializedEvent;
   galleryItems?: GalleryStripItem[];
+  siteName: string;
 }
 
-export function EventDetail({ event, galleryItems = [] }: EventDetailProps) {
+export function EventDetail({ event, galleryItems = [], siteName }: EventDetailProps) {
   const endLabel = event.endAt
     ? format(parseISO(event.endAt), "HH:mm")
     : null;
@@ -82,7 +82,7 @@ export function EventDetail({ event, galleryItems = [] }: EventDetailProps) {
             {event.description}
           </p>
           <p className="text-sm text-muted-foreground">
-            Hosted by {SITE_NAME}. We look forward to welcoming you.
+            Hosted by {siteName}. We look forward to welcoming you.
           </p>
         </div>
       </section>

@@ -46,8 +46,8 @@ export function RegisterForm() {
         throw new Error(result.error || "Registration failed");
       }
 
-      toast.success("Account created");
-      router.push(result.redirect || "/user");
+      toast.success("Account created — check your email to verify");
+      router.push(result.redirect || "/register/check-email");
       router.refresh();
     } catch (error) {
       toast.error(

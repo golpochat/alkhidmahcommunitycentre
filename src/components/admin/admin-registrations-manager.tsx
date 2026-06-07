@@ -30,16 +30,20 @@ export function AdminRegistrationsManager() {
   const [classes, setClasses] = useState<SerializedClass[]>([]);
   const [loading, setLoading] = useState(true);
   const [classId, setClassId] = useState("all");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
+  const today = format(new Date(), "yyyy-MM-dd");
+  const [dateFilter, setDateFilter] = useState<"today" | "all" | "custom">("today");
+  const [from, setFrom] = useState(today);
+  const [to, setTo] = useState(today);
+  const queryFrom = dateFilter === "all" ? "" : dateFilter === "today" ? today : from;
+  const queryTo = dateFilter === "all" ? "" : dateFilter === "today" ? today : to;
 
   const queryString = useMemo(() => {
     const params = new URLSearchParams();
     if (classId !== "all") params.set("classId", classId);
-    if (from) params.set("from", from);
-    if (to) params.set("to", to);
+    if (queryFrom) params.set("from", queryFrom);
+    if (queryTo) params.set("to", queryTo);
     return params.toString();
-  }, [classId, from, to]);
+  }, [classId, queryFrom, queryTo]);
 
   useEffect(() => {
     async function loadData() {
@@ -120,13 +124,56 @@ export function AdminRegistrationsManager() {
               </SelectContent>
             </Select>
           </div>
+          <div className="space-y-2 md:col-span-2">
+            <Label>Date range</Label>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant={dateFilter === "today" ? "default" : "outline"}
+                className={dateFilter === "today" ? "btn-gold" : "border-gold text-gold"}
+                onClick={() => {
+                  setDateFilter("today");
+                  setFrom(today);
+                  setTo(today);
+                }}
+              >
+                Today
+              </Button>
+              <Button
+                type="button"
+                variant={dateFilter === "all" ? "default" : "outline"}
+                className={dateFilter === "all" ? "btn-gold" : "border-gold text-gold"}
+                onClick={() => setDateFilter("all")}
+              >
+                All dates
+              </Button>
+            </div>
+          </div>
           <div className="space-y-2">
             <Label htmlFor="from">From</Label>
-            <Input id="from" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+            <Input
+              id="from"
+              type="date"
+              value={dateFilter === "today" ? today : from}
+              disabled={dateFilter === "all"}
+              onChange={(e) => {
+                setDateFilter("custom");
+                setFrom(e.target.value);
+              }}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="to">To</Label>
-            <Input id="to" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+            <Input
+              id="to"
+              type="date"
+              value={dateFilter === "today" ? today : to}
+              disabled={dateFilter === "all"}
+              onChange={(e) => {
+                setDateFilter("custom");
+                setTo(e.target.value);
+              }}
+            />
           </div>
         </CardContent>
       </Card>

@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 
 const PASSWORD_RESET_TTL_MS = 60 * 60 * 1000;
 const EMAIL_CHANGE_TTL_MS = 24 * 60 * 60 * 1000;
+const EMAIL_VERIFY_TTL_MS = 48 * 60 * 60 * 1000;
 
 export function generateAuthTokenValue() {
   return randomBytes(32).toString("hex");
@@ -56,6 +57,27 @@ export async function createEmailChangeToken(userId: string, newEmail: string) {
   return token;
 }
 
+export async function createEmailVerificationToken(userId: string) {
+  const token = generateAuthTokenValue();
+  const tokenHash = hashAuthToken(token);
+  const expiresAt = new Date(Date.now() + EMAIL_VERIFY_TTL_MS);
+
+  await db.authToken.deleteMany({
+    where: { userId, type: AuthTokenType.EMAIL_VERIFY },
+  });
+
+  await db.authToken.create({
+    data: {
+      userId,
+      type: AuthTokenType.EMAIL_VERIFY,
+      tokenHash,
+      expiresAt,
+    },
+  });
+
+  return token;
+}
+
 export async function findValidAuthToken(token: string, type: AuthTokenType) {
   const tokenHash = hashAuthToken(token);
 
@@ -65,6 +87,26 @@ export async function findValidAuthToken(token: string, type: AuthTokenType) {
   });
 
   if (!record || record.type !== type) {
+    return null;
+  }
+
+  if (record.expiresAt < new Date()) {
+    await db.authToken.delete({ where: { id: record.id } });
+    return null;
+  }
+
+  return record;
+}
+
+export async function findValidAuthTokenAny(token: string) {
+  const tokenHash = hashAuthToken(token);
+
+  const record = await db.authToken.findUnique({
+    where: { tokenHash },
+    include: { user: true },
+  });
+
+  if (!record) {
     return null;
   }
 

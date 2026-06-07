@@ -20,6 +20,7 @@ import {
   getDonationStatementBranding,
   loadStatementLogoPng,
 } from "@/lib/donation-statement-branding";
+import { loadDonationProviderFeeConfigs } from "@/lib/donation-accounting-server";
 
 export const runtime = "nodejs";
 
@@ -42,6 +43,8 @@ export async function GET(request: NextRequest) {
     const { page, pageSize } = parseDonationPagination(searchParams);
     const where = buildDonationWhere(filters);
 
+    const feeConfigs = await loadDonationProviderFeeConfigs();
+
     const [total, donations] = await Promise.all([
       db.donation.count({ where }),
       db.donation.findMany({
@@ -55,7 +58,7 @@ export async function GET(request: NextRequest) {
     const totalPages = total === 0 ? 0 : Math.ceil(total / pageSize);
 
     return NextResponse.json({
-      items: donations.map(serializeDonation),
+      items: donations.map((donation) => serializeDonation(donation, feeConfigs)),
       total,
       page,
       pageSize,
@@ -79,12 +82,19 @@ export async function POST(request: NextRequest) {
     const format = parseExportFormat(searchParams.get("format")) ?? "csv";
     const filters = filtersFromSearchParams(searchParams);
 
-    const donations = await db.donation.findMany({
-      where: buildDonationWhere(filters),
-      orderBy: { createdAt: "desc" },
-    });
+    const [feeConfigs, categories, donations] = await Promise.all([
+      loadDonationProviderFeeConfigs(),
+      db.donationCategory.findMany({
+        select: { slug: true, name: true },
+        orderBy: { sortOrder: "asc" },
+      }),
+      db.donation.findMany({
+        where: buildDonationWhere(filters),
+        orderBy: { createdAt: "desc" },
+      }),
+    ]);
 
-    const rows = mapDonationsToExportRows(donations);
+    const rows = mapDonationsToExportRows(donations, feeConfigs, categories);
     const filename = exportFilename(format, filters.from, filters.to);
 
     if (format === "xlsx") {
@@ -105,6 +115,8 @@ export async function POST(request: NextRequest) {
         to: filters.to,
         branding,
         logoPng,
+        donations,
+        feeConfigs,
       });
       return new NextResponse(new Uint8Array(buffer), {
         headers: {

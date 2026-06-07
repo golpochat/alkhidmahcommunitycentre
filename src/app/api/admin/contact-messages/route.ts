@@ -15,7 +15,7 @@ function buildStatusFilter(status: string | null) {
 
 export async function GET(request: NextRequest) {
   try {
-    await requirePermission(PERMISSIONS.registrations.manage);
+    await requirePermission(PERMISSIONS.contact.manage);
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
 
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    await requirePermission(PERMISSIONS.registrations.manage);
+    await requirePermission(PERMISSIONS.contact.manage);
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
 

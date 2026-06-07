@@ -124,6 +124,10 @@ export const registerSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
+export const resendVerificationSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
+});
+
 export const inviteUserSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   name: z.string().min(2, "Name must be at least 2 characters").optional(),

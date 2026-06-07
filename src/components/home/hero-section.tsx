@@ -1,16 +1,20 @@
+"use client";
+
 import Image from "next/image";
 import { ArrowRight, Heart } from "lucide-react";
-import { SITE_NAME } from "@/lib/constants";
+import { usePublicSiteBranding } from "@/components/layout/site-branding-context";
 import { IMAGES } from "@/lib/images";
 import { ButtonLink } from "@/components/ui/button-link";
 
 export function HeroSection() {
+  const { siteName } = usePublicSiteBranding();
+
   return (
     <section className="relative flex min-h-[85vh] max-w-full items-center overflow-hidden">
       <div className="image-frame image-frame-hero absolute inset-0">
         <Image
           src={IMAGES.hero}
-          alt={`${SITE_NAME} — masjid and community`}
+          alt={`${siteName} — masjid and community`}
           fill
           priority
           className="object-cover brightness-105"
@@ -21,7 +25,7 @@ export function HeroSection() {
       <div className="section-container relative z-10 py-section">
         <div className="max-w-3xl">
           <p className="mb-4 font-heading text-sm uppercase tracking-[0.3em] text-gold">
-            {SITE_NAME}
+            {siteName}
           </p>
           <h1 className="heading-display mb-6 text-balance text-white">
             Serving the Muslim Community of Clondalkin

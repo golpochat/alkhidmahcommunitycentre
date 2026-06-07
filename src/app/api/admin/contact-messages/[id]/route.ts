@@ -13,7 +13,7 @@ export async function PATCH(
   { params }: { params: { id: string } },
 ) {
   try {
-    await requirePermission(PERMISSIONS.registrations.manage);
+    await requirePermission(PERMISSIONS.contact.manage);
     const body = patchSchema.parse(await request.json());
 
     const updated = await db.contactMessage.update({

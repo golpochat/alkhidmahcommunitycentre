@@ -36,15 +36,25 @@ export function AdminLoginForm() {
       });
 
       if (!response.ok) {
-        throw new Error("Invalid credentials");
+        const result = await response.json();
+        if (result.code === "EMAIL_NOT_VERIFIED") {
+          toast.error(result.error || "Please verify your email first");
+          router.push(
+            `/register/check-email?email=${encodeURIComponent(formData.email)}`,
+          );
+          return;
+        }
+        throw new Error(result.error || "Invalid credentials");
       }
 
       const result = await response.json();
       toast.success("Login successful");
       router.push(result.redirect || "/login");
       router.refresh();
-    } catch {
-      toast.error("Invalid email or password");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Invalid email or password",
+      );
     } finally {
       setSubmitting(false);
     }

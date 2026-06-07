@@ -12,6 +12,7 @@ export function VerifyEmailPageContent() {
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("");
   const [email, setEmail] = useState("");
+  const [purpose, setPurpose] = useState<"registration" | "email_change">("email_change");
 
   useEffect(() => {
     if (!token) {
@@ -29,8 +30,13 @@ export function VerifyEmailPageContent() {
         }
 
         setEmail(data.email || "");
+        setPurpose(data.purpose === "registration" ? "registration" : "email_change");
         setStatus("success");
-        setMessage("Your email address has been updated successfully.");
+        setMessage(
+          data.purpose === "registration"
+            ? "Your email address has been verified. You can now sign in."
+            : "Your email address has been updated successfully.",
+        );
       })
       .catch((error) => {
         setStatus("error");
@@ -53,11 +59,11 @@ export function VerifyEmailPageContent() {
           </div>
           <CardTitle className="font-heading text-2xl">Email Verification</CardTitle>
           <CardDescription>
-            {status === "loading" ? "Confirming your new email address..." : message}
+            {status === "loading" ? "Confirming your email address..." : message}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 text-center text-sm">
-          {status === "success" && email && (
+          {status === "success" && email && purpose === "email_change" && (
             <p className="text-muted-foreground">
               Your account email is now <strong>{email}</strong>.
             </p>

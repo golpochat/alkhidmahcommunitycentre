@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json(donations.map(serializeDonation));
+    return NextResponse.json(donations.map((donation) => serializeDonation(donation)));
   } catch {
     return NextResponse.json({ error: "Failed to fetch donations" }, { status: 500 });
   }

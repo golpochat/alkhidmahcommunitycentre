@@ -512,7 +512,8 @@
   }
 
   .admin-contact-message-body {
-    @apply max-h-80 overflow-y-auto whitespace-pre-wrap rounded-lg border border-border bg-muted/40 p-4 text-sm leading-relaxed;
+    @apply max-h-80 overflow-y-auto whitespace-pre-wrap rounded-lg border border-border p-4 text-sm leading-relaxed;
+    background-color: color-mix(in srgb, var(--muted) 40%, transparent);
   }
 
   .admin-publish-checklist {

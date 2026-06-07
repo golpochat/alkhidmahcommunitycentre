@@ -19,7 +19,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { SITE_NAME } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 const links = [
@@ -65,7 +64,7 @@ function SidebarNav({
   );
 }
 
-export function SuperAdminSidebar() {
+export function SuperAdminSidebar({ siteName }: { siteName: string }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -74,7 +73,7 @@ export function SuperAdminSidebar() {
       <div className="flex items-center justify-between border-b border-border bg-card p-4 lg:hidden">
         <div>
           <p className="font-heading text-lg font-semibold text-gold">Super Admin</p>
-          <p className="text-xs text-muted-foreground">{SITE_NAME}</p>
+          <p className="text-xs text-muted-foreground">{siteName}</p>
         </div>
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger className="inline-flex size-9 items-center justify-center rounded-lg border border-gold text-gold transition-colors hover:bg-gold/10">
@@ -94,7 +93,7 @@ export function SuperAdminSidebar() {
           <Link href="/super-admin" className="font-heading text-xl font-semibold text-gold">
             Super Admin
           </Link>
-          <p className="text-xs text-muted-foreground">{SITE_NAME}</p>
+          <p className="text-xs text-muted-foreground">{siteName}</p>
         </div>
         <SidebarNav pathname={pathname} />
       </aside>

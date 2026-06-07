@@ -1,22 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { canManagePrayerTimes, getSession } from "@/lib/auth";
+import { requireDisplayAdminSession } from "@/lib/display-admin-auth";
 import { serializeDisplayNotice } from "@/lib/display-api";
 import { displayNoticeSchema } from "@/lib/validations";
-
-async function requireDisplayAdmin() {
-  const session = await getSession();
-  if (!session) throw new Error("Unauthorized");
-  if (!canManagePrayerTimes(session)) throw new Error("Forbidden");
-  return session;
-}
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    await requireDisplayAdmin();
+    await requireDisplayAdminSession();
     const body = await request.json();
     const validated = displayNoticeSchema.parse(body);
 
@@ -49,7 +42,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await requireDisplayAdmin();
+    await requireDisplayAdminSession();
     await db.displayNotice.delete({ where: { id: params.id } });
     return NextResponse.json({ success: true });
   } catch (error) {

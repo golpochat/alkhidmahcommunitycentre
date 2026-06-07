@@ -7,6 +7,7 @@
     "build": "node scripts/prisma-with-env.mjs generate && next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "vitest run",
     "postinstall": "node scripts/prisma-with-env.mjs generate",
     "prisma": "node scripts/prisma-with-env.mjs",
     "db:push": "node scripts/prisma-with-env.mjs db push",
@@ -87,6 +88,7 @@
     "prisma": "^5.22.0",
     "tailwindcss": "^3.4.1",
     "tsx": "^4.22.3",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.6"
   }
 }

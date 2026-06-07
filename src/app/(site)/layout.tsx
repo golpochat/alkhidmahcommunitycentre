@@ -1,6 +1,7 @@
 import { Footer } from "@/components/layout/footer";
 import { Navbar } from "@/components/layout/navbar";
 import { PwaRegister } from "@/components/layout/pwa-register";
+import { SiteBrandingProvider } from "@/components/layout/site-branding-context";
 import { SiteStructuredData } from "@/components/layout/site-structured-data";
 import { getFreshSession } from "@/lib/auth";
 import { buildSiteAuthNav } from "@/lib/site-auth-nav";
@@ -18,12 +19,16 @@ export default async function SiteLayout({
   const authNav = buildSiteAuthNav(session);
 
   return (
-    <div className="flex min-h-screen max-w-full flex-col overflow-x-hidden">
-      <PwaRegister />
-      <SiteStructuredData />
-      <Navbar authNav={authNav} logoPath={branding.logoPath} />
-      <main className="flex-1 max-w-full overflow-x-hidden">{children}</main>
-      <Footer logoPath={branding.logoPath} />
-    </div>
+    <SiteBrandingProvider
+      value={{ siteName: branding.siteName, logoPath: branding.logoPath }}
+    >
+      <div className="flex min-h-screen max-w-full flex-col overflow-x-hidden">
+        <PwaRegister />
+        <SiteStructuredData />
+        <Navbar authNav={authNav} logoPath={branding.logoPath} />
+        <main className="flex-1 max-w-full overflow-x-hidden">{children}</main>
+        <Footer logoPath={branding.logoPath} />
+      </div>
+    </SiteBrandingProvider>
   );
 }

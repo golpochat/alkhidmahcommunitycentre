@@ -7,6 +7,7 @@ import { getSeasonalFlags } from "@/lib/seasonal";
 import { getCachedPrayerTimesForDisplay } from "@/lib/display-api";
 import { runRamadanAutomation } from "@/lib/ramadan-cron";
 import { runScheduledPublish } from "@/lib/scheduled-publish";
+import { isValidCronRequest } from "@/lib/cron-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -21,8 +22,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const token = authHeader?.replace(/^Bearer\s+/i, "").trim();
-  if (token !== cronSecret) {
+  if (!isValidCronRequest(authHeader, cronSecret)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

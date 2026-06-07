@@ -52,6 +52,20 @@ export function normalizeGatewayFeeConfig(
   };
 }
 
+/** Fee deducted from a charge (percent + fixed), rounded to the nearest cent. */
+export function calculateGatewayFeeOnCharge(
+  chargeCents: number,
+  config: GatewayFeeConfig,
+): number {
+  if (chargeCents <= 0) {
+    return 0;
+  }
+
+  const normalizedConfig = normalizeGatewayFeeConfig(config);
+  const rate = normalizedConfig.feePercent / 100;
+  return Math.round(chargeCents * rate + normalizedConfig.feeFixedCents);
+}
+
 /** Gross-up so the mosque receives the full base amount after gateway fees. */
 export function calculateDonationFeeBreakdown(
   baseAmountEuros: number,
@@ -64,11 +78,28 @@ export function calculateDonationFeeBreakdown(
     : 0;
   const baseAmountCents = safeBaseEuros * 100;
 
-  if (!coverFee || !normalizedConfig.allowCoverFee || baseAmountCents <= 0) {
+  if (baseAmountCents <= 0) {
     return {
       baseAmountEuros: safeBaseEuros,
       baseAmountCents,
       processingFeeCents: 0,
+      totalCents: 0,
+      coverFee: false,
+    };
+  }
+
+  const shouldCoverFee = coverFee && normalizedConfig.allowCoverFee;
+
+  if (!shouldCoverFee) {
+    const processingFeeCents = calculateGatewayFeeOnCharge(
+      baseAmountCents,
+      normalizedConfig,
+    );
+
+    return {
+      baseAmountEuros: safeBaseEuros,
+      baseAmountCents,
+      processingFeeCents,
       totalCents: baseAmountCents,
       coverFee: false,
     };
@@ -104,8 +135,32 @@ export function calculateDonationFeeBreakdown(
 export function getDonationTotalCents(input: {
   amount: number;
   processingFeeCents?: number | null;
+  coverFee?: boolean | null;
 }) {
-  return input.amount * 100 + (input.processingFeeCents ?? 0);
+  const baseCents = input.amount * 100;
+  const feeCents = input.processingFeeCents ?? 0;
+
+  if (input.coverFee && feeCents > 0) {
+    return baseCents + feeCents;
+  }
+
+  return baseCents;
+}
+
+/** Estimated amount the mosque receives after gateway fees. */
+export function getDonationNetCents(input: {
+  amount: number;
+  processingFeeCents?: number | null;
+  coverFee?: boolean | null;
+}) {
+  const baseCents = input.amount * 100;
+  const feeCents = input.processingFeeCents ?? 0;
+
+  if (input.coverFee) {
+    return baseCents;
+  }
+
+  return Math.max(0, baseCents - feeCents);
 }
 
 export function formatDonationMoney(

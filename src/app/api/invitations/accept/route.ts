@@ -52,6 +52,7 @@ export async function POST(request: NextRequest) {
           roleId: invitation.roleId,
           passwordHash,
           isActive: true,
+          emailVerified: true,
         },
       });
 

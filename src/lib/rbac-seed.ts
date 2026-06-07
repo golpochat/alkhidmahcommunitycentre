@@ -59,8 +59,20 @@ export const DEFAULT_PERMISSIONS = [
   {
     key: PERMISSIONS.prayerTimes.manage,
     name: "Manage prayer times",
-    description: "Update prayer schedules and overrides",
+    description: "Update prayer schedules, overrides, and timetables",
     group: "prayer_times",
+  },
+  {
+    key: PERMISSIONS.display.manage,
+    name: "Manage TV display",
+    description: "Configure mosque TV screen notices, ayat, ticker, and settings",
+    group: "display",
+  },
+  {
+    key: PERMISSIONS.about.manage,
+    name: "Manage about page",
+    description: "Edit the public About page content",
+    group: "about",
   },
   {
     key: PERMISSIONS.registrations.manage,
@@ -69,9 +81,21 @@ export const DEFAULT_PERMISSIONS = [
     group: "registrations",
   },
   {
+    key: PERMISSIONS.contact.manage,
+    name: "Manage contact messages",
+    description: "Read and handle inbound contact form messages",
+    group: "contact",
+  },
+  {
     key: PERMISSIONS.content.write,
     name: "Write admin content",
-    description: "Access create, edit, and upload admin pages",
+    description: "Create, edit, and upload on module admin pages",
+    group: "content",
+  },
+  {
+    key: PERMISSIONS.content.audit,
+    name: "View content audit log",
+    description: "Review publish and unpublish history",
     group: "content",
   },
 ] as const;
@@ -130,7 +154,9 @@ export const DEFAULT_ROLES: Array<{
       PERMISSIONS.gallery.manage,
       PERMISSIONS.gallery.delete,
       PERMISSIONS.prayerTimes.manage,
+      PERMISSIONS.display.manage,
       PERMISSIONS.content.write,
+      PERMISSIONS.content.audit,
     ],
   },
   {
@@ -144,7 +170,10 @@ export const DEFAULT_ROLES: Array<{
       PERMISSIONS.education.delete,
       PERMISSIONS.donations.manage,
       PERMISSIONS.registrations.manage,
+      PERMISSIONS.contact.manage,
+      PERMISSIONS.about.manage,
       PERMISSIONS.content.write,
+      PERMISSIONS.content.audit,
     ],
   },
   {

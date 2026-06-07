@@ -447,8 +447,10 @@ export function drawPageFooters(
   const totalPages = pages.length;
 
   pages.forEach((footerPage, index) => {
+    const { width: pageWidth } = footerPage.getSize();
+    const contentWidth = pageWidth - PDF_MARGIN * 2;
     const footerTop = PDF_MARGIN + 38;
-    drawHorizontalRule(footerPage, footerTop);
+    drawHorizontalRule(footerPage, footerTop, pageWidth);
 
     footerPage.drawText(
       `Registered charity number: ${branding.charityNumber}`,
@@ -465,7 +467,7 @@ export function drawPageFooters(
       `${branding.siteName} · ${branding.address}`,
       font,
       7.5,
-      PDF_PAGE.width - PDF_MARGIN * 2,
+      contentWidth,
     );
     let footerY = footerTop - 28;
     for (const line of addressLines) {
@@ -487,14 +489,14 @@ export function drawPageFooters(
         size: 7.5,
         font,
         color: MUTED,
-        maxWidth: PDF_PAGE.width - PDF_MARGIN * 2,
+        maxWidth: contentWidth,
       },
     );
 
     const pageLabel = `Page ${index + 1} of ${totalPages}`;
     const pageLabelWidth = font.widthOfTextAtSize(pageLabel, 8);
     footerPage.drawText(pageLabel, {
-      x: PDF_PAGE.width - PDF_MARGIN - pageLabelWidth,
+      x: pageWidth - PDF_MARGIN - pageLabelWidth,
       y: footerTop - 16,
       size: 8,
       font,
@@ -504,7 +506,7 @@ export function drawPageFooters(
     const printedLabel = `Printed: ${printedAt}`;
     const printedWidth = font.widthOfTextAtSize(printedLabel, 8);
     footerPage.drawText(printedLabel, {
-      x: PDF_PAGE.width - PDF_MARGIN - printedWidth,
+      x: pageWidth - PDF_MARGIN - printedWidth,
       y: footerTop - 28,
       size: 8,
       font,
@@ -514,5 +516,61 @@ export function drawPageFooters(
 }
 
 export function formatPrintedAt(date = new Date()) {
-  return format(date, "d MMM yyyy 'at' HH:mm");
+  return format(date, "dd MMM yyyy 'at' HH:mm");
+}
+
+export function drawDonationStatementFooters(
+  pdfDoc: PDFDocument,
+  branding: DonationStatementBranding,
+  printedAt: string,
+  fonts: PdfFonts,
+  buildPrimaryLine: (branding: DonationStatementBranding) => string,
+  buildSecondaryLine: (pageNumber: number, totalPages: number) => string,
+) {
+  const { font } = fonts;
+  const pages = pdfDoc.getPages();
+  const totalPages = pages.length;
+  const footerFontSize = 7;
+  const lineHeight = 9;
+
+  pages.forEach((footerPage, index) => {
+    const { width: pageWidth } = footerPage.getSize();
+    const contentWidth = pageWidth - PDF_MARGIN * 2;
+    const primaryLine = toPdfSafeText(buildPrimaryLine(branding));
+    const secondaryLine = toPdfSafeText(
+      buildSecondaryLine(index + 1, totalPages),
+    );
+    const primaryLines = wrapText(primaryLine, font, footerFontSize, contentWidth);
+    const secondaryWidth = font.widthOfTextAtSize(secondaryLine, footerFontSize);
+    const secondaryY = PDF_MARGIN + 10;
+    const ruleY =
+      secondaryY +
+      lineHeight +
+      6 +
+      primaryLines.length * lineHeight +
+      4;
+
+    drawHorizontalRule(footerPage, ruleY, pageWidth);
+
+    let primaryY = ruleY - 12;
+    for (const line of primaryLines) {
+      const lineWidth = font.widthOfTextAtSize(line, footerFontSize);
+      footerPage.drawText(line, {
+        x: Math.max(PDF_MARGIN, (pageWidth - lineWidth) / 2),
+        y: primaryY,
+        size: footerFontSize,
+        font,
+        color: MUTED,
+      });
+      primaryY -= lineHeight;
+    }
+
+    footerPage.drawText(secondaryLine, {
+      x: Math.max(PDF_MARGIN, (pageWidth - secondaryWidth) / 2),
+      y: secondaryY,
+      size: footerFontSize,
+      font,
+      color: MUTED,
+    });
+  });
 }

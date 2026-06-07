@@ -24,12 +24,14 @@ async function main() {
       roleId: superAdminRoleId,
       passwordHash,
       name: "Super Admin",
+      emailVerified: true,
     },
     create: {
       email: adminEmail,
       passwordHash,
       name: "Super Admin",
       roleId: superAdminRoleId,
+      emailVerified: true,
     },
   });
 

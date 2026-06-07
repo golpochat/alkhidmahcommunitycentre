@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import {
-  createSession,
-  getHomeRouteForSession,
-  setAuthCookie,
-} from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getRoleIdBySlug } from "@/lib/seed-rbac";
 import { MEMBER_ROLE_SLUG } from "@/lib/rbac-seed";
-import { buildSessionUserFromRecord } from "@/lib/session-access";
+import {
+  createEmailVerificationToken,
+  getSiteUrl,
+} from "@/lib/auth-tokens";
+import { sendRegistrationVerificationEmail } from "@/lib/email";
 import { registerSchema } from "@/lib/validations";
 
 export async function POST(request: NextRequest) {
@@ -35,41 +34,29 @@ export async function POST(request: NextRequest) {
         name: validated.name,
         passwordHash,
         roleId: memberRoleId,
+        emailVerified: false,
       },
       select: {
         id: true,
         email: true,
         name: true,
-        role: {
-          select: {
-            id: true,
-            slug: true,
-            name: true,
-            tier: true,
-            permissions: {
-              select: {
-                permission: { select: { key: true } },
-              },
-            },
-          },
-        },
       },
     });
 
-    const sessionUser = await buildSessionUserFromRecord(user);
-    const token = await createSession(sessionUser);
-    const response = NextResponse.json({
-      success: true,
-      user: {
-        email: user.email,
-        roleSlug: sessionUser.roleSlug,
-        roleName: sessionUser.roleName,
-        name: user.name,
-      },
-      redirect: getHomeRouteForSession(sessionUser),
+    const token = await createEmailVerificationToken(user.id);
+    const verifyUrl = `${getSiteUrl()}/verify-email?token=${encodeURIComponent(token)}`;
+    await sendRegistrationVerificationEmail({
+      email: user.email,
+      name: user.name,
+      verifyUrl,
     });
-    setAuthCookie(response, token);
-    return response;
+
+    return NextResponse.json({
+      success: true,
+      verifyRequired: true,
+      email: user.email,
+      redirect: `/register/check-email?email=${encodeURIComponent(user.email)}`,
+    });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Registration failed" },

@@ -31,7 +31,7 @@ const aboutContentSchema = z.object({
 
 export async function GET() {
   try {
-    await requirePermission(PERMISSIONS.content.write);
+    await requirePermission(PERMISSIONS.about.manage);
     const content = await getAboutPageContent();
     return NextResponse.json(content);
   } catch (error) {
@@ -44,7 +44,7 @@ export async function GET() {
 
 export async function PUT(request: NextRequest) {
   try {
-    await requirePermission(PERMISSIONS.content.write);
+    await requirePermission(PERMISSIONS.about.manage);
 
     const body = await request.json();
     const validated = aboutContentSchema.parse(body) as AboutPageContent;

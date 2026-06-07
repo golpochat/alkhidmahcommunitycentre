@@ -80,6 +80,7 @@ model User {
   email          String          @unique
   passwordHash   String
   name           String?
+  emailVerified  Boolean         @default(false)
   roleId         String
   isActive       Boolean         @default(true)
   role           AccessRole      @relation(fields: [roleId], references: [id])
@@ -115,6 +116,7 @@ model UserAdminLog {
 enum AuthTokenType {
   PASSWORD_RESET
   EMAIL_CHANGE
+  EMAIL_VERIFY
 }
 
 model AuthToken {

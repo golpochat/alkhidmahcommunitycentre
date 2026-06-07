@@ -23,11 +23,21 @@ export const PERMISSIONS = {
   prayerTimes: {
     manage: "prayer_times.manage",
   },
+  display: {
+    manage: "display.manage",
+  },
+  about: {
+    manage: "about.manage",
+  },
   registrations: {
     manage: "registrations.manage",
   },
+  contact: {
+    manage: "contact.manage",
+  },
   content: {
     write: "content.write",
+    audit: "content.audit",
   },
 } as const;
 
@@ -42,8 +52,12 @@ export type PermissionKey =
   | typeof PERMISSIONS.education.delete
   | typeof PERMISSIONS.donations.manage
   | typeof PERMISSIONS.prayerTimes.manage
+  | typeof PERMISSIONS.display.manage
+  | typeof PERMISSIONS.about.manage
   | typeof PERMISSIONS.registrations.manage
-  | typeof PERMISSIONS.content.write;
+  | typeof PERMISSIONS.contact.manage
+  | typeof PERMISSIONS.content.write
+  | typeof PERMISSIONS.content.audit;
 
 export const ALL_PERMISSION_KEYS: PermissionKey[] = [
   PERMISSIONS.users.manage,
@@ -56,8 +70,12 @@ export const ALL_PERMISSION_KEYS: PermissionKey[] = [
   PERMISSIONS.education.delete,
   PERMISSIONS.donations.manage,
   PERMISSIONS.prayerTimes.manage,
+  PERMISSIONS.display.manage,
+  PERMISSIONS.about.manage,
   PERMISSIONS.registrations.manage,
+  PERMISSIONS.contact.manage,
   PERMISSIONS.content.write,
+  PERMISSIONS.content.audit,
 ];
 
 export const PERMISSION_GROUP_LABELS: Record<string, string> = {
@@ -68,6 +86,9 @@ export const PERMISSION_GROUP_LABELS: Record<string, string> = {
   education: "Education",
   donations: "Donations",
   prayer_times: "Prayer times",
+  display: "TV Display",
+  about: "About page",
   registrations: "Registrations",
+  contact: "Contact",
   content: "Content",
 };

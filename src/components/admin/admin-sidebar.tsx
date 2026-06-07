@@ -25,14 +25,18 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { SITE_NAME, EDUCATION_NAV_LABEL, ADMIN_EDUCATION_PATH } from "@/lib/constants";
+import { EDUCATION_NAV_LABEL, ADMIN_EDUCATION_PATH } from "@/lib/constants";
 import {
   canManageClasses,
   canManageDonations,
   canManageEvents,
   canManageGallery,
   canManagePrayerTimes,
+  canManageDisplay,
+  canManageAboutPage,
   canManageRegistrations,
+  canManageContactMessages,
+  canViewContentAudit,
   canWriteAdminContent,
 } from "@/lib/rbac";
 import { cn } from "@/lib/utils";
@@ -48,7 +52,7 @@ const navLinks = [
     href: "/admin/audit",
     label: "Content Audit",
     icon: History,
-    canAccess: () => true,
+    canAccess: canViewContentAudit,
   },
   {
     href: "/admin/events",
@@ -60,7 +64,7 @@ const navLinks = [
     href: "/admin/about",
     label: "About Page",
     icon: Info,
-    canAccess: canWriteAdminContent,
+    canAccess: canManageAboutPage,
   },
   {
     href: "/admin/gallery",
@@ -90,7 +94,7 @@ const navLinks = [
     href: "/admin/contact",
     label: "Contact Messages",
     icon: Mail,
-    canAccess: canManageRegistrations,
+    canAccess: canManageContactMessages,
   },
   {
     href: "/admin/special-prayers",
@@ -102,12 +106,13 @@ const navLinks = [
     href: "/admin/display",
     label: "TV Display",
     icon: Monitor,
-    canAccess: canManagePrayerTimes,
+    canAccess: canManageDisplay,
   },
 ];
 
 interface AdminSidebarProps {
   session: SessionUser;
+  siteName: string;
 }
 
 function SidebarNav({
@@ -148,7 +153,7 @@ function SidebarNav({
   );
 }
 
-export function AdminSidebar({ session }: AdminSidebarProps) {
+export function AdminSidebar({ session, siteName }: AdminSidebarProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -157,7 +162,7 @@ export function AdminSidebar({ session }: AdminSidebarProps) {
       <div className="flex items-center justify-between border-b border-border bg-card p-4 lg:hidden">
         <div>
           <p className="font-heading text-lg font-semibold text-gold">Admin Panel</p>
-          <p className="text-xs text-muted-foreground">{SITE_NAME}</p>
+          <p className="text-xs text-muted-foreground">{siteName}</p>
         </div>
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger
@@ -183,7 +188,7 @@ export function AdminSidebar({ session }: AdminSidebarProps) {
           <Link href="/admin" className="font-heading text-xl font-semibold text-gold">
             Admin Panel
           </Link>
-          <p className="text-xs text-muted-foreground">{SITE_NAME}</p>
+          <p className="text-xs text-muted-foreground">{siteName}</p>
         </div>
         <SidebarNav pathname={pathname} session={session} />
       </aside>

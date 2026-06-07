@@ -1,22 +1,38 @@
-import { format } from "date-fns";
 import { PDFDocument, rgb } from "pdf-lib";
 import type { Donation } from "@prisma/client";
-import { getCategoryLabel } from "@/lib/donations";
 import {
-  formatDonationCents,
-  getDonationTotalCents,
-} from "@/lib/donation-processing-fee";
+  resolveDonationAccounting,
+  formatProviderLabel,
+  type DonationProviderFeeConfigs,
+} from "@/lib/donation-accounting";
+import { getCategoryLabel } from "@/lib/donations";
+import type { DonationCategoryLookup } from "@/lib/admin-donations-export";
+import { formatDonationCents } from "@/lib/donation-processing-fee";
 import type { DonationStatementBranding } from "@/lib/donation-statement-branding";
+import {
+  buildStatementFooterPrimaryLine,
+  buildStatementFooterSecondaryLine,
+  formatExportTransactionId,
+  formatStatementPrintedAt,
+  formatStatementStatus,
+  formatStatementTableDate,
+} from "@/lib/donation-statement-format";
 import {
   BRAND_GOLD,
   BRAND_GREEN,
   PDF_MARGIN,
   PDF_PAGE,
+  drawDonationStatementFooters,
   drawLetterhead,
-  drawPageFooters,
   embedStandardFonts,
-  formatPrintedAt,
+  getPdfFontVerticalMetrics,
+  toPdfSafeText,
 } from "@/lib/donation-pdf-layout";
+
+const RECEIPT_TITLE_SIZE = 17;
+const RECEIPT_LETTERHEAD_SCALE = 0.88;
+const RECEIPT_LETTERHEAD_RULE_GAP = 10;
+const RECEIPT_TITLE_RULE_CLEARANCE = 16;
 
 export interface DonationReceiptInput {
   id: string;
@@ -57,74 +73,106 @@ export function receiptPdfFilename(donationId: string) {
 export async function donationReceiptToPdfBuffer(
   donation: DonationReceiptInput,
   branding: DonationStatementBranding,
-  logoPng?: Uint8Array | null
+  logoPng?: Uint8Array | null,
+  options: {
+    feeConfigs?: DonationProviderFeeConfigs;
+    categories?: DonationCategoryLookup[];
+  } = {},
 ) {
-  const printedAt = formatPrintedAt();
+  const printedAt = formatStatementPrintedAt();
   const pdfDoc = await PDFDocument.create();
   const fonts = await embedStandardFonts(pdfDoc);
   const { font, fontBold } = fonts;
+  const accounting = resolveDonationAccounting(donation, options.feeConfigs ?? {});
+  const currency = donation.currency || "EUR";
 
   const page = pdfDoc.addPage([PDF_PAGE.width, PDF_PAGE.height]);
   let y = PDF_PAGE.height - PDF_MARGIN;
 
-  y = await drawLetterhead(pdfDoc, page, y, branding, fonts, logoPng);
+  y = await drawLetterhead(pdfDoc, page, y, branding, fonts, logoPng, {
+    combineEmailAndWebsite: true,
+    fontScale: RECEIPT_LETTERHEAD_SCALE,
+    compact: true,
+    ruleGap: RECEIPT_LETTERHEAD_RULE_GAP,
+  });
 
-  page.drawText("Donation Receipt", {
-    x: PDF_MARGIN,
+  const titleMetrics = getPdfFontVerticalMetrics(fontBold, RECEIPT_TITLE_SIZE);
+  y -=
+    titleMetrics.ascent +
+    RECEIPT_TITLE_RULE_CLEARANCE -
+    RECEIPT_LETTERHEAD_RULE_GAP;
+
+  const title = "Donation Receipt";
+  const titleWidth = fontBold.widthOfTextAtSize(title, RECEIPT_TITLE_SIZE);
+  page.drawText(title, {
+    x: (PDF_PAGE.width - titleWidth) / 2,
     y,
-    size: 16,
+    size: RECEIPT_TITLE_SIZE,
     font: fontBold,
     color: rgb(0, 0, 0),
   });
+  y -= titleMetrics.descent + 14;
+
+  page.drawText(toPdfSafeText(`Receipt reference: ${donation.id}`), {
+    x: PDF_MARGIN,
+    y,
+    size: 9,
+    font,
+    color: rgb(0.35, 0.35, 0.35),
+  });
   y -= 22;
 
-  page.drawText(`Receipt reference: ${donation.id}`, {
-    x: PDF_MARGIN,
-    y,
-    size: 9,
-    font,
-    color: rgb(0.35, 0.35, 0.35),
-  });
-  y -= 14;
-
-  page.drawText(`Date printed: ${printedAt}`, {
-    x: PDF_MARGIN,
-    y,
-    size: 9,
-    font,
-    color: rgb(0.35, 0.35, 0.35),
-  });
-  y -= 24;
-
-  const categoryLabel = getCategoryLabel(donation.category);
+  const categoryLabel = getCategoryLabel(donation.category, options.categories);
   const donorLabel = donation.donorName?.trim() || "Anonymous";
-  const donationDate = format(donation.createdAt, "d MMMM yyyy 'at' HH:mm");
-  const totalCents = getDonationTotalCents(donation);
-  const amountLabel = formatDonationCents(totalCents, donation.currency);
+  const donationDate = formatStatementTableDate(donation.createdAt);
+  const transactionId = formatExportTransactionId(
+    donation.provider,
+    donation.providerId,
+  );
+  const providerLabel = formatProviderLabel(donation.provider);
+  const statusLabel = formatStatementStatus(donation.status);
 
-  const details: Array<{ label: string; value: string }> = [
+  const details: Array<{ label: string; value: string; highlight?: boolean }> = [
     { label: "Donor", value: donorLabel },
     { label: "Email", value: donation.donorEmail?.trim() || "Not provided" },
   ];
 
-  if (donation.coverFee && donation.processingFeeCents > 0) {
+  if (accounting.processingFeeCents > 0) {
     details.push(
-      { label: "Donation", value: formatDonationCents(donation.amount * 100, donation.currency) },
       {
-        label: "Processing fee",
-        value: formatDonationCents(donation.processingFeeCents, donation.currency),
+        label: "Charitable gift",
+        value: formatDonationCents(accounting.giftAmountCents, currency),
       },
-      { label: "Total paid", value: amountLabel },
+      {
+        label: accounting.coverFee ? "Processing fee (covered)" : "Processing fee",
+        value: formatDonationCents(accounting.processingFeeCents, currency),
+      },
+      {
+        label: accounting.coverFee ? "Total paid" : "Amount paid",
+        value: formatDonationCents(accounting.totalChargedCents, currency),
+        highlight: true,
+      },
     );
+
+    if (!accounting.coverFee) {
+      details.push({
+        label: "Net received",
+        value: formatDonationCents(accounting.netReceivedCents, currency),
+      });
+    }
   } else {
-    details.push({ label: "Amount", value: amountLabel });
+    details.push({
+      label: "Amount paid",
+      value: formatDonationCents(accounting.totalChargedCents, currency),
+      highlight: true,
+    });
   }
 
   details.push(
     { label: "Category", value: categoryLabel },
-    { label: "Payment method", value: donation.provider },
-    { label: "Status", value: donation.status },
-    { label: "Transaction ID", value: donation.providerId || "—" },
+    { label: "Payment method", value: providerLabel },
+    { label: "Status", value: statusLabel },
+    { label: "Transaction ID", value: transactionId },
     { label: "Donation date", value: donationDate },
   );
 
@@ -152,13 +200,13 @@ export async function donationReceiptToPdfBuffer(
       color: rgb(0, 0, 0),
     });
 
-    const valueX = PDF_MARGIN + 150;
-    page.drawText(detail.value, {
+    const valueX = PDF_MARGIN + 168;
+    page.drawText(toPdfSafeText(detail.value), {
       x: valueX,
       y: rowY,
       size: 10,
-      font: detail.label === "Amount" ? fontBold : font,
-      color: detail.label === "Amount" ? BRAND_GREEN : rgb(0, 0, 0),
+      font: detail.highlight ? fontBold : font,
+      color: detail.highlight ? BRAND_GREEN : rgb(0, 0, 0),
       maxWidth: PDF_PAGE.width - valueX - PDF_MARGIN - 14,
     });
 
@@ -176,10 +224,26 @@ export async function donationReceiptToPdfBuffer(
       font,
       color: rgb(0, 0, 0),
       maxWidth: PDF_PAGE.width - PDF_MARGIN * 2,
-    }
+    },
   );
 
-  drawPageFooters(pdfDoc, branding, printedAt, fonts);
+  drawDonationStatementFooters(
+    pdfDoc,
+    branding,
+    printedAt,
+    fonts,
+    (statementBranding) =>
+      buildStatementFooterPrimaryLine({
+        charityNumber: statementBranding.charityNumber,
+        siteName: statementBranding.siteName,
+        address: statementBranding.address,
+        phone: statementBranding.phone,
+        email: statementBranding.email,
+        website: statementBranding.website,
+      }),
+    (pageNumber, totalPages) =>
+      buildStatementFooterSecondaryLine(pageNumber, totalPages, printedAt),
+  );
 
   const pdfBytes = await pdfDoc.save();
   return Buffer.from(pdfBytes);

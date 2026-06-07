@@ -32,7 +32,7 @@
 
 ### Auth (shared login)
 
-- Register (member accounts)
+- Register (member accounts) — email verification required before first login
 - Login / logout
 - Forgot / reset password
 - Email change verification
@@ -54,6 +54,7 @@
 | **About Page** | CMS for Values + Committee sections |
 | **Prayer Timetable** | Daily overrides, Jumu'ah, Eid, Ramadan timetable (PDF, QR, notes, moon sighting), Monthly timetable (PDF + homepage publish) |
 | **TV Display** | Notices, ayat rotation, display settings, orientation — public screen at `/display/prayer` |
+| **Content Audit** | Publish/unpublish history log |
 | **Profile** | Name, password, email |
 
 ### Publish / unpublish model (consistent pattern)
@@ -138,7 +139,7 @@
 ### Auth & security
 
 - JWT session cookies
-- Dynamic RBAC (12 permissions, 6 system roles)
+- Dynamic RBAC (16 permissions, 6 system roles)
 - Middleware tier routing (super-admin / admin / user)
 - Encrypted payment/SMTP secrets
 
@@ -152,11 +153,23 @@ Users, Roles, Permissions, Invitations, Events, Classes, Registrations, Gallery 
 
 | Item | Notes |
 |------|--------|
-| **About — Our Values & Committee** | CMS at `/admin/about`; toggle visibility per section |
 | **Editor role gap** | Can manage lists but blocked from create/edit/upload without `content.write` |
-| **Legacy config** | Display/TV components may still read some constants — migrate as needed |
-| **Email verification on register** | Only used for email *change*, not new sign-ups |
-| **Display PIN / scrolling ticker** | Stored or built but not enforced on TV UI |
+| **Legacy config** | A few public/display strings still fall back to `constants.ts` when branding context is unavailable |
+
+---
+
+## 6a. Recently completed hardening (June 2026)
+
+| Item | Notes |
+|------|--------|
+| **Member email verification** | Register sends verify link; login blocked until verified |
+| **Dedicated permissions** | `contact.manage`, `content.audit` |
+| **Prisma migration** | `20260609120000_phase3_hardening` for Phase 3 schema |
+| **SEO detail pages** | Event/Course JSON-LD on detail routes |
+| **Site branding** | DB-driven name in layouts, emails, and public site context |
+| **Registrations filters** | Defaults to today with **All dates** toggle |
+| **Super-admin email route** | `/super-admin/settings/email` redirects to settings tab |
+| **Unit tests** | `npm run test` — cron auth, fee calc, permission keys |
 
 ---
 
@@ -230,8 +243,10 @@ Items kept for later — **not** part of Phase 1–3 implementation until explic
 - **Unpublished by default** — new events, programmes, albums, and categories do not appear on the public site until toggled on in admin
 - **Donations vs Categories** — same sidebar item, two tabs; category “Published” = `isActive` in the database
 - **Prayer Timetable** — sidebar label is “Prayer Timetable”; URL is still `/admin/special-prayers`
-- **Contact Messages** — uses `registrations.manage` permission; route `/admin/contact`
-- **About Page CMS** — `/admin/about` (requires `content.write`); toggles Values/Committee visibility
+- **Contact Messages** — uses `contact.manage` permission; route `/admin/contact`
+- **Content Audit** — uses `content.audit` permission; route `/admin/audit`
+- **TV Display** — uses `display.manage` permission; admin at `/admin/display`, public screen at `/display/prayer`
+- **About Page CMS** — `/admin/about` (requires `about.manage`); toggles Values/Committee visibility
 - **Member portal** — `/user/donations` and `/user/registrations` match by account email
 - **Publish checklist** — admin dashboard shows unpublished content after seed/deploy
 - **Database commands** — use `npm run db:push`, `npm run db:deploy`, `npm run db:migrate` (not raw `npx prisma`); env loads from `.env.local`
@@ -245,7 +260,7 @@ Items kept for later — **not** part of Phase 1–3 implementation until explic
 
 - ~~Remove unused `src/lib/storage.ts` (legacy JSON helpers)~~ — removed
 - ~~Remove unused `prayer_override_enabled` setting~~ — removed from defaults/seed
-- Consolidate super-admin email settings (tab vs duplicate route)
+- Consolidate super-admin email settings (tab vs duplicate route) — duplicate route now redirects to settings tab
 - See [DEPLOYMENT.md](../DEPLOYMENT.md) for the full environment variable list
 
 ---
@@ -256,8 +271,8 @@ Items kept for later — **not** part of Phase 1–3 implementation until explic
 |------|----------------|
 | **Super Admin** | Everything + users, settings, flyers |
 | **Admin** | All content except users/settings |
-| **Web Admin** | Events, gallery, prayer times + delete + uploads |
-| **Account Admin** | Education, donations, registrations + delete + uploads |
+| **Web Admin** | Events, gallery, prayer times, TV display + delete + uploads |
+| **Account Admin** | Education, donations, registrations, about page + delete + uploads |
 | **Editor** | Events, education, registrations, prayer times (no delete, no upload pages) |
 | **Member** | Public site + `/user` portal only |
 
@@ -276,8 +291,11 @@ Items kept for later — **not** part of Phase 1–3 implementation until explic
 | education | `education.manage`, `education.delete` |
 | donations | `donations.manage` |
 | prayer_times | `prayer_times.manage` |
+| display | `display.manage` |
+| about | `about.manage` |
 | registrations | `registrations.manage` |
-| content | `content.write` (upload/create/edit pages) |
+| contact | `contact.manage` |
+| content | `content.write`, `content.audit` |
 
 **Seeded system roles:** super-admin, admin, editor, web-admin, account-admin, member
 
@@ -292,7 +310,8 @@ Items kept for later — **not** part of Phase 1–3 implementation until explic
 | `npm run db:push` | Sync schema to database |
 | `npm run db:deploy` | Apply pending migrations |
 | `npm run db:migrate` | Create/apply migrations (dev) |
-| `npm run db:seed` | Seed database |
+| `npm run test` | Run unit tests (Vitest) |
+| `npm run db:seed` | Seed database (also syncs RBAC permissions on existing DB) |
 | `npm run db:baseline` | Baseline existing DB for migrations (one-time) |
 | `npm run db:resolve-applied -- MIGRATION_NAME` | Mark migration as applied |
 | `npm run db:studio` | Prisma Studio |

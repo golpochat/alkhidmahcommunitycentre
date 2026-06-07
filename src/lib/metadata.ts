@@ -71,19 +71,21 @@ export function createPageMetadata(
   title: string,
   description: string,
   options?: {
+    siteName?: string;
     image?: string;
     canonical?: string;
     type?: "website" | "article";
   },
 ): Metadata {
   const trimmedDescription = description.slice(0, 160);
+  const siteName = options?.siteName ?? SITE_NAME;
 
   return {
     title,
     description: trimmedDescription,
     alternates: options?.canonical ? { canonical: options.canonical } : undefined,
     openGraph: {
-      title: `${title} | ${SITE_NAME}`,
+      title: `${title} | ${siteName}`,
       description: trimmedDescription,
       type: options?.type ?? "website",
       ...(options?.image ? { images: [{ url: options.image }] } : {}),

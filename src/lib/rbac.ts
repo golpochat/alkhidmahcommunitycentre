@@ -77,8 +77,24 @@ export function canManagePrayerTimes(session: SessionUser) {
   return hasPermission(session, PERMISSIONS.prayerTimes.manage);
 }
 
+export function canManageDisplay(session: SessionUser) {
+  return hasPermission(session, PERMISSIONS.display.manage);
+}
+
+export function canManageAboutPage(session: SessionUser) {
+  return hasPermission(session, PERMISSIONS.about.manage);
+}
+
 export function canManageRegistrations(session: SessionUser) {
   return hasPermission(session, PERMISSIONS.registrations.manage);
+}
+
+export function canManageContactMessages(session: SessionUser) {
+  return hasPermission(session, PERMISSIONS.contact.manage);
+}
+
+export function canViewContentAudit(session: SessionUser) {
+  return hasPermission(session, PERMISSIONS.content.audit);
 }
 
 export function canWriteAdminContent(session: SessionUser) {

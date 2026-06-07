@@ -11,7 +11,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { SITE_NAME } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 const links = [
@@ -54,7 +53,7 @@ function SidebarNav({
   );
 }
 
-export function UserSidebar() {
+export function UserSidebar({ siteName }: { siteName: string }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -63,7 +62,7 @@ export function UserSidebar() {
       <div className="flex items-center justify-between border-b border-border bg-card p-4 lg:hidden">
         <div>
           <p className="font-heading text-lg font-semibold text-gold">My Account</p>
-          <p className="text-xs text-muted-foreground">{SITE_NAME}</p>
+          <p className="text-xs text-muted-foreground">{siteName}</p>
         </div>
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger className="inline-flex size-9 items-center justify-center rounded-lg border border-gold text-gold transition-colors hover:bg-gold/10">
@@ -83,7 +82,7 @@ export function UserSidebar() {
           <Link href="/user" className="font-heading text-xl font-semibold text-gold">
             My Account
           </Link>
-          <p className="text-xs text-muted-foreground">{SITE_NAME}</p>
+          <p className="text-xs text-muted-foreground">{siteName}</p>
         </div>
         <SidebarNav pathname={pathname} />
       </aside>

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { AdminDisplayManager } from "@/components/admin/admin-display-manager";
-import { canAccessAdminRoutes, canManagePrayerTimes, getSession } from "@/lib/auth";
+import { canAccessAdminRoutes, canManageDisplay, getSession } from "@/lib/auth";
 
 export default async function AdminDisplayPage() {
   const session = await getSession();
@@ -9,7 +9,7 @@ export default async function AdminDisplayPage() {
     redirect("/login");
   }
 
-  if (!canManagePrayerTimes(session)) {
+  if (!canManageDisplay(session)) {
     redirect("/unauthorized");
   }
 

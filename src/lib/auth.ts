@@ -4,6 +4,7 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+import { AccountTier } from "@prisma/client";
 import { db } from "@/lib/db";
 import {
   buildSessionUserFromRecord,
@@ -34,7 +35,11 @@ import {
   canManageDonations,
   canManageGallery,
   canManagePrayerTimes,
+  canManageDisplay,
+  canManageAboutPage,
   canManageRegistrations,
+  canManageContactMessages,
+  canViewContentAudit,
   canManageSettings,
   canManageUsers,
 } from "@/lib/rbac";
@@ -48,13 +53,17 @@ export {
   canDeleteEvents,
   canDeleteGallery,
   canManageClasses,
+  canManageContactMessages,
   canManageDonations,
   canManageEvents,
   canManageGallery,
   canManagePrayerTimes,
+  canManageDisplay,
+  canManageAboutPage,
   canManageRegistrations,
   canManageSettings,
   canManageUsers,
+  canViewContentAudit,
   canWriteAdminContent,
   getHomeRouteForSession,
   hasPermission,
@@ -99,6 +108,7 @@ export async function verifyCredentials(
         email: true,
         name: true,
         passwordHash: true,
+        emailVerified: true,
         isActive: true,
         role: {
           select: {
@@ -128,6 +138,10 @@ export async function verifyCredentials(
 
   if (!user.isActive || !user.role.isActive) {
     throw new Error("Account deactivated");
+  }
+
+  if (user.role.tier === AccountTier.MEMBER && !user.emailVerified) {
+    throw new Error("EMAIL_NOT_VERIFIED");
   }
 
   return buildSessionUserFromRecord(user);

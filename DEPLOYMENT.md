@@ -115,11 +115,13 @@ Add `STRIPE_WEBHOOK_SECRET` to env or configure in Super Admin → Payment.
 
 ## 5. Post-deploy checklist
 
+- [ ] Run `npm run db:deploy` (or `db:push` on empty DB) including migration `20260609120000_phase3_hardening`
+- [ ] Run `npm run db:seed` to sync new RBAC permissions (`contact.manage`, `content.audit`)
 - [ ] Log in as super-admin (`ADMIN_EMAIL` / seed password — change immediately)
 - [ ] Super Admin → Settings: site name, logo, SMTP, payment
 - [ ] Super Admin → Roles: review permissions
 - [ ] Admin → Dashboard: review **Publish status overview** and publish seed content
-- [ ] Admin → Contact Messages: confirm inbox access for staff with registrations permission
+- [ ] Admin → Contact Messages: confirm inbox access for staff with `contact.manage` permission
 - [ ] Test public site, donations (test mode), admin login
 - [ ] Confirm `NEXT_PUBLIC_SITE_URL` matches live domain (sitemap, emails, redirects)
 
@@ -129,6 +131,7 @@ Add `STRIPE_WEBHOOK_SECRET` to env or configure in Super Admin → Payment.
 |---------|---------|
 | `npm run dev` | Local development |
 | `npm run build` | Production build |
+| `npm run test` | Run unit tests |
 | `npm run start` | Run production server locally |
 | `npm run db:push` | Sync schema to database |
 | `npm run db:seed` | Seed roles, permissions, super-admin, sample content |

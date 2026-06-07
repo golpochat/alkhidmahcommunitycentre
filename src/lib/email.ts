@@ -1,10 +1,10 @@
 import { format } from "date-fns";
 import type { Donation } from "@prisma/client";
-import { SITE_NAME } from "@/lib/constants";
 import { getCategoryLabel } from "@/lib/donations";
 import { getDonationTotalCents } from "@/lib/donation-processing-fee";
 import { generateDonationReceiptPdf } from "@/lib/generate-donation-receipt";
 import { getDonationStatementBranding } from "@/lib/donation-statement-branding";
+import { getSiteBranding } from "@/lib/site-branding";
 import {
   getNotificationEmail,
   sendEmail,
@@ -12,6 +12,11 @@ import {
 } from "@/lib/email-service";
 
 export type { EmailSendResult } from "@/lib/email-service";
+
+async function brandedSiteName() {
+  const branding = await getSiteBranding();
+  return branding.siteName;
+}
 
 export async function sendContactEmail(data: {
   name: string;
@@ -48,6 +53,7 @@ export async function sendContactAutoReply(data: {
   email: string;
   subject: string;
 }) {
+  const siteName = await brandedSiteName();
   const result = await sendEmail({
     to: data.email,
     subject: `We received your message — ${data.subject}`,
@@ -56,7 +62,7 @@ export async function sendContactAutoReply(data: {
       <p>Dear ${data.name},</p>
       <p>We have received your message regarding <strong>${data.subject}</strong>.</p>
       <p>Our team will review your enquiry and respond as soon as possible.</p>
-      <p>JazakAllah khair,<br>${SITE_NAME}</p>
+      <p>JazakAllah khair,<br>${siteName}</p>
     `,
   });
 
@@ -155,6 +161,7 @@ export async function sendRegistrationConfirmation(data: {
   classTitle: string;
   classSchedule?: string | null;
 }) {
+  const siteName = await brandedSiteName();
   const result = await sendEmail({
     to: data.email,
     subject: "Class Registration Confirmation",
@@ -164,7 +171,7 @@ export async function sendRegistrationConfirmation(data: {
       <p>Thank you for registering for <strong>${data.classTitle}</strong>.</p>
       ${data.classSchedule ? `<p><strong>Schedule:</strong> ${data.classSchedule}</p>` : ""}
       <p>We will contact you shortly with further class details.</p>
-      <p>JazakAllah khair,<br>${SITE_NAME}</p>
+      <p>JazakAllah khair,<br>${siteName}</p>
     `,
   });
 
@@ -249,11 +256,12 @@ export async function sendPasswordResetEmail(data: {
   name?: string | null;
   temporaryPassword: string;
 }) {
+  const siteName = await brandedSiteName();
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
   const result = await sendEmail({
     to: data.email,
-    subject: `Password Reset — ${SITE_NAME}`,
+    subject: `Password Reset — ${siteName}`,
     html: `
       <h2>Password Reset</h2>
       <p>Dear ${data.name || "Admin"},</p>
@@ -261,7 +269,7 @@ export async function sendPasswordResetEmail(data: {
       <p><strong>Login URL:</strong> <a href="${siteUrl}/login">${siteUrl}/login</a></p>
       <p><strong>Temporary Password:</strong> ${data.temporaryPassword}</p>
       <p>Please sign in and change your password after logging in.</p>
-      <p>${SITE_NAME}</p>
+      <p>${siteName}</p>
     `,
   });
 
@@ -273,16 +281,17 @@ export async function sendPasswordResetLinkEmail(data: {
   name?: string | null;
   resetUrl: string;
 }) {
+  const siteName = await brandedSiteName();
   const result = await sendEmail({
     to: data.email,
-    subject: `Reset Your Password — ${SITE_NAME}`,
+    subject: `Reset Your Password — ${siteName}`,
     html: `
       <h2>Reset Your Password</h2>
       <p>Dear ${data.name || "User"},</p>
-      <p>We received a request to reset your password for ${SITE_NAME}.</p>
+      <p>We received a request to reset your password for ${siteName}.</p>
       <p><a href="${data.resetUrl}">Click here to reset your password</a></p>
       <p>This link expires in 1 hour. If you did not request this, you can ignore this email.</p>
-      <p>${SITE_NAME}</p>
+      <p>${siteName}</p>
     `,
   });
 
@@ -294,16 +303,37 @@ export async function sendEmailChangeVerificationEmail(data: {
   name?: string | null;
   verifyUrl: string;
 }): Promise<EmailSendResult> {
+  const siteName = await brandedSiteName();
   return sendEmail({
     to: data.email,
-    subject: `Confirm Your New Email — ${SITE_NAME}`,
+    subject: `Confirm Your New Email — ${siteName}`,
     html: `
       <h2>Confirm Email Change</h2>
       <p>Dear ${data.name || "User"},</p>
-      <p>Please confirm that you want to use this email address for your ${SITE_NAME} account.</p>
+      <p>Please confirm that you want to use this email address for your ${siteName} account.</p>
       <p><a href="${data.verifyUrl}">Click here to confirm your new email</a></p>
       <p>This link expires in 24 hours. If you did not request this change, you can ignore this email.</p>
-      <p>${SITE_NAME}</p>
+      <p>${siteName}</p>
+    `,
+  });
+}
+
+export async function sendRegistrationVerificationEmail(data: {
+  email: string;
+  name?: string | null;
+  verifyUrl: string;
+}): Promise<EmailSendResult> {
+  const siteName = await brandedSiteName();
+  return sendEmail({
+    to: data.email,
+    subject: `Verify Your Email — ${siteName}`,
+    html: `
+      <h2>Welcome to ${siteName}</h2>
+      <p>Dear ${data.name || "Member"},</p>
+      <p>Thank you for creating a member account. Please verify your email address to sign in and access your portal.</p>
+      <p><a href="${data.verifyUrl}">Click here to verify your email</a></p>
+      <p>This link expires in 48 hours. If you did not create this account, you can ignore this email.</p>
+      <p>${siteName}</p>
     `,
   });
 }

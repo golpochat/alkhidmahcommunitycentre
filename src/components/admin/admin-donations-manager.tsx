@@ -342,7 +342,9 @@ export function AdminDonationsManager() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Donor</TableHead>
-                    <TableHead>Amount</TableHead>
+                    <TableHead>Gift</TableHead>
+                    <TableHead>Fee</TableHead>
+                    <TableHead>Net</TableHead>
                     <TableHead>Category</TableHead>
                     <TableHead>Provider</TableHead>
                     <TableHead>Status</TableHead>
@@ -362,6 +364,22 @@ export function AdminDonationsManager() {
                       </TableCell>
                       <TableCell className="font-medium text-gold">
                         €{donation.amount}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {donation.processingFeeCents > 0 ? (
+                          <>
+                            €{(donation.processingFeeCents / 100).toFixed(2)}
+                            <span className="block text-xs text-muted-foreground">
+                              {donation.coverFee ? "Covered" : "Deducted"}
+                              {donation.feeEstimated ? " · est." : ""}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-sm font-medium">
+                        €{(donation.netCents / 100).toFixed(2)}
                       </TableCell>
                       <TableCell>
                         {getCategoryLabel(donation.category, categoryOptions)}

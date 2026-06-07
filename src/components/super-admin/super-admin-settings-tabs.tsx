@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import { DEFAULT_SETTINGS, SETTING_KEYS } from "@/lib/settings";
 type BrandingUploadField = "logo" | "favicon";
 
 export function SuperAdminSettingsTabs() {
+  const searchParams = useSearchParams();
   const [settings, setSettings] = useState<Record<string, string>>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -22,6 +24,13 @@ export function SuperAdminSettingsTabs() {
   );
   const logoInputRef = useRef<HTMLInputElement>(null);
   const faviconInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab === "site" || tab === "payment" || tab === "email") {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     fetch("/api/settings")

@@ -9,7 +9,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { SITE_NAME } from "@/lib/constants";
 import { getDashboardPageTitle } from "@/lib/dashboard-titles";
 
 interface DashboardShellProps {
@@ -20,6 +19,7 @@ interface DashboardShellProps {
   pageTitles: Record<string, string>;
   defaultTitle: string;
   basePath: string;
+  siteName: string;
 }
 
 export function DashboardShell({
@@ -30,6 +30,7 @@ export function DashboardShell({
   pageTitles,
   defaultTitle,
   basePath,
+  siteName,
 }: DashboardShellProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -78,7 +79,7 @@ export function DashboardShell({
 
       <footer className="admin-dashboard-footer">
         <p>
-          &copy; {new Date().getFullYear()} {SITE_NAME}. All rights reserved.
+          &copy; {new Date().getFullYear()} {siteName}. All rights reserved.
         </p>
       </footer>
     </div>

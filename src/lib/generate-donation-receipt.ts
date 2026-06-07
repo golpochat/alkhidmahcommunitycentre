@@ -1,4 +1,6 @@
 import type { Donation } from "@prisma/client";
+import { db } from "@/lib/db";
+import { loadDonationProviderFeeConfigs } from "@/lib/donation-accounting-server";
 import {
   getDonationStatementBranding,
   loadStatementLogoPng,
@@ -11,11 +13,20 @@ import {
 
 export async function generateDonationReceiptPdf(donation: Donation) {
   const branding = await getDonationStatementBranding();
-  const logoPng = await loadStatementLogoPng(branding.logoPath);
+  const [logoPng, feeConfigs, categories] = await Promise.all([
+    loadStatementLogoPng(branding.logoPath),
+    loadDonationProviderFeeConfigs(),
+    db.donationCategory.findMany({
+      select: { slug: true, name: true },
+      orderBy: { sortOrder: "asc" },
+    }),
+  ]);
+
   const buffer = await donationReceiptToPdfBuffer(
     donationFromRecord(donation),
     branding,
-    logoPng
+    logoPng,
+    { feeConfigs, categories },
   );
 
   return {

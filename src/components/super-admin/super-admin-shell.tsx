@@ -5,9 +5,10 @@ interface SuperAdminShellProps {
   children: React.ReactNode;
   email: string;
   name?: string | null;
+  siteName: string;
 }
 
-export function SuperAdminShell({ children, email, name }: SuperAdminShellProps) {
+export function SuperAdminShell({ children, email, name, siteName }: SuperAdminShellProps) {
   return (
     <DashboardShell
       email={email}
@@ -16,6 +17,7 @@ export function SuperAdminShell({ children, email, name }: SuperAdminShellProps)
       pageTitles={SUPER_ADMIN_PAGE_TITLES}
       defaultTitle="Super Admin"
       basePath="/super-admin"
+      siteName={siteName}
     >
       {children}
     </DashboardShell>

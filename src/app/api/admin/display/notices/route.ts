@@ -1,22 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { canManagePrayerTimes, getSession } from "@/lib/auth";
+import { requireDisplayAdminSession } from "@/lib/display-admin-auth";
 import {
   getActiveDisplayNotices,
   serializeDisplayNotice,
 } from "@/lib/display-api";
 import { displayNoticeSchema } from "@/lib/validations";
 
-async function requireDisplayAdmin() {
-  const session = await getSession();
-  if (!session) throw new Error("Unauthorized");
-  if (!canManagePrayerTimes(session)) throw new Error("Forbidden");
-  return session;
-}
-
 export async function GET() {
   try {
-    await requireDisplayAdmin();
+    await requireDisplayAdminSession();
     const notices = await getActiveDisplayNotices();
     const all = await db.displayNotice.findMany({
       orderBy: { createdAt: "desc" },
@@ -35,7 +28,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await requireDisplayAdmin();
+    const session = await requireDisplayAdminSession();
     const body = await request.json();
     const validated = displayNoticeSchema.parse(body);
 

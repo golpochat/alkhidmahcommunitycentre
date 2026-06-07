@@ -1,15 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { canManagePrayerTimes, getSession } from "@/lib/auth";
+import { requireDisplayAdminSession } from "@/lib/display-admin-auth";
 import { refreshAyatCache } from "@/lib/display-api";
 import { ayahRotationSchema } from "@/lib/validations";
-
-async function requireDisplayAdmin() {
-  const session = await getSession();
-  if (!session) throw new Error("Unauthorized");
-  if (!canManagePrayerTimes(session)) throw new Error("Forbidden");
-  return session;
-}
 
 function serializeAyah(item: {
   id: string;
@@ -29,7 +22,7 @@ function serializeAyah(item: {
 
 export async function GET() {
   try {
-    await requireDisplayAdmin();
+    await requireDisplayAdminSession();
     const items = await db.ayahRotation.findMany({
       orderBy: { createdAt: "asc" },
     });
@@ -44,7 +37,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    await requireDisplayAdmin();
+    await requireDisplayAdminSession();
     const body = await request.json();
     const validated = ayahRotationSchema.parse(body);
 

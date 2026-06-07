@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireSession, canAccessAdminRoutes } from "@/lib/auth";
+import { requirePermission, PERMISSIONS } from "@/lib/auth";
 import {
   listContentAuditLogs,
   serializeContentAuditLog,
@@ -7,10 +7,7 @@ import {
 
 export async function GET() {
   try {
-    const session = await requireSession();
-    if (!canAccessAdminRoutes(session)) {
-      throw new Error("Forbidden");
-    }
+    await requirePermission(PERMISSIONS.content.audit);
 
     const logs = await listContentAuditLogs(200);
     return NextResponse.json(logs.map(serializeContentAuditLog));

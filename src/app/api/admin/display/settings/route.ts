@@ -1,23 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
-import { canManagePrayerTimes, getSession } from "@/lib/auth";
+import { requireDisplayAdminSession } from "@/lib/display-admin-auth";
 import {
   ensureDisplaySettings,
   serializeDisplaySettings,
 } from "@/lib/display-settings";
 import { displaySettingsSchema } from "@/lib/validations";
 
-async function requireDisplayAdmin() {
-  const session = await getSession();
-  if (!session) throw new Error("Unauthorized");
-  if (!canManagePrayerTimes(session)) throw new Error("Forbidden");
-  return session;
-}
-
 export async function GET() {
   try {
-    await requireDisplayAdmin();
+    await requireDisplayAdminSession();
     const settings = await ensureDisplaySettings();
     return NextResponse.json(serializeDisplaySettings(settings));
   } catch (error) {
@@ -30,7 +23,7 @@ export async function GET() {
 
 export async function PUT(request: NextRequest) {
   try {
-    await requireDisplayAdmin();
+    await requireDisplayAdminSession();
     const body = await request.json();
     const validated = displaySettingsSchema.parse(body);
     const existing = await ensureDisplaySettings();
