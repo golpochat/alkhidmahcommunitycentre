@@ -2,7 +2,7 @@ import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 
 const MAX_SIZE = 5 * 1024 * 1024;
-export type UploadFolder = "events" | "gallery" | "logo" | "favicon";
+export type UploadFolder = "events" | "gallery" | "logo" | "favicon" | "about" | "education";
 
 const FOLDER_ALLOWED_TYPES: Record<UploadFolder, string[]> = {
   events: ["image/jpeg", "image/png", "image/webp"],
@@ -16,6 +16,8 @@ const FOLDER_ALLOWED_TYPES: Record<UploadFolder, string[]> = {
     "image/x-icon",
     "image/vnd.microsoft.icon",
   ],
+  about: ["image/jpeg", "image/png", "image/webp"],
+  education: ["image/jpeg", "image/png", "image/webp"],
 };
 
 export async function saveUploadedImage(file: File, folder: UploadFolder) {

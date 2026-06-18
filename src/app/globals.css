@@ -734,7 +734,7 @@
   }
 
   .admin-prayer-times-table-wrap .admin-prayer-times-table--daily {
-    @apply min-w-[52rem];
+    @apply min-w-[58rem];
   }
 
   .admin-prayer-times-table-wrap .admin-prayer-times-table--slots {
@@ -755,19 +755,23 @@
 
   .admin-prayer-times-col-prayer,
   .admin-prayer-times-col-label {
-    width: 12%;
+    width: 11%;
   }
 
   .admin-prayer-times-col-adhan-api {
-    width: 12%;
+    width: 11%;
   }
 
   .admin-prayer-times-col-adhan-adjust {
-    width: 40%;
+    width: 30%;
   }
 
   .admin-prayer-times-col-iqama {
-    width: 36%;
+    width: 28%;
+  }
+
+  .admin-prayer-times-col-iqama-actual {
+    width: 20%;
   }
 
   .admin-prayer-times-col-value {
@@ -818,6 +822,18 @@
   .admin-prayer-times-adhan-adjust-cell,
   .admin-prayer-times-iqama-cell {
     @apply min-w-0 overflow-hidden align-middle;
+  }
+
+  .admin-prayer-times-iqama-actual-cell {
+    @apply min-w-0 align-middle;
+  }
+
+  .admin-iqama-actual-time {
+    @apply block font-heading text-sm font-semibold leading-snug text-gold;
+  }
+
+  .admin-iqama-actual-time--time {
+    @apply tabular-nums normal-case;
   }
 
   .admin-adhan-api-time {
@@ -893,6 +909,41 @@
 
   .admin-prayer-times-tab-content {
     @apply mt-0 w-full space-y-4 rounded-b-lg border border-border border-t-0 bg-card p-4 sm:p-6;
+  }
+
+  .admin-prayer-times-tab-content--schedule {
+    @apply space-y-0 p-0;
+  }
+
+  .admin-prayer-times-inner-tabs {
+    @apply w-full flex-col gap-0;
+  }
+
+  .admin-prayer-times-inner-tabs-list {
+    @apply flex h-auto w-full max-w-none items-end gap-0 rounded-none border-0 border-b border-border bg-transparent px-4 pt-4 sm:px-6;
+  }
+
+  .admin-prayer-times-inner-tabs-list [data-slot="tabs-trigger"] {
+    @apply -mb-px flex min-h-[2.75rem] flex-1 basis-0 items-center justify-center rounded-none rounded-t-md border border-transparent px-3 py-2 text-center text-sm font-medium leading-snug text-muted-foreground shadow-none transition-colors;
+    white-space: normal;
+  }
+
+  .admin-prayer-times-inner-tabs-list [data-slot="tabs-trigger"]::after {
+    @apply hidden;
+  }
+
+  .admin-prayer-times-inner-tabs-list
+    [data-slot="tabs-trigger"]:hover:not([data-active]) {
+    @apply text-foreground;
+    background-color: color-mix(in srgb, var(--muted) 40%, transparent);
+  }
+
+  .admin-prayer-times-inner-tabs-list [data-slot="tabs-trigger"][data-active] {
+    @apply z-10 border-border border-b-card bg-card font-semibold text-foreground;
+  }
+
+  .admin-prayer-times-inner-tab-content {
+    @apply mt-0 w-full space-y-4 p-4 sm:p-6;
   }
 
   .admin-prayer-times-tab-section {
@@ -1134,14 +1185,6 @@
 
   .ramadan-payment-qr-description {
     @apply text-sm text-muted-foreground;
-  }
-
-  .ramadan-payment-qr-display-count {
-    @apply space-y-2;
-  }
-
-  .ramadan-payment-qr-display-count-options {
-    @apply flex flex-wrap gap-2;
   }
 
   .ramadan-payment-qr-grid {
@@ -1809,6 +1852,22 @@
 
   .display-landscape-announcement-message {
     @apply text-[clamp(0.875rem,1.2vw,1.25rem)] text-white/90;
+  }
+
+  .display-landscape-announcement-message-multiline {
+    @apply whitespace-pre-line;
+  }
+
+  .display-landscape-announcement-message-muted {
+    @apply text-[clamp(0.8rem,1.05vw,1rem)] text-white/70;
+  }
+
+  .display-portrait-panel-body-muted {
+    @apply text-sm text-white/70;
+  }
+
+  .display-rotating-panels-landscape .display-rotating-panels-dots {
+    @apply mt-[clamp(0.35rem,0.75vw,0.75rem)] justify-start;
   }
 
   .display-prayer-times-stack {
@@ -2518,23 +2577,27 @@
   }
 
   .admin-display-manager {
-    @apply space-y-6;
+    @apply space-y-4;
   }
 
-  .admin-display-header {
-    @apply flex flex-wrap items-start justify-between gap-4;
+  .admin-display-toolbar {
+    @apply flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between;
+  }
+
+  .admin-display-toolbar-summary {
+    @apply max-w-3xl text-sm text-muted-foreground;
+  }
+
+  .admin-display-inline-link {
+    @apply font-medium text-gold underline-offset-4 hover:underline;
+  }
+
+  .admin-display-preview-link {
+    @apply inline-flex shrink-0 items-center rounded-lg border border-border px-4 py-2 text-sm font-medium transition-colors hover:border-gold/40 hover:text-gold;
   }
 
   .admin-display-loading {
     @apply flex items-center justify-center py-16;
-  }
-
-  .admin-display-tabs-list {
-    @apply mb-6;
-  }
-
-  .admin-display-tab-content {
-    @apply mt-0;
   }
 
   .admin-display-grid {
@@ -2576,6 +2639,151 @@
 
   .admin-about-item {
     @apply rounded-lg border border-border p-4;
+  }
+
+  .admin-about-item-unpublished {
+    @apply border-dashed opacity-80;
+  }
+
+  .education-classes-list {
+    @apply space-y-10;
+  }
+
+  .education-classes-pagination {
+    @apply flex flex-col items-center gap-4 border-t border-border pt-8 sm:flex-row sm:justify-between;
+  }
+
+  .education-classes-pagination-summary {
+    @apply text-sm text-muted-foreground;
+  }
+
+  .education-classes-pagination-nav {
+    @apply flex items-center gap-3;
+  }
+
+  .education-classes-pagination-page {
+    @apply min-w-[7rem] text-center text-sm text-muted-foreground;
+  }
+
+  .admin-education-manager {
+    @apply max-w-6xl;
+  }
+
+  .admin-ramadan-timetable-toolbar {
+    @apply mb-6 flex flex-col gap-4 rounded-lg border border-border p-4 sm:gap-5 sm:p-5;
+    background-color: color-mix(in srgb, var(--muted) 20%, transparent);
+  }
+
+  .admin-ramadan-timetable-toolbar-actions {
+    @apply flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:gap-3 sm:pt-5;
+  }
+
+  .admin-ramadan-load-button {
+    @apply w-full sm:w-auto sm:shrink-0;
+  }
+
+  .admin-ramadan-generate-button {
+    @apply w-full sm:ml-auto sm:w-auto sm:min-w-[17rem] sm:shrink-0;
+  }
+
+  .admin-ramadan-upcoming-toolbar {
+    @apply grid grid-cols-1 gap-4;
+  }
+
+  @media (min-width: 640px) {
+    .admin-ramadan-upcoming-toolbar {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .admin-ramadan-upcoming-item--start {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .admin-ramadan-upcoming-toolbar {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      align-items: start;
+    }
+
+    .admin-ramadan-upcoming-item--start {
+      grid-column: auto;
+    }
+  }
+
+  .admin-ramadan-upcoming-item {
+    @apply flex min-w-0 flex-col gap-2;
+  }
+
+  .admin-ramadan-upcoming-item-label {
+    @apply block min-h-10 items-start text-xs font-medium leading-snug text-muted-foreground;
+  }
+
+  .admin-ramadan-upcoming-control-shell {
+    @apply min-h-10 w-full rounded-md border border-border bg-background;
+  }
+
+  .admin-ramadan-upcoming-start-value {
+    @apply flex items-center px-3;
+  }
+
+  .admin-ramadan-upcoming-item-value {
+    @apply break-words text-sm font-medium normal-case text-foreground;
+  }
+
+  .admin-ramadan-upcoming-adjust-controls {
+    @apply flex w-full max-w-full items-stretch overflow-hidden p-0;
+  }
+
+  .admin-ramadan-upcoming-step {
+    @apply h-10 w-10 shrink-0 rounded-none border-0 border-r border-border shadow-none;
+  }
+
+  .admin-ramadan-upcoming-offset-input {
+    @apply h-10 min-w-0 flex-1 rounded-none border-0 px-0 text-center text-sm shadow-none;
+  }
+
+  .admin-ramadan-upcoming-length-control {
+    @apply flex items-center px-2 py-1.5;
+  }
+
+  .admin-ramadan-length-slider-track {
+    @apply relative flex h-8 w-full cursor-pointer items-center overflow-hidden rounded-full border border-border p-0.5 disabled:cursor-not-allowed disabled:opacity-50;
+    background-color: color-mix(in srgb, var(--muted) 30%, transparent);
+  }
+
+  .admin-ramadan-length-slider-thumb {
+    @apply pointer-events-none absolute top-1/2 h-[calc(100%-4px)] w-[calc(50%-2px)] -translate-y-1/2 rounded-full bg-gold transition-[left] duration-200 ease-out;
+    left: 2px;
+  }
+
+  .admin-ramadan-length-slider-thumb[data-position="30"] {
+    left: calc(50% + 0px);
+  }
+
+  .admin-ramadan-length-slider-option {
+    @apply relative z-10 flex flex-1 items-center justify-center text-xs font-medium text-muted-foreground;
+  }
+
+  .admin-ramadan-length-slider-option--active {
+    @apply font-semibold text-mosque-black;
+  }
+
+  .admin-monthly-timetable-toolbar {
+    @apply mb-6 flex flex-col gap-4 rounded-lg border border-border p-4 sm:flex-row sm:flex-wrap sm:items-end sm:gap-4 sm:p-5;
+    background-color: color-mix(in srgb, var(--muted) 20%, transparent);
+  }
+
+  .admin-monthly-timetable-field {
+    @apply flex min-w-0 flex-1 flex-col gap-2 sm:max-w-[12rem];
+  }
+
+  .admin-monthly-load-button {
+    @apply w-full sm:w-auto sm:shrink-0;
+  }
+
+  .admin-monthly-generate-button {
+    @apply w-full sm:ml-auto sm:w-auto sm:min-w-[17rem] sm:shrink-0;
   }
 
   .display-pin-gate {

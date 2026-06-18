@@ -62,6 +62,7 @@ export function PrayerTimesPanel({
       <PrayerCard
         name="Dhuhr"
         adhan={schedule.prayers.dhuhr?.adhan ?? null}
+        adhanDisplay={schedule.prayers.dhuhr?.adhanDisplay}
         iqama={schedule.prayers.dhuhr?.iqama ?? null}
         iqamaDisplay={schedule.prayers.dhuhr?.iqamaDisplay}
         isNext={isNextFard("dhuhr")}
@@ -81,6 +82,7 @@ export function PrayerTimesPanel({
           <PrayerCard
             name="Fajr"
             adhan={schedule.prayers.fajr.adhan}
+            adhanDisplay={schedule.prayers.fajr.adhanDisplay}
             iqama={schedule.prayers.fajr.iqama}
             iqamaDisplay={schedule.prayers.fajr.iqamaDisplay}
             isNext={isNextFard("fajr")}
@@ -96,6 +98,7 @@ export function PrayerTimesPanel({
           <PrayerCard
             name="Asr"
             adhan={schedule.prayers.asr.adhan}
+            adhanDisplay={schedule.prayers.asr.adhanDisplay}
             iqama={schedule.prayers.asr.iqama}
             iqamaDisplay={schedule.prayers.asr.iqamaDisplay}
             isNext={isNextFard("asr")}
@@ -104,6 +107,7 @@ export function PrayerTimesPanel({
           <PrayerCard
             name="Maghrib"
             adhan={schedule.prayers.maghrib.adhan}
+            adhanDisplay={schedule.prayers.maghrib.adhanDisplay}
             iqama={schedule.prayers.maghrib.iqama}
             iqamaDisplay={schedule.prayers.maghrib.iqamaDisplay}
             isNext={isNextFard("maghrib")}
@@ -112,13 +116,17 @@ export function PrayerTimesPanel({
           <PrayerCard
             name="Isha"
             adhan={schedule.prayers.isha.adhan}
+            adhanDisplay={schedule.prayers.isha.adhanDisplay}
             iqama={schedule.prayers.isha.iqama}
             iqamaDisplay={schedule.prayers.isha.iqamaDisplay}
             iqamaLabel={
-              combinedMaghribIsha ||
-              schedule.prayers.isha.iqamaDisplay === FOLLOWS_MAGHRIB_LABEL
-                ? FOLLOWS_MAGHRIB_LABEL
-                : null
+              combinedMaghribIsha
+                ? schedule.prayers.isha.iqamaDisplay ??
+                  schedule.prayers.isha.adhanDisplay ??
+                  FOLLOWS_MAGHRIB_LABEL
+                : schedule.prayers.isha.iqamaDisplay === FOLLOWS_MAGHRIB_LABEL
+                  ? FOLLOWS_MAGHRIB_LABEL
+                  : null
             }
             isNext={isNextFard("isha")}
           />
@@ -133,6 +141,7 @@ export function PrayerTimesPanel({
         <PrayerCard
           name="Fajr"
           adhan={schedule.prayers.fajr.adhan}
+          adhanDisplay={schedule.prayers.fajr.adhanDisplay}
           iqama={schedule.prayers.fajr.iqama}
           iqamaDisplay={schedule.prayers.fajr.iqamaDisplay}
           isNext={isNextFard("fajr")}
@@ -143,6 +152,7 @@ export function PrayerTimesPanel({
         <PrayerCard
           name="Asr"
           adhan={schedule.prayers.asr.adhan}
+          adhanDisplay={schedule.prayers.asr.adhanDisplay}
           iqama={schedule.prayers.asr.iqama}
           iqamaDisplay={schedule.prayers.asr.iqamaDisplay}
           isNext={isNextFard("asr")}
@@ -151,6 +161,7 @@ export function PrayerTimesPanel({
         <PrayerCard
           name="Maghrib"
           adhan={schedule.prayers.maghrib.adhan}
+          adhanDisplay={schedule.prayers.maghrib.adhanDisplay}
           iqama={schedule.prayers.maghrib.iqama}
           iqamaDisplay={schedule.prayers.maghrib.iqamaDisplay}
           isNext={isNextFard("maghrib")}
@@ -159,10 +170,18 @@ export function PrayerTimesPanel({
         <PrayerCard
           name="Isha"
           adhan={schedule.prayers.isha.adhan}
+          adhanDisplay={schedule.prayers.isha.adhanDisplay}
           iqama={schedule.prayers.isha.iqama}
           iqamaDisplay={schedule.prayers.isha.iqamaDisplay}
           combinedNote={
             combinedMaghribIsha ? "(Combined with Maghrib)" : null
+          }
+          iqamaLabel={
+            combinedMaghribIsha
+              ? schedule.prayers.isha.iqamaDisplay ??
+                schedule.prayers.isha.adhanDisplay ??
+                FOLLOWS_MAGHRIB_LABEL
+              : null
           }
           isNext={isNextFard("isha")}
         />

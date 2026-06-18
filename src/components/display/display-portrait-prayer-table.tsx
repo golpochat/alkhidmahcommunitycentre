@@ -45,6 +45,7 @@ function isNextFard(
 interface PortraitRowProps {
   name: string;
   adhan: string | null;
+  adhanDisplay?: string | null;
   iqama?: string | null;
   iqamaLabel?: string | null;
   isActive?: boolean;
@@ -54,11 +55,14 @@ interface PortraitRowProps {
 function PortraitRow({
   name,
   adhan,
+  adhanDisplay,
   iqama,
   iqamaLabel,
   isActive,
   prayerSuffix,
 }: PortraitRowProps) {
+  const adhanLabel = adhanDisplay?.trim() || formatPrayerTime24h(adhan);
+
   return (
     <div
       className={
@@ -75,7 +79,7 @@ function PortraitRow({
           </span>
         ) : null}
       </div>
-      <div>{formatPrayerTime24h(adhan)}</div>
+      <div>{adhanLabel}</div>
       <div>
         {iqamaLabel ? (
           <span className="display-portrait-table-iqama-label">
@@ -123,6 +127,7 @@ export function DisplayPortraitPrayerTable({
         <PortraitRow
           name="Fajr"
           adhan={schedule.prayers.fajr.adhan}
+          adhanDisplay={schedule.prayers.fajr.adhanDisplay}
           iqama={
             schedule.prayers.fajr.iqamaDisplay ?? schedule.prayers.fajr.iqama
           }
@@ -147,6 +152,7 @@ export function DisplayPortraitPrayerTable({
           <PortraitRow
             name="Dhuhr"
             adhan={schedule.prayers.dhuhr?.adhan ?? null}
+            adhanDisplay={schedule.prayers.dhuhr?.adhanDisplay}
             iqama={
               schedule.prayers.dhuhr?.iqamaDisplay ??
               schedule.prayers.dhuhr?.iqama ??
@@ -160,6 +166,7 @@ export function DisplayPortraitPrayerTable({
         <PortraitRow
           name="Asr"
           adhan={schedule.prayers.asr.adhan}
+          adhanDisplay={schedule.prayers.asr.adhanDisplay}
           iqama={
             schedule.prayers.asr.iqamaDisplay ?? schedule.prayers.asr.iqama
           }
@@ -169,6 +176,7 @@ export function DisplayPortraitPrayerTable({
         <PortraitRow
           name="Maghrib"
           adhan={schedule.prayers.maghrib.adhan}
+          adhanDisplay={schedule.prayers.maghrib.adhanDisplay}
           iqama={
             schedule.prayers.maghrib.iqamaDisplay ??
             schedule.prayers.maghrib.iqama
@@ -179,14 +187,18 @@ export function DisplayPortraitPrayerTable({
         <PortraitRow
           name="Isha"
           adhan={schedule.prayers.isha.adhan}
+          adhanDisplay={schedule.prayers.isha.adhanDisplay}
           iqama={
             schedule.prayers.isha.iqamaDisplay ?? schedule.prayers.isha.iqama
           }
           iqamaLabel={
-            combinedMaghribIsha ||
-            schedule.prayers.isha.iqamaDisplay === FOLLOWS_MAGHRIB_LABEL
-              ? FOLLOWS_MAGHRIB_LABEL
-              : null
+            combinedMaghribIsha
+              ? schedule.prayers.isha.iqamaDisplay ??
+                schedule.prayers.isha.adhanDisplay ??
+                FOLLOWS_MAGHRIB_LABEL
+              : schedule.prayers.isha.iqamaDisplay === FOLLOWS_MAGHRIB_LABEL
+                ? FOLLOWS_MAGHRIB_LABEL
+                : null
           }
           isActive={isNextFard(nextPrayer, "isha")}
         />

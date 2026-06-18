@@ -17,7 +17,7 @@ const qrItemSchema = z.object({
 
 const saveSchema = z.object({
   year: ramadanStorageYearSchema,
-  qrSlotCount: z.union([z.literal(3), z.literal(6)]),
+  qrSlotCount: z.union([z.literal(3), z.literal(6)]).optional(),
   items: z.array(qrItemSchema).max(6),
 });
 

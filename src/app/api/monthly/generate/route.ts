@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { generateMonthlyTimetable, listMonthlyTimetable } from "@/lib/monthly-timetable";
+import { generateMonthlyTimetable } from "@/lib/monthly-timetable";
 import { requireTimetableAdmin } from "@/lib/timetable-api-auth";
 
 export async function GET(request: NextRequest) {
@@ -10,8 +10,8 @@ export async function GET(request: NextRequest) {
   const month = Number(request.nextUrl.searchParams.get("month") ?? new Date().getMonth() + 1);
   const year = Number(request.nextUrl.searchParams.get("year") ?? new Date().getFullYear());
 
-  const rows = await listMonthlyTimetable(month, year);
-  return NextResponse.json({ month, year, rows });
+  const result = await generateMonthlyTimetable(month, year);
+  return NextResponse.json(result);
 }
 
 const generateSchema = z.object({

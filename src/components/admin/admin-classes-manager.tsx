@@ -6,7 +6,7 @@ import { AdminClassesTable } from "@/components/admin/admin-classes-table";
 import type { SerializedClass } from "@/lib/classes";
 import { EDUCATION_API_PATH } from "@/lib/constants";
 
-export function AdminClassesManager() {
+export function AdminClassesManager({ embedded = false }: { embedded?: boolean }) {
   const [classes, setClasses] = useState<SerializedClass[]>([]);
   const [canDelete, setCanDelete] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -44,5 +44,5 @@ export function AdminClassesManager() {
     );
   }
 
-  return <AdminClassesTable classes={classes} canDelete={canDelete} />;
+  return <AdminClassesTable classes={classes} canDelete={canDelete} embedded={embedded} />;
 }

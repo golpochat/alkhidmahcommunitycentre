@@ -1,19 +1,22 @@
+"use client";
+
+import { filterActiveDisplayNotices } from "@/lib/display-notices";
 import type { SerializedDisplayNotice } from "@/lib/display-types";
 
 interface ScrollingTickerProps {
   notices: SerializedDisplayNotice[];
+  now?: Date | null;
 }
 
-export function ScrollingTicker({ notices }: ScrollingTickerProps) {
-  const highPriority = notices.filter((notice) => notice.priority === "high");
+export function ScrollingTicker({ notices, now = null }: ScrollingTickerProps) {
+  const effectiveNow = now ?? new Date();
+  const highPriority = filterActiveDisplayNotices(notices, effectiveNow).filter(
+    (notice) => notice.priority === "high",
+  );
 
   if (!highPriority.length) return null;
 
-  const items = highPriority.flatMap((notice) => [
-    notice.title,
-    notice.message,
-  ]);
-
+  const items = highPriority.flatMap((notice) => [notice.title, notice.message]);
   const tickerText = items.join("  •  ");
 
   return (

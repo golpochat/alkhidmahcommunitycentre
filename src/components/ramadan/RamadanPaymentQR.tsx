@@ -16,15 +16,11 @@ import {
   RAMADAN_QR_MAX_SLOTS,
   type RamadanDonationCategoryOption,
   type RamadanPaymentQRItem,
-  type RamadanQrSlotCount,
-  type RamadanSettingsData,
 } from "@/lib/ramadan-settings-types";
 
 interface RamadanPaymentQRProps {
   categories: RamadanDonationCategoryOption[];
-  settings: RamadanSettingsData;
   items: RamadanPaymentQRItem[];
-  onSettingsChange: (patch: Partial<RamadanSettingsData>) => void;
   onItemsChange: (items: RamadanPaymentQRItem[]) => void;
   onSave: () => void;
   saving?: boolean;
@@ -33,10 +29,10 @@ interface RamadanPaymentQRProps {
 
 const NONE_VALUE = "__none__";
 
-function buildSlots(items: RamadanPaymentQRItem[], slotCount: RamadanQrSlotCount) {
-  const base = emptyPaymentQrSlots(slotCount);
+function buildSlots(items: RamadanPaymentQRItem[]) {
+  const base = emptyPaymentQrSlots(RAMADAN_QR_MAX_SLOTS);
   for (const item of items) {
-    if (item.order >= 0 && item.order < slotCount) {
+    if (item.order >= 0 && item.order < RAMADAN_QR_MAX_SLOTS) {
       base[item.order] = { ...item, order: item.order };
     }
   }
@@ -45,7 +41,7 @@ function buildSlots(items: RamadanPaymentQRItem[], slotCount: RamadanQrSlotCount
 
 function resolveCategoryId(
   slot: RamadanPaymentQRItem,
-  categories: RamadanDonationCategoryOption[]
+  categories: RamadanDonationCategoryOption[],
 ) {
   if (!slot.url && !slot.category) return NONE_VALUE;
 
@@ -94,38 +90,39 @@ function QrPreview({ url, cached }: { url: string; cached?: string | null }) {
   return (
     <div className="ramadan-payment-qr-preview">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={preview} alt="Payment QR code preview" className="ramadan-payment-qr-preview-image" />
+      <img
+        src={preview}
+        alt="Payment QR code preview"
+        className="ramadan-payment-qr-preview-image"
+      />
     </div>
   );
 }
 
 export function RamadanPaymentQR({
   categories,
-  settings,
   items,
-  onSettingsChange,
   onItemsChange,
   onSave,
   saving = false,
   disabled = false,
 }: RamadanPaymentQRProps) {
-  const slotCount = settings.qrSlotCount;
-  const slots = buildSlots(items, slotCount);
-
-  function setSlotCount(count: RamadanQrSlotCount) {
-    onSettingsChange({ qrSlotCount: count });
-    onItemsChange(buildSlots(items, count));
-  }
+  const slots = buildSlots(items);
 
   function updateSlot(index: number, patch: Partial<RamadanPaymentQRItem>) {
-    const next = buildSlots(items, slotCount);
+    const next = buildSlots(items);
     next[index] = { ...next[index], ...patch, order: index };
     onItemsChange(next);
   }
 
   function selectCategory(index: number, categoryId: string) {
     if (categoryId === NONE_VALUE) {
-      updateSlot(index, { category: "", url: "", enabled: false, qrImage: null });
+      updateSlot(index, {
+        category: "",
+        url: "",
+        enabled: false,
+        qrImage: null,
+      });
       return;
     }
 
@@ -145,43 +142,23 @@ export function RamadanPaymentQR({
       <div className="ramadan-payment-qr-header">
         <h3 className="ramadan-payment-qr-title">Donation QR Codes</h3>
         <p className="ramadan-payment-qr-description">
-          Choose up to 3 or 6 donation categories. The payment link and QR code are generated
-          automatically.
+          Choose up to {RAMADAN_QR_MAX_SLOTS} donation categories. The payment
+          link and QR code are generated automatically.
         </p>
-      </div>
-
-      <div className="ramadan-payment-qr-display-count">
-        <Label>Show on PDF</Label>
-        <div className="ramadan-payment-qr-display-count-options">
-          <Button
-            type="button"
-            variant={slotCount === 3 ? "default" : "outline"}
-            className={slotCount === 3 ? "btn-gold" : undefined}
-            disabled={disabled}
-            onClick={() => setSlotCount(3)}
-          >
-            3 QR codes
-          </Button>
-          <Button
-            type="button"
-            variant={slotCount === 6 ? "default" : "outline"}
-            className={slotCount === 6 ? "btn-gold" : undefined}
-            disabled={disabled}
-            onClick={() => setSlotCount(6)}
-          >
-            6 QR codes
-          </Button>
-        </div>
       </div>
 
       <div className="ramadan-payment-qr-grid">
         {slots.map((slot, index) => {
           const selectedId = resolveCategoryId(slot, categories);
-          const selectedCategory = categories.find((category) => category.id === selectedId);
+          const selectedCategory = categories.find(
+            (category) => category.id === selectedId,
+          );
 
           return (
             <div key={`payment-qr-${index}`} className="ramadan-payment-qr-slot">
-              <Label htmlFor={`payment-qr-category-${index}`}>QR {index + 1}</Label>
+              <Label htmlFor={`payment-qr-category-${index}`}>
+                QR {index + 1}
+              </Label>
               <Select
                 value={selectedId}
                 disabled={disabled || categories.length === 0}
@@ -210,9 +187,18 @@ export function RamadanPaymentQR({
         })}
       </div>
 
-      <Button type="button" className="btn-gold" disabled={disabled || saving} onClick={onSave}>
-        {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-        Save QR settings
+      <Button
+        type="button"
+        className="btn-gold"
+        disabled={disabled || saving}
+        onClick={onSave}
+      >
+        {saving ? (
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        ) : (
+          <Save className="mr-2 h-4 w-4" />
+        )}
+        Save
       </Button>
     </section>
   );

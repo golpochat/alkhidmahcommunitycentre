@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EventForm } from "@/components/admin/event-form";
-import { getSession, canManageEvents } from "@/lib/auth";
+import { getFreshSession, canManageEvents } from "@/lib/auth";
 import { getEventRecordById } from "@/lib/queries";
 
 interface AdminEditEventPageProps {
@@ -9,7 +9,7 @@ interface AdminEditEventPageProps {
 }
 
 export default async function AdminEditEventPage({ params }: AdminEditEventPageProps) {
-  const session = await getSession();
+  const session = await getFreshSession();
 
   if (!session || !canManageEvents(session)) {
     redirect("/admin");

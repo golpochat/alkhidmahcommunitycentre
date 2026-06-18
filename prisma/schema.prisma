@@ -310,67 +310,42 @@ model SmtpEmailSetting {
   @@index([isDefault])
 }
 
-model PrayerTimesOverride {
-  id        String   @id @default(cuid())
-  date      DateTime @unique @db.Date
-  eidType   String?
-  eidShowOnFrontend Boolean @default(false)
+model MosquePrayerConfig {
+  id               String    @id @default("default")
+  dailyAdhanConfig Json?
+  dailyIqamaConfig Json?
+  eidType          String?
+  eidDate          DateTime? @db.Date
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
-  fajrAdhan    String?
-  fajrIqama    String?
-  dhuhrAdhan   String?
-  dhuhrIqama   String?
-  asrAdhan     String?
-  asrIqama     String?
-  maghribAdhan String?
-  maghribIqama String?
-  ishaAdhan    String?
-  ishaIqama    String?
-  iqamaConfig  Json?
-  adhanConfig  Json?
-
-  eidFitrAdhan1 String?
-  eidFitrIqama1 String?
-  eidFitrAdhan2 String?
-  eidFitrIqama2 String?
-  eidAdhaAdhan1 String?
-  eidAdhaIqama1 String?
-  eidAdhaAdhan2 String?
-  eidAdhaIqama2 String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  jumuahOverrides JumuahOverride[]
-  eidOverrides    EidOverride[]
+  jumuahSlots MosqueJumuahSlot[]
+  eidSlots    MosqueEidSlot[]
 }
 
-model EidOverride {
-  id                    String              @id @default(cuid())
-  prayerTimesOverrideId String
-  date                  DateTime            @db.Date
-  adhan                 String?
-  iqama                 String?
-  index                 Int
-  createdAt             DateTime            @default(now())
-  updatedAt             DateTime            @updatedAt
-  prayerTimesOverride   PrayerTimesOverride @relation(fields: [prayerTimesOverrideId], references: [id], onDelete: Cascade)
+model MosqueJumuahSlot {
+  id                   String             @id @default(cuid())
+  mosquePrayerConfigId String             @default("default")
+  index                Int
+  adhan                String?
+  iqama                String?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  mosquePrayerConfig   MosquePrayerConfig @relation(fields: [mosquePrayerConfigId], references: [id], onDelete: Cascade)
 
-  @@unique([prayerTimesOverrideId, index])
+  @@unique([mosquePrayerConfigId, index])
 }
 
-model JumuahOverride {
-  id                    String              @id @default(cuid())
-  prayerTimesOverrideId String
-  date                  DateTime            @db.Date
-  adhan                 String?
-  iqama                 String?
-  index                 Int
-  createdAt             DateTime            @default(now())
-  updatedAt             DateTime            @updatedAt
-  prayerTimesOverride   PrayerTimesOverride @relation(fields: [prayerTimesOverrideId], references: [id], onDelete: Cascade)
+model MosqueEidSlot {
+  id                   String             @id @default(cuid())
+  mosquePrayerConfigId String             @default("default")
+  index                Int
+  time                 String?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  mosquePrayerConfig   MosquePrayerConfig @relation(fields: [mosquePrayerConfigId], references: [id], onDelete: Cascade)
 
-  @@unique([prayerTimesOverrideId, index])
+  @@unique([mosquePrayerConfigId, index])
 }
 
 model ContactMessage {
@@ -414,10 +389,12 @@ model RamadanTimetable {
 }
 
 model RamadanSettings {
-  year          Int      @id
-  notesMessage  String?  @db.Text
-  qrSlotCount   Int      @default(3)
-  masjidName    String?
+  year              Int      @id
+  notesMessage      String?  @db.Text
+  qrSlotCount       Int      @default(3)
+  startDayOffset    Int      @default(0)
+  isThirtyDayMonth  Boolean  @default(false)
+  masjidName        String?
   address       String?
   phone         String?
   email         String?

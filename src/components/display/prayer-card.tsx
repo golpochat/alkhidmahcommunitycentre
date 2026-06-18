@@ -4,6 +4,7 @@ interface PrayerCardProps {
   name: string;
   adhan: string | null;
   iqama: string | null;
+  adhanDisplay?: string | null;
   iqamaDisplay?: string | null;
   iqamaLabel?: string | null;
   combinedNote?: string | null;
@@ -15,6 +16,7 @@ export function PrayerCard({
   name,
   adhan,
   iqama,
+  adhanDisplay,
   iqamaDisplay,
   iqamaLabel,
   combinedNote,
@@ -23,6 +25,7 @@ export function PrayerCard({
 }: PrayerCardProps) {
   const iqamaTime = iqamaDisplay ?? iqama;
   const showIqamah = Boolean(iqamaLabel || iqamaTime);
+  const adhanLabel = adhanDisplay?.trim() || formatPrayerTime24h(adhan);
 
   return (
     <article
@@ -32,9 +35,7 @@ export function PrayerCard({
       <div className="display-prayer-card-times">
         <div className="display-prayer-card-time-block">
           <span className="display-prayer-card-time-label">Adhan</span>
-          <span className="display-prayer-card-time-value">
-            {formatPrayerTime24h(adhan)}
-          </span>
+          <span className="display-prayer-card-time-value">{adhanLabel}</span>
         </div>
         {showIqamah && (
           <div className="display-prayer-card-time-block">

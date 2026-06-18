@@ -3,6 +3,14 @@ import { isValidCronRequest } from "@/lib/cron-auth";
 import { calculateDonationFeeBreakdown, getDonationNetCents } from "@/lib/donation-processing-fee";
 import { resolveDonationAccounting } from "@/lib/donation-accounting";
 import { ALL_PERMISSION_KEYS } from "@/lib/permission-keys";
+import {
+  permissionsEqual,
+  sessionAuthorizationChanged,
+} from "@/lib/session-sync";
+import { AccountTier } from "@/lib/account-tier";
+import {
+  hasDailyPrayerConfigData,
+} from "@/lib/prayer-times-pure";
 
 describe("isValidCronRequest", () => {
   it("accepts a matching bearer token", () => {
@@ -108,6 +116,40 @@ describe("getDonationNetCents", () => {
   });
 });
 
+describe("session authorization sync", () => {
+  const baseSession = {
+    roleId: "role-1",
+    roleSlug: "editor",
+    tier: AccountTier.STAFF,
+    permissions: ["events.manage", "content.write"],
+  };
+
+  it("detects permission changes", () => {
+    expect(
+      sessionAuthorizationChanged(baseSession, {
+        ...baseSession,
+        permissions: ["events.manage", "display.manage"],
+      }),
+    ).toBe(true);
+  });
+
+  it("ignores permission order differences", () => {
+    expect(
+      permissionsEqual(["b.perm", "a.perm"], ["a.perm", "b.perm"]),
+    ).toBe(true);
+    expect(sessionAuthorizationChanged(baseSession, baseSession)).toBe(false);
+  });
+
+  it("detects role and tier changes", () => {
+    expect(
+      sessionAuthorizationChanged(baseSession, {
+        ...baseSession,
+        roleSlug: "web-admin",
+      }),
+    ).toBe(true);
+  });
+});
+
 describe("permission keys", () => {
   it("includes dedicated permissions for standalone admin features", () => {
     expect(ALL_PERMISSION_KEYS).toContain("contact.manage");
@@ -115,5 +157,26 @@ describe("permission keys", () => {
     expect(ALL_PERMISSION_KEYS).toContain("display.manage");
     expect(ALL_PERMISSION_KEYS).toContain("about.manage");
     expect(ALL_PERMISSION_KEYS.length).toBe(16);
+  });
+});
+
+describe("daily prayer config", () => {
+  it("detects saved mosque prayer rules in JSON config", () => {
+    expect(
+      hasDailyPrayerConfigData({
+        dailyIqamaConfig: {
+          dhuhr: { mode: "interval", intervalText: "20" },
+          isha: { mode: "follows_magrib" },
+        },
+      }),
+    ).toBe(true);
+  });
+
+  it("ignores jumuah-only rows for daily prayer config", () => {
+    expect(
+      hasDailyPrayerConfigData({
+        jumuah: [{ index: 1, adhan: "13:00", iqama: "13:30" }],
+      } as Parameters<typeof hasDailyPrayerConfigData>[0]),
+    ).toBe(false);
   });
 });

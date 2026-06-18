@@ -50,32 +50,14 @@ export type DonationCategory =
   | "dawah";
 
 import type { DailyIqamaConfig } from "@/lib/prayer-iqama";
+import type { DailyAdhanConfig } from "@/lib/prayer-adhan";
 
-export interface PrayerTimesOverrideRecord {
+export interface MosquePrayerConfigRecord {
   id: string;
-  date: string;
+  adhanConfig: DailyAdhanConfig;
+  iqamaConfig: DailyIqamaConfig;
   eidType: "FITR" | "ADHA" | null;
-  eidShowOnFrontend: boolean;
-  fajrAdhan: string | null;
-  fajrIqama: string | null;
-  dhuhrAdhan: string | null;
-  dhuhrIqama: string | null;
-  asrAdhan: string | null;
-  asrIqama: string | null;
-  maghribAdhan: string | null;
-  maghribIqama: string | null;
-  ishaAdhan: string | null;
-  ishaIqama: string | null;
-  iqamaConfig?: DailyIqamaConfig;
-  adhanConfig?: import("@/lib/prayer-adhan").DailyAdhanConfig;
-  eidFitrAdhan1: string | null;
-  eidFitrIqama1: string | null;
-  eidFitrAdhan2: string | null;
-  eidFitrIqama2: string | null;
-  eidAdhaAdhan1: string | null;
-  eidAdhaIqama1: string | null;
-  eidAdhaAdhan2: string | null;
-  eidAdhaIqama2: string | null;
+  eidDate: string | null;
   eidPrayers: Array<{ index: number; time: string }>;
   jumuah: Array<{
     id?: string;
@@ -84,6 +66,9 @@ export interface PrayerTimesOverrideRecord {
     iqama: string | null;
   }>;
 }
+
+/** @deprecated Use MosquePrayerConfigRecord */
+export type PrayerTimesOverrideRecord = MosquePrayerConfigRecord;
 
 export type {
   PrayerSlot,
@@ -135,7 +120,10 @@ export interface CommitteeMember {
   role: string;
   bio: string;
   imageUrl: string;
+  published: boolean;
 }
+
+export type EducationTeacher = CommitteeMember;
 
 export interface AdminUser {
   email: string;

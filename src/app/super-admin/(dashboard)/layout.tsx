@@ -9,7 +9,7 @@ export default async function SuperAdminDashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getFreshSession();
+  const session = await getFreshSession({ syncCookie: true });
 
   if (!session || !canAccessSuperAdminRoutes(session)) {
     if (await getSession()) {

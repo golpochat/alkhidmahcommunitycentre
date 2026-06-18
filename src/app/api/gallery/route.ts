@@ -3,7 +3,7 @@ import { ZodError } from "zod";
 import { db } from "@/lib/db";
 import {
   canManageGallery,
-  getSession,
+  getFreshSession,
   requirePermission,
   PERMISSIONS,
 } from "@/lib/auth";
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     const albumId = searchParams.get("albumId");
     const limitParam = searchParams.get("limit");
     const limit = limitParam ? Number(limitParam) : undefined;
-    const session = await getSession();
+    const session = await getFreshSession();
     const canViewUnpublished = session ? canManageGallery(session) : false;
 
     const items = await db.galleryItem.findMany({

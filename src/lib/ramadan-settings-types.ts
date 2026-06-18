@@ -16,6 +16,8 @@ export type RamadanQrSlotCount = 3 | 6;
 export interface RamadanSettingsData {
   notesMessage: string;
   qrSlotCount: RamadanQrSlotCount;
+  startDayOffset: number;
+  isThirtyDayMonth: boolean;
 }
 
 export interface RamadanDonationCategoryOption {
@@ -35,11 +37,19 @@ export interface RamadanPaymentQRItem {
 
 export const EMPTY_RAMADAN_SETTINGS: RamadanSettingsData = {
   notesMessage: DEFAULT_RAMADAN_NOTES_MESSAGE,
-  qrSlotCount: 3,
+  qrSlotCount: 6,
+  startDayOffset: 0,
+  isThirtyDayMonth: false,
 };
 
-export function normalizeRamadanQrSlotCount(value: unknown): RamadanQrSlotCount {
-  return value === 6 ? 6 : 3;
+export function normalizeRamadanStartDayOffset(value: unknown): number {
+  const parsed = typeof value === "number" ? value : Number.parseInt(String(value), 10);
+  if (!Number.isFinite(parsed)) return 0;
+  return Math.min(5, Math.max(-5, Math.trunc(parsed)));
+}
+
+export function normalizeRamadanQrSlotCount(_value?: unknown): RamadanQrSlotCount {
+  return RAMADAN_QR_MAX_SLOTS;
 }
 
 export function emptyPaymentQrSlots(count: RamadanQrSlotCount): RamadanPaymentQRItem[] {

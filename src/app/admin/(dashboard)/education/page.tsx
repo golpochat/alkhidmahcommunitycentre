@@ -1,5 +1,5 @@
-import { AdminClassesManager } from "@/components/admin/admin-classes-manager";
+import { AdminEducationManager } from "@/components/admin/admin-education-manager";
 
 export default function AdminEducationPage() {
-  return <AdminClassesManager />;
+  return <AdminEducationManager />;
 }

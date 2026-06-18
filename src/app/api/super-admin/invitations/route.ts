@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getSession, requirePermission, PERMISSIONS } from "@/lib/auth";
+import { requirePermission, PERMISSIONS } from "@/lib/auth";
 import { staffInvitationSchema } from "@/lib/validations";
 import { createStaffInvitation } from "@/lib/staff-invitations";
 import { isInvitationExpired } from "@/lib/staff-invitation-tokens";
@@ -42,8 +42,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    await requirePermission(PERMISSIONS.users.manage);
-    const session = await getSession();
+    const session = await requirePermission(PERMISSIONS.users.manage);
 
     const body = await request.json();
     const validated = staffInvitationSchema.parse(body);
@@ -52,7 +51,7 @@ export async function POST(request: NextRequest) {
       email: validated.email,
       name: validated.name,
       roleId: validated.roleId,
-      invitedByEmail: session?.email ?? null,
+      invitedByEmail: session.email ?? null,
     });
 
     return NextResponse.json(

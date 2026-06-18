@@ -14,10 +14,14 @@ import {
   normalizeRamadanRowTimes,
 } from "@/lib/ramadan-format";
 import { assertRamadanNotesWithinLimit } from "@/lib/ramadan-notes-html";
-import type { RamadanSeasonInfo } from "@/lib/ramadan-season-types";
+import type {
+  RamadanSeasonInfo,
+  UpcomingRamadanSeasonInfo,
+} from "@/lib/ramadan-season-types";
 import {
   EMPTY_RAMADAN_SETTINGS,
   normalizeRamadanQrSlotCount,
+  normalizeRamadanStartDayOffset,
   RAMADAN_NOTES_MAX_LENGTH,
   type RamadanSettingsData,
 } from "@/lib/ramadan-settings-types";
@@ -26,7 +30,10 @@ import { listActiveDonationCategories } from "@/lib/donation-categories";
 import { getSettingsMap } from "@/lib/queries";
 import { isHijriRamadanStorageYear } from "@/lib/ramadan-season-types";
 import { getPrayerTimesForDate } from "@/lib/prayer-times";
-import { getRamadanSeasonForHijriYear } from "@/lib/ramadan-seasons";
+import {
+  getRamadanSeasonForHijriYear,
+  getUpcomingRamadanSeason,
+} from "@/lib/ramadan-seasons";
 import { SETTING_KEYS } from "@/lib/settings";
 
 export {
@@ -119,6 +126,114 @@ async function buildRamadanRowForDate(
     isLastTen: flags.isLastTen,
     isFriday: getDay(parseISO(dateKey)) === 5,
   };
+}
+
+async function buildRamadanRowForGregorianDate(
+  dateKey: string,
+  hijriDay: number,
+  hijriYear: number,
+): Promise<Omit<RamadanDayRow, "id">> {
+  const resolved = await getPrayerTimesForDate(dateKey);
+  const fajr = formatRamadanTime(resolved.prayers.fajr?.adhan ?? "");
+  const maghrib = formatRamadanTime(resolved.prayers.maghrib?.adhan ?? "");
+  const flags = ramadanFlags(hijriDay);
+
+  return {
+    date: dateKey,
+    dayName: format(parseISO(dateKey), "EEEE"),
+    hijriDay,
+    hijriDate: `${hijriDay} Ramadan ${hijriYear} AH`,
+    suhoorEnd: fajr ? formatRamadanTime(addMinutesToTime(fajr, -10)) : "",
+    fajr,
+    sunrise: formatRamadanTime(resolved.sunrise ?? ""),
+    dhuhr: formatRamadanTime(resolved.prayers.dhuhr?.adhan ?? ""),
+    asr: formatRamadanTime(resolved.prayers.asr?.adhan ?? ""),
+    maghrib,
+    iftar: maghrib,
+    isha: formatRamadanTime(resolved.prayers.isha?.adhan ?? ""),
+    taraweeh: formatRamadanTime(resolved.prayers.isha?.adhan ?? ""),
+    notes: "",
+    isCommunityIftar: false,
+    isOddNight: flags.isOddNight,
+    isLastTen: flags.isLastTen,
+    isFriday: getDay(parseISO(dateKey)) === 5,
+  };
+}
+
+export function resolveUpcomingRamadanSeason(
+  calculated: { hijriYear: number; startDate: string; endDate: string },
+  settings: Pick<RamadanSettingsData, "startDayOffset" | "isThirtyDayMonth">,
+): UpcomingRamadanSeasonInfo {
+  const startDayOffset = normalizeRamadanStartDayOffset(settings.startDayOffset);
+  const dayCount = settings.isThirtyDayMonth ? 30 : 29;
+  const startDate = format(
+    addDays(parseISO(calculated.startDate), startDayOffset),
+    "yyyy-MM-dd",
+  );
+  const endDate = format(addDays(parseISO(startDate), dayCount - 1), "yyyy-MM-dd");
+
+  return {
+    hijriYear: calculated.hijriYear,
+    calculatedStartDate: calculated.startDate,
+    calculatedEndDate: calculated.endDate,
+    startDate,
+    endDate,
+    startDayOffset,
+    isThirtyDayMonth: settings.isThirtyDayMonth,
+    dayCount,
+  };
+}
+
+async function generateRamadanRows(
+  season: UpcomingRamadanSeasonInfo,
+): Promise<RamadanDayRow[]> {
+  const calendar = await fetchAlAdhanHijriCalendar(season.hijriYear, 9);
+  const calendarByDate = new Map(
+    calendar.data.map((day) => [
+      parseAlAdhanGregorianDate(day.date.gregorian.date),
+      day,
+    ]),
+  );
+
+  const rows = await Promise.all(
+    Array.from({ length: season.dayCount }, async (_, index) => {
+      const hijriDay = index + 1;
+      const dateKey = format(
+        addDays(parseISO(season.startDate), index),
+        "yyyy-MM-dd",
+      );
+      const calendarDay = calendarByDate.get(dateKey);
+
+      if (calendarDay) {
+        const row = await buildRamadanRowForDate(calendarDay);
+        const flags = ramadanFlags(hijriDay);
+        return normalizeRamadanRowTimes({
+          ...row,
+          date: dateKey,
+          dayName: format(parseISO(dateKey), "EEEE"),
+          hijriDay,
+          hijriDate: `${hijriDay} Ramadan ${season.hijriYear} AH`,
+          isFriday: getDay(parseISO(dateKey)) === 5,
+          isOddNight: flags.isOddNight,
+          isLastTen: flags.isLastTen,
+        });
+      }
+
+      return normalizeRamadanRowTimes(
+        await buildRamadanRowForGregorianDate(
+          dateKey,
+          hijriDay,
+          season.hijriYear,
+        ),
+      );
+    }),
+  );
+
+  if (rows.length === 0) {
+    throw new Error("No Ramadan days found for the upcoming season.");
+  }
+
+  return rows;
 }
 
 async function findRamadanDatesForGregorianYear(gregorianYear: number) {
@@ -368,34 +483,28 @@ export async function listRamadanTimetable(year: number) {
 }
 
 export async function generateRamadanTimetable(year: number) {
-  const season = await getRamadanSeasonDates(year);
-  const hijriYear =
-    season.hijriYear ??
-    (isHijriRamadanStorageYear(year)
-      ? year
-      : (await findRamadanDatesForGregorianYear(year)).hijriYear);
-
-  const calendar = await fetchAlAdhanHijriCalendar(hijriYear, 9);
-  const daysInSeason = calendar.data.filter((day) => {
-    const dateKey = parseAlAdhanGregorianDate(day.date.gregorian.date);
-    return dateKey >= season.startDate && dateKey <= season.endDate;
-  });
-
-  const generated = (
-    await Promise.all(daysInSeason.map((day) => buildRamadanRowForDate(day)))
-  ).map((row) => normalizeRamadanRowTimes(row));
-
-  if (generated.length === 0) {
-    throw new Error("No Ramadan days found for the selected year and date range.");
+  const upcoming = await getUpcomingRamadanSeason();
+  if (upcoming.hijriYear !== year) {
+    throw new Error("Only the upcoming Ramadan season can be generated.");
   }
+
+  const settings = await getRamadanSettings(year);
+  const season = resolveUpcomingRamadanSeason(upcoming, settings);
+  const rows = await generateRamadanRows(season);
 
   return {
     year,
-    hijriYear,
+    hijriYear: season.hijriYear,
     startDate: season.startDate,
     endDate: season.endDate,
-    rows: ensureThirtyRamadanRows(generated),
+    season,
+    rows,
   };
+}
+
+export async function generateUpcomingRamadanTimetable() {
+  const upcoming = await getUpcomingRamadanSeason();
+  return generateRamadanTimetable(upcoming.hijriYear);
 }
 
 export async function getDefaultRamadanSettings(): Promise<RamadanSettingsData> {
@@ -407,7 +516,9 @@ function mergeRamadanSettings(
   saved: {
     notesMessage: string | null;
     qrSlotCount?: number | null;
-  } | null
+    startDayOffset?: number | null;
+    isThirtyDayMonth?: boolean | null;
+  } | null,
 ): RamadanSettingsData {
   if (!saved) return defaults;
 
@@ -416,6 +527,8 @@ function mergeRamadanSettings(
       ? saved.notesMessage
       : defaults.notesMessage,
     qrSlotCount: normalizeRamadanQrSlotCount(saved.qrSlotCount),
+    startDayOffset: normalizeRamadanStartDayOffset(saved.startDayOffset),
+    isThirtyDayMonth: saved.isThirtyDayMonth === true,
   };
 }
 
@@ -434,8 +547,13 @@ export async function saveRamadanSettings(year: number, settings: Partial<Ramada
         ? assertRamadanNotesWithinLimit(settings.notesMessage)
         : current.notesMessage,
     qrSlotCount: normalizeRamadanQrSlotCount(
-      settings.qrSlotCount ?? current.qrSlotCount
+      settings.qrSlotCount ?? current.qrSlotCount,
     ),
+    startDayOffset: normalizeRamadanStartDayOffset(
+      settings.startDayOffset ?? current.startDayOffset,
+    ),
+    isThirtyDayMonth:
+      settings.isThirtyDayMonth ?? current.isThirtyDayMonth,
   };
 
   await db.ramadanSettings.upsert({
@@ -444,10 +562,14 @@ export async function saveRamadanSettings(year: number, settings: Partial<Ramada
       year,
       notesMessage: next.notesMessage || null,
       qrSlotCount: next.qrSlotCount,
+      startDayOffset: next.startDayOffset,
+      isThirtyDayMonth: next.isThirtyDayMonth,
     },
     update: {
       notesMessage: next.notesMessage || null,
       qrSlotCount: next.qrSlotCount,
+      startDayOffset: next.startDayOffset,
+      isThirtyDayMonth: next.isThirtyDayMonth,
     },
   });
 
@@ -457,6 +579,46 @@ export async function saveRamadanSettings(year: number, settings: Partial<Ramada
 export async function getRamadanNotesMessage(year: number) {
   const settings = await getRamadanSettings(year);
   return settings.notesMessage;
+}
+
+export async function getUpcomingRamadanTimetablePayload() {
+  const upcoming = await getUpcomingRamadanSeason();
+  const year = upcoming.hijriYear;
+  const settings = await getRamadanSettings(year);
+  const season = resolveUpcomingRamadanSeason(upcoming, settings);
+  const generated = await generateRamadanRows(season);
+  const paymentQrs = await listRamadanPaymentQrs(year, settings.qrSlotCount);
+  const categories = await listActiveDonationCategories();
+
+  return {
+    year,
+    season,
+    rows: generated,
+    settings,
+    paymentQrs,
+    categories: categories.map((category) => ({
+      id: category.id,
+      name: category.name,
+      donationUrl: category.donationUrl,
+    })),
+  };
+}
+
+export async function updateUpcomingRamadanConfig(
+  patch: Partial<Pick<RamadanSettingsData, "startDayOffset" | "isThirtyDayMonth">>,
+) {
+  const upcoming = await getUpcomingRamadanSeason();
+  const year = upcoming.hijriYear;
+  const settings = await saveRamadanSettings(year, patch);
+  const season = resolveUpcomingRamadanSeason(upcoming, settings);
+  const rows = await generateRamadanRows(season);
+
+  return {
+    year,
+    season,
+    settings,
+    rows,
+  };
 }
 
 export async function getRamadanTimetablePayload(year: number) {

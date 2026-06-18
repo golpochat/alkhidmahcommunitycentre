@@ -1,10 +1,10 @@
 import "server-only";
 
-import { getSession } from "@/lib/auth";
+import { getFreshSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 
 export async function resolveDonationUserId(): Promise<string | null> {
-  const session = await getSession();
+  const session = await getFreshSession();
   return session?.id ?? null;
 }
 

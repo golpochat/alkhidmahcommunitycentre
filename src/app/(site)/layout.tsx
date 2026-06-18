@@ -13,7 +13,7 @@ export default async function SiteLayout({
   children: React.ReactNode;
 }) {
   const [session, branding] = await Promise.all([
-    getFreshSession(),
+    getFreshSession({ syncCookie: true }),
     getSiteBranding(),
   ]);
   const authNav = buildSiteAuthNav(session);

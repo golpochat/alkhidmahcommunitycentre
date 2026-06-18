@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import {
+  formatAdhanDisplay,
   formatIqamaDisplay,
   formatJumuahNoticeLine,
   formatPrayerTime24h,
@@ -54,7 +55,7 @@ function PrayerTableRow({
         {notice && <span className="jumuah-prayer-notice-inline">{notice}</span>}
       </TableCell>
       <TableCell className="prayer-times-table-cell prayer-times-table-cell-time text-right">
-        {formatPrayerTime24h(row.slot.adhan)}
+        {formatAdhanDisplay(row.slot)}
       </TableCell>
       <TableCell className="prayer-times-table-cell prayer-times-table-cell-time text-right">
         {row.key === "sunrise" ? "—" : formatIqamaDisplay(row.slot)}

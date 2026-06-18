@@ -2,8 +2,8 @@ import { format, nextFriday, parseISO } from "date-fns";
 import { DateTime } from "luxon";
 import type { AlAdhanResponse } from "@/types";
 import {
-  buildDailyIqamaConfigFromOverride,
   defaultIqamaConfig,
+  FOLLOWS_MAGHRIB_LABEL,
   parseDailyIqamaConfig,
 } from "@/lib/prayer-iqama";
 import {
@@ -23,7 +23,7 @@ export {
   parseIntervalMinutes,
 } from "@/lib/prayer-iqama";
 
-export const IQAMA_OFFSET_MINUTES = 15;
+export const IQAMA_OFFSET_MINUTES = 20;
 
 export const DISPLAY_TIMEZONE = "Europe/Dublin";
 
@@ -70,6 +70,7 @@ export function eidSlotFromPrayerTime(index: number, time: string): EidSlot {
 export interface PrayerSlot {
   adhan: string | null;
   iqama: string | null;
+  adhanDisplay?: string | null;
   iqamaDisplay: string | null;
 }
 
@@ -212,6 +213,13 @@ export function formatPrayerTime24h(time?: string | null) {
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
 }
 
+export function formatAdhanDisplay(
+  slot: Pick<PrayerSlot, "adhan" | "adhanDisplay">,
+) {
+  if (slot.adhanDisplay?.trim()) return slot.adhanDisplay.trim();
+  return formatPrayerTime24h(slot.adhan);
+}
+
 export function parseDateParam(dateParam?: string | null) {
   const dateKey = dateParam ?? toDateKey(new Date());
   return new Date(`${dateKey}T00:00:00.000Z`);
@@ -221,9 +229,26 @@ export function toDateKey(date: Date) {
   return format(date, "yyyy-MM-dd");
 }
 
+export function buildDateKey(year: number, month: number, day: number) {
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+export function getGregorianMonthDayCount(month: number, year: number) {
+  return new Date(year, month, 0).getDate();
+}
+
+/** Parse YYYY-MM-DD for display without UTC-midnight shifting the calendar day. */
+export function parseDateKey(dateKey: string) {
+  return parseISO(`${dateKey}T12:00:00`);
+}
+
 /** Calendar date key for `@db.Date` values stored in UTC. */
 export function toRecordDateKey(date: Date) {
-  return date.toISOString().slice(0, 10);
+  return buildDateKey(
+    date.getUTCFullYear(),
+    date.getUTCMonth() + 1,
+    date.getUTCDate(),
+  );
 }
 
 export function isFriday(date: Date) {
@@ -283,8 +308,20 @@ export function formatJamaahLabel(index: number) {
 }
 
 export function isCombinedMaghribIsha(schedule: PrayerTimesResponse): boolean {
-  const ishaAdhan = normalizeTime(schedule.prayers.isha.adhan);
-  const ishaIqamah = normalizeTime(schedule.prayers.isha.iqama);
+  const isha = schedule.prayers.isha;
+
+  if (isha.iqamaDisplay === FOLLOWS_MAGHRIB_LABEL) {
+    return true;
+  }
+
+  const adhanText = isha.adhanDisplay?.trim().toLowerCase();
+  const iqamaText = isha.iqamaDisplay?.trim().toLowerCase();
+  if (adhanText?.includes("maghrib") || iqamaText?.includes("maghrib")) {
+    return true;
+  }
+
+  const ishaAdhan = normalizeTime(isha.adhan);
+  const ishaIqamah = normalizeTime(isha.iqama);
   if (!ishaAdhan || !ishaIqamah) return false;
 
   return parseTimeToMinutes(ishaIqamah) < parseTimeToMinutes(ishaAdhan);
@@ -355,35 +392,19 @@ export function mapJumuahOverrides(
 
 export type OverrideRecord = {
   eidType: string | null;
-  eidShowOnFrontend?: boolean;
-  fajrAdhan: string | null;
-  fajrIqama: string | null;
-  dhuhrAdhan: string | null;
-  dhuhrIqama: string | null;
-  asrAdhan: string | null;
-  asrIqama: string | null;
-  maghribAdhan: string | null;
-  maghribIqama: string | null;
-  ishaAdhan: string | null;
-  ishaIqama: string | null;
+  eidDate?: Date | string | null;
   iqamaConfig?: unknown;
   adhanConfig?: unknown;
-  eidFitrAdhan1: string | null;
-  eidFitrIqama1: string | null;
-  eidFitrAdhan2: string | null;
-  eidFitrIqama2: string | null;
-  eidAdhaAdhan1: string | null;
-  eidAdhaIqama1: string | null;
-  eidAdhaAdhan2: string | null;
-  eidAdhaIqama2: string | null;
   jumuahOverrides?: Array<{ index: number; adhan: string | null; iqama: string | null }>;
+  jumuah?: Array<{ index: number; adhan: string | null; iqama: string | null }>;
   eidOverrides?: Array<{ index: number; adhan: string | null; iqama: string | null }>;
+  eidPrayers?: Array<{ index: number; time: string }>;
 };
 
 type DbPrayerTimesOverrideRecord = OverrideRecord & {
   id: string;
-  date: Date;
-  updatedAt: Date;
+  eidDate?: Date | null;
+  updatedAt?: Date;
 };
 
 export type { DbPrayerTimesOverrideRecord };
@@ -417,6 +438,7 @@ export function buildSlot(
   return {
     adhan: normalizedAdhan,
     iqama: resolvedIqama,
+    adhanDisplay: normalizedAdhan,
     iqamaDisplay: resolvedIqama,
   };
 }
@@ -473,51 +495,42 @@ function buildEidSlots(
 export function hasOverrideData(override: OverrideRecord | null | undefined) {
   if (!override) return false;
   if (override.eidType) return true;
-  if (override.jumuahOverrides?.length) return true;
-  if (override.eidOverrides?.length) return true;
-
-  return [
-    override.fajrAdhan,
-    override.fajrIqama,
-    override.dhuhrAdhan,
-    override.dhuhrIqama,
-    override.asrAdhan,
-    override.asrIqama,
-    override.maghribAdhan,
-    override.maghribIqama,
-    override.ishaAdhan,
-    override.ishaIqama,
-    override.eidFitrAdhan1,
-    override.eidFitrIqama1,
-    override.eidFitrAdhan2,
-    override.eidFitrIqama2,
-    override.eidAdhaAdhan1,
-    override.eidAdhaIqama1,
-    override.eidAdhaAdhan2,
-    override.eidAdhaIqama2,
-  ].some(Boolean);
+  if (override.jumuahOverrides?.length || override.jumuah?.length) return true;
+  if (override.eidOverrides?.length || override.eidPrayers?.length) return true;
+  return hasDailyPrayerConfigData(override);
 }
 
-export function hasDailyOverrideData(override: OverrideRecord | null | undefined) {
-  if (!override) return false;
-  if (override.jumuahOverrides?.length) return true;
-  if (parseDailyIqamaConfig(override.iqamaConfig)) return true;
+export function hasDailyPrayerConfigData(
+  config: {
+    dailyAdhanConfig?: unknown;
+    dailyIqamaConfig?: unknown;
+    adhanConfig?: unknown;
+    iqamaConfig?: unknown;
+  } | null | undefined,
+) {
+  if (!config) return false;
 
-  const adhanConfig = parseDailyAdhanConfig(override.adhanConfig);
+  const iqamaJson = config.dailyIqamaConfig ?? config.iqamaConfig;
+  if (parseDailyIqamaConfig(iqamaJson)) return true;
+
+  const adhanJson = config.dailyAdhanConfig ?? config.adhanConfig;
+  const adhanConfig = parseDailyAdhanConfig(adhanJson);
   if (adhanConfig && hasAdhanOverrides(adhanConfig)) return true;
 
-  return [
-    override.fajrAdhan,
-    override.fajrIqama,
-    override.dhuhrAdhan,
-    override.dhuhrIqama,
-    override.asrAdhan,
-    override.asrIqama,
-    override.maghribAdhan,
-    override.maghribIqama,
-    override.ishaAdhan,
-    override.ishaIqama,
-  ].some(Boolean);
+  return false;
+}
+
+export function hasDailyOverrideData(
+  config: {
+    dailyAdhanConfig?: unknown;
+    dailyIqamaConfig?: unknown;
+    jumuahSlots?: unknown[];
+    jumuahOverrides?: unknown[];
+  } | null | undefined,
+) {
+  if (!config) return false;
+  if (config.jumuahSlots?.length || config.jumuahOverrides?.length) return true;
+  return hasDailyPrayerConfigData(config);
 }
 
 interface ScheduleEntry {
@@ -655,33 +668,22 @@ function buildEidSlotsFromRelation(
 
 function mergeEidSlots(
   type: Exclude<EidType, null>,
-  override: OverrideRecord | null | undefined
+  record: OverrideRecord | null | undefined
 ): EidSlot[] {
-  const relationSlots = buildEidSlotsFromRelation(override?.eidOverrides);
+  const relationSlots = buildEidSlotsFromRelation(record?.eidOverrides);
   if (relationSlots.length > 0) return relationSlots;
 
-  const defaults = defaultEidSlots(type);
+  const prayerSlots =
+    record?.eidPrayers
+      ?.filter((item) => item.time?.trim())
+      .map((item) => ({
+        index: item.index,
+        ...buildSlot(item.time, item.time, false),
+      })) ?? [];
 
-  if (!override) return defaults;
+  if (prayerSlots.length > 0) return prayerSlots;
 
-  const overrideSlots =
-    type === "FITR"
-      ? buildEidSlots(
-          override.eidFitrAdhan1,
-          override.eidFitrIqama1,
-          override.eidFitrAdhan2,
-          override.eidFitrIqama2
-        )
-      : buildEidSlots(
-          override.eidAdhaAdhan1,
-          override.eidAdhaIqama1,
-          override.eidAdhaAdhan2,
-          override.eidAdhaIqama2
-        );
-
-  if (overrideSlots.length === 0) return defaults;
-
-  return overrideSlots;
+  return defaultEidSlots(type);
 }
 
 export function isEidVisibleForToday(eidDate: Date, today: Date = parseDateParam()) {
@@ -711,7 +713,7 @@ export function jumuahSlotsFromRecord(record: {
 }
 
 export function buildEidInfoFromRecord(
-  record: OverrideRecord & { date?: Date | string },
+  record: OverrideRecord & { date?: Date | string; eidDate?: Date | string | null },
   options?: { isUpcoming?: boolean }
 ): EidInfo {
   const eidType = record.eidType as EidType;
@@ -719,11 +721,12 @@ export function buildEidInfoFromRecord(
     return { type: null, prayers: [] };
   }
 
+  const rawDate = record.eidDate ?? record.date;
   const dateKey =
-    record.date instanceof Date
-      ? toRecordDateKey(record.date)
-      : typeof record.date === "string"
-        ? record.date
+    rawDate instanceof Date
+      ? toRecordDateKey(rawDate)
+      : typeof rawDate === "string"
+        ? rawDate
         : undefined;
 
   return {
@@ -801,100 +804,5 @@ export function buildAdminFormDefaults(
           iqama: item.iqama || "",
         }))
       : [],
-  };
-}
-
-function eidPrayersFromOverride(override: {
-  eidType: string | null;
-  eidOverrides?: Array<{ index: number; adhan: string | null; iqama: string | null }>;
-  eidFitrAdhan1: string | null;
-  eidFitrIqama1: string | null;
-  eidFitrAdhan2: string | null;
-  eidFitrIqama2: string | null;
-  eidAdhaAdhan1: string | null;
-  eidAdhaIqama1: string | null;
-  eidAdhaAdhan2: string | null;
-  eidAdhaIqama2: string | null;
-}): Array<{ index: number; time: string }> {
-  const type = override.eidType as EidType;
-  if (!type) return [];
-
-  const slots = mergeEidSlots(type, override as OverrideRecord);
-  return slots.map((slot) => ({
-    index: slot.index,
-    time: getEidPrayerTime(slot) || "",
-  }));
-}
-
-export function serializeOverride(override: {
-  id: string;
-  date: Date;
-  eidType: string | null;
-  eidShowOnFrontend?: boolean;
-  fajrAdhan: string | null;
-  fajrIqama: string | null;
-  dhuhrAdhan: string | null;
-  dhuhrIqama: string | null;
-  asrAdhan: string | null;
-  asrIqama: string | null;
-  maghribAdhan: string | null;
-  maghribIqama: string | null;
-  ishaAdhan: string | null;
-  ishaIqama: string | null;
-  iqamaConfig?: unknown;
-  adhanConfig?: unknown;
-  eidFitrAdhan1: string | null;
-  eidFitrIqama1: string | null;
-  eidFitrAdhan2: string | null;
-  eidFitrIqama2: string | null;
-  eidAdhaAdhan1: string | null;
-  eidAdhaIqama1: string | null;
-  eidAdhaAdhan2: string | null;
-  eidAdhaIqama2: string | null;
-  jumuahOverrides?: Array<{
-    id?: string;
-    index: number;
-    adhan: string | null;
-    iqama: string | null;
-  }>;
-  eidOverrides?: Array<{
-    id?: string;
-    index: number;
-    adhan: string | null;
-    iqama: string | null;
-  }>;
-}) {
-  return {
-    id: override.id,
-    date: format(override.date, "yyyy-MM-dd"),
-    eidType: override.eidType,
-    eidShowOnFrontend: override.eidShowOnFrontend ?? false,
-    iqamaConfig: buildDailyIqamaConfigFromOverride(override),
-    adhanConfig: parseDailyAdhanConfig(override.adhanConfig) ?? undefined,
-    fajrAdhan: override.fajrAdhan,
-    fajrIqama: override.fajrIqama,
-    dhuhrAdhan: override.dhuhrAdhan,
-    dhuhrIqama: override.dhuhrIqama,
-    asrAdhan: override.asrAdhan,
-    asrIqama: override.asrIqama,
-    maghribAdhan: override.maghribAdhan,
-    maghribIqama: override.maghribIqama,
-    ishaAdhan: override.ishaAdhan,
-    ishaIqama: override.ishaIqama,
-    eidFitrAdhan1: override.eidFitrAdhan1,
-    eidFitrIqama1: override.eidFitrIqama1,
-    eidFitrAdhan2: override.eidFitrAdhan2,
-    eidFitrIqama2: override.eidFitrIqama2,
-    eidAdhaAdhan1: override.eidAdhaAdhan1,
-    eidAdhaIqama1: override.eidAdhaIqama1,
-    eidAdhaAdhan2: override.eidAdhaAdhan2,
-    eidAdhaIqama2: override.eidAdhaIqama2,
-    eidPrayers: eidPrayersFromOverride(override),
-    jumuah: (override.jumuahOverrides ?? []).map((item) => ({
-      id: item.id ?? `${item.index}`,
-      index: item.index,
-      adhan: item.adhan,
-      iqama: item.iqama,
-    })),
   };
 }

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import {
   canManageClasses,
-  getSession,
+  getFreshSession,
   requirePermission,
   PERMISSIONS,
 } from "@/lib/auth";
@@ -11,7 +11,7 @@ import { classSchema } from "@/lib/validations";
 
 export async function GET() {
   try {
-    const session = await getSession();
+    const session = await getFreshSession();
     const canViewUnpublished = session ? canManageClasses(session) : false;
 
     const classes = await db.class.findMany({

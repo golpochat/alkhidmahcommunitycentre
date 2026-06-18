@@ -8,12 +8,25 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+import type { UploadFolder } from "@/lib/upload-image";
+
 interface ImageUploadProps {
   value: string;
   onChange: (url: string) => void;
+  folder?: UploadFolder;
+  label?: string;
+  previewAlt?: string;
+  variant?: "landscape" | "square";
 }
 
-export function ImageUpload({ value, onChange }: ImageUploadProps) {
+export function ImageUpload({
+  value,
+  onChange,
+  folder = "events",
+  label = "Image",
+  previewAlt = "Image preview",
+  variant = "landscape",
+}: ImageUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -25,7 +38,7 @@ export function ImageUpload({ value, onChange }: ImageUploadProps) {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("folder", "events");
+      formData.append("folder", folder);
 
       const response = await fetch("/api/admin/upload", {
         method: "POST",
@@ -52,16 +65,22 @@ export function ImageUpload({ value, onChange }: ImageUploadProps) {
 
   return (
     <div className="space-y-3">
-      <Label>Event Image</Label>
+      <Label>{label}</Label>
 
       {value && (
-        <div className="relative aspect-video overflow-hidden rounded-lg border border-border">
+        <div
+          className={
+            variant === "square"
+              ? "relative mx-auto aspect-square w-full max-w-[12rem] overflow-hidden rounded-full border border-border"
+              : "relative aspect-video overflow-hidden rounded-lg border border-border"
+          }
+        >
           <Image
             src={value}
-            alt="Event preview"
+            alt={previewAlt}
             fill
             className="object-cover"
-            sizes="400px"
+            sizes={variant === "square" ? "192px" : "400px"}
           />
           <Button
             type="button"

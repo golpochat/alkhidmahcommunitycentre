@@ -52,6 +52,8 @@ async function main() {
     { key: "social_youtube", value: "https://youtube.com/@alkhidmahmosque" },
     { key: "logo_path", value: "/logo/logo.png" },
     { key: "favicon_path", value: "/favicon.svg" },
+    { key: "about_values_visible", value: "true" },
+    { key: "about_committee_visible", value: "true" },
   ];
 
   for (const setting of settings) {

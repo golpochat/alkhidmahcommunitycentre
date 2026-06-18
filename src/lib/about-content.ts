@@ -92,7 +92,14 @@ function normalizeCommittee(members: CommitteeMember[]): CommitteeMember[] {
       role: item.role.trim(),
       bio: item.bio?.trim() ?? "",
       imageUrl: item.imageUrl?.trim() ?? "",
+      published: item.published !== false,
     }));
+}
+
+export function getPublishedCommitteeMembers(
+  members: CommitteeMember[],
+): CommitteeMember[] {
+  return members.filter((member) => member.published);
 }
 
 export const getAboutPageContent = cache(async (): Promise<AboutPageContent> => {
@@ -106,8 +113,8 @@ export const getAboutPageContent = cache(async (): Promise<AboutPageContent> => 
   );
 
   return {
-    valuesVisible: parseBoolean(map[ABOUT_SETTING_KEYS.valuesVisible], false),
-    committeeVisible: parseBoolean(map[ABOUT_SETTING_KEYS.committeeVisible], false),
+    valuesVisible: parseBoolean(map[ABOUT_SETTING_KEYS.valuesVisible], true),
+    committeeVisible: parseBoolean(map[ABOUT_SETTING_KEYS.committeeVisible], true),
     values: values.length > 0 ? values : DEFAULT_VALUES,
     committee: committee.length > 0 ? committee : COMMITTEE_MEMBERS,
   };

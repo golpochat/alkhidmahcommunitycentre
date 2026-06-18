@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import {
   canManageGallery,
-  getSession,
+  getFreshSession,
   requirePermission,
   PERMISSIONS,
 } from "@/lib/auth";
@@ -11,7 +11,7 @@ import { galleryAlbumSchema } from "@/lib/validations";
 
 export async function GET() {
   try {
-    const session = await getSession();
+    const session = await getFreshSession();
     const canViewUnpublished = session ? canManageGallery(session) : false;
 
     const albums = await db.galleryAlbum.findMany({

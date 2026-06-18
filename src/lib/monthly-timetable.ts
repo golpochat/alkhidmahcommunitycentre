@@ -1,21 +1,23 @@
 import "server-only";
 
 import {
-  eachDayOfInterval,
-  endOfMonth,
   format,
-  parseISO,
-  startOfMonth,
 } from "date-fns";
 import { db } from "@/lib/db";
 import { getPrayerTimesForDate } from "@/lib/prayer-times";
 import {
   addMinutesToTime,
+  buildDateKey,
+  formatAdhanDisplay,
+  getGregorianMonthDayCount,
   IQAMA_OFFSET_MINUTES,
   normalizeTime,
   parseAlAdhanGregorianDate,
+  parseDateKey,
+  toRecordDateKey,
   type PrayerSlot,
 } from "@/lib/prayer-times-pure";
+import { formatIqamaDisplay } from "@/lib/prayer-iqama";
 import { fetchAlAdhanGregorianCalendar } from "@/lib/prayer-times-aladhan";
 import { getSettingsMap } from "@/lib/queries";
 import { SETTING_KEYS } from "@/lib/settings";
@@ -43,18 +45,16 @@ function defaultIqama(adhan: string) {
   return adhan ? addMinutesToTime(adhan, IQAMA_OFFSET_MINUTES) : "";
 }
 
-function resolveMonthlyAdhan(
-  slot: PrayerSlot | null | undefined,
-  apiFallback: string | undefined
-): string {
-  return normalizeTime(slot?.adhan ?? apiFallback) ?? "";
+function monthlyAdhanValue(slot: PrayerSlot, apiFallback: string) {
+  const display = formatAdhanDisplay(slot);
+  if (display !== "—") return display;
+  return normalizeTime(apiFallback) ?? "";
 }
 
-function resolveMonthlyIqama(
-  slot: PrayerSlot | null | undefined,
-  adhan: string
-): string {
-  return normalizeTime(slot?.iqama) ?? defaultIqama(adhan);
+function monthlyIqamaValue(slot: PrayerSlot, adhanFallback: string) {
+  const display = formatIqamaDisplay(slot);
+  if (display !== "—") return display;
+  return normalizeTime(slot.iqama) ?? defaultIqama(adhanFallback);
 }
 
 async function buildMonthlyRowFromDailyPrayerTimes(
@@ -68,31 +68,41 @@ async function buildMonthlyRowFromDailyPrayerTimes(
     Isha: string;
   }
 ): Promise<MonthlyDayRow> {
-  const date = parseISO(dateKey);
+  const date = parseDateKey(dateKey);
   const resolved = await getPrayerTimesForDate(dateKey);
-  const fajrAdhan = resolveMonthlyAdhan(resolved.prayers.fajr, apiTimings.Fajr);
-  const dhuhrAdhan = resolveMonthlyAdhan(resolved.prayers.dhuhr, apiTimings.Dhuhr);
-  const asrAdhan = resolveMonthlyAdhan(resolved.prayers.asr, apiTimings.Asr);
-  const maghribAdhan = resolveMonthlyAdhan(
-    resolved.prayers.maghrib,
-    apiTimings.Maghrib
-  );
-  const ishaAdhan = resolveMonthlyAdhan(resolved.prayers.isha, apiTimings.Isha);
 
   return {
     date: dateKey,
     dayName: format(date, "EEEE"),
-    fajrAdhan,
-    fajrIqama: resolveMonthlyIqama(resolved.prayers.fajr, fajrAdhan),
+    fajrAdhan: monthlyAdhanValue(resolved.prayers.fajr, apiTimings.Fajr),
+    fajrIqama: monthlyIqamaValue(
+      resolved.prayers.fajr,
+      normalizeTime(resolved.prayers.fajr.adhan) ?? apiTimings.Fajr,
+    ),
     sunrise: normalizeTime(resolved.sunrise ?? apiTimings.Sunrise) ?? "",
-    dhuhrAdhan,
-    dhuhrIqama: resolveMonthlyIqama(resolved.prayers.dhuhr, dhuhrAdhan),
-    asrAdhan,
-    asrIqama: resolveMonthlyIqama(resolved.prayers.asr, asrAdhan),
-    maghribAdhan,
-    maghribIqama: resolveMonthlyIqama(resolved.prayers.maghrib, maghribAdhan),
-    ishaAdhan,
-    ishaIqama: resolveMonthlyIqama(resolved.prayers.isha, ishaAdhan),
+    dhuhrAdhan: monthlyAdhanValue(
+      resolved.prayers.dhuhr ?? { adhan: null, iqama: null, iqamaDisplay: null },
+      apiTimings.Dhuhr,
+    ),
+    dhuhrIqama: monthlyIqamaValue(
+      resolved.prayers.dhuhr ?? { adhan: null, iqama: null, iqamaDisplay: null },
+      normalizeTime(resolved.prayers.dhuhr?.adhan) ?? apiTimings.Dhuhr,
+    ),
+    asrAdhan: monthlyAdhanValue(resolved.prayers.asr, apiTimings.Asr),
+    asrIqama: monthlyIqamaValue(
+      resolved.prayers.asr,
+      normalizeTime(resolved.prayers.asr.adhan) ?? apiTimings.Asr,
+    ),
+    maghribAdhan: monthlyAdhanValue(resolved.prayers.maghrib, apiTimings.Maghrib),
+    maghribIqama: monthlyIqamaValue(
+      resolved.prayers.maghrib,
+      normalizeTime(resolved.prayers.maghrib.adhan) ?? apiTimings.Maghrib,
+    ),
+    ishaAdhan: monthlyAdhanValue(resolved.prayers.isha, apiTimings.Isha),
+    ishaIqama: monthlyIqamaValue(
+      resolved.prayers.isha,
+      normalizeTime(resolved.prayers.isha.adhan) ?? apiTimings.Isha,
+    ),
     notes: "",
     isFriday: format(date, "EEEE") === "Friday",
   };
@@ -114,10 +124,13 @@ function mapDbRow(row: {
   ishaIqama: string | null;
   notes: string | null;
 }): MonthlyDayRow {
+  const dateKey = toRecordDateKey(row.date);
+  const date = parseDateKey(dateKey);
+
   return {
     id: row.id,
-    date: format(row.date, "yyyy-MM-dd"),
-    dayName: format(row.date, "EEEE"),
+    date: dateKey,
+    dayName: format(date, "EEEE"),
     fajrAdhan: row.fajrAdhan ?? "",
     fajrIqama: row.fajrIqama ?? "",
     sunrise: row.sunrise ?? "",
@@ -130,7 +143,7 @@ function mapDbRow(row: {
     ishaAdhan: row.ishaAdhan ?? "",
     ishaIqama: row.ishaIqama ?? "",
     notes: row.notes ?? "",
-    isFriday: format(row.date, "EEEE") === "Friday",
+    isFriday: format(date, "EEEE") === "Friday",
   };
 }
 
@@ -139,7 +152,13 @@ export async function listMonthlyTimetable(month: number, year: number) {
     where: { month, year },
     orderBy: { date: "asc" },
   });
-  return rows.map(mapDbRow);
+
+  return rows
+    .map(mapDbRow)
+    .filter((row) => {
+      const [rowYear, rowMonth] = row.date.split("-").map(Number);
+      return rowYear === year && rowMonth === month;
+    });
 }
 
 export async function generateMonthlyTimetable(month: number, year: number) {
@@ -151,13 +170,11 @@ export async function generateMonthlyTimetable(month: number, year: number) {
     ])
   );
 
-  const monthStart = startOfMonth(new Date(year, month - 1, 1));
-  const monthEnd = endOfMonth(monthStart);
-  const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
-
+  const dayCount = getGregorianMonthDayCount(month, year);
   const rows = await Promise.all(
-    days.map(async (date) => {
-      const dateKey = format(date, "yyyy-MM-dd");
+    Array.from({ length: dayCount }, async (_, index) => {
+      const day = index + 1;
+      const dateKey = buildDateKey(year, month, day);
       const apiTimings = apiTimingsByDate.get(dateKey) ?? {
         Fajr: "",
         Sunrise: "",
@@ -167,7 +184,7 @@ export async function generateMonthlyTimetable(month: number, year: number) {
         Isha: "",
       };
       return buildMonthlyRowFromDailyPrayerTimes(dateKey, apiTimings);
-    })
+    }),
   );
 
   return { month, year, rows };
@@ -181,13 +198,13 @@ export async function saveMonthlyTimetable(month: number, year: number, rows: Mo
           month_year_date: {
             month,
             year,
-            date: parseISO(row.date),
+            date: parseDateKey(row.date),
           },
         },
         create: {
           month,
           year,
-          date: parseISO(row.date),
+          date: parseDateKey(row.date),
           fajrAdhan: row.fajrAdhan,
           fajrIqama: row.fajrIqama,
           sunrise: row.sunrise,

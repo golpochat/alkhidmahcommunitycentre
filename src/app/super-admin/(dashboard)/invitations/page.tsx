@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth";
+import { getFreshSession } from "@/lib/auth";
 import { canManageUsers } from "@/lib/rbac";
 import { StaffInvitationsManager } from "@/components/super-admin/staff-invitations-manager";
 
 export default async function SuperAdminInvitationsPage() {
-  const session = await getSession();
+  const session = await getFreshSession();
   if (!session) {
     redirect("/login");
   }

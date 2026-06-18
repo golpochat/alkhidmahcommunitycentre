@@ -171,7 +171,7 @@ export async function getAllClasses(): Promise<SerializedClass[]> {
   return safe(async () => {
     const classes = await db.class.findMany({
       where: { published: true },
-      orderBy: { title: "asc" },
+      orderBy: { createdAt: "desc" },
     });
 
     return classes.map(serializeClass);

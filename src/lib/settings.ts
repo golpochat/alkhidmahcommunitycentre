@@ -29,6 +29,7 @@ export const SETTING_KEYS = {
   smtpFrom: "smtp_from",
   notificationEmail: "notification_email",
   ramadanActiveYear: "ramadan_active_year",
+  ramadanPdfPath: "ramadan_pdf_path",
   monthlyTimetableMonth: "monthly_timetable_month",
   monthlyTimetableYear: "monthly_timetable_year",
 } as const;

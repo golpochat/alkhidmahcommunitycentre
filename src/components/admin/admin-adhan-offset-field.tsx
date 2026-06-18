@@ -12,6 +12,7 @@ import { formatPrayerTime24h } from "@/lib/prayer-times-client";
 import {
   defaultAdhanConfigEntry,
   resolveAdhan,
+  resolveAdhanDisplay,
   type AdhanMode,
   type PrayerAdhanConfig,
 } from "@/lib/prayer-adhan";
@@ -34,8 +35,9 @@ interface AdminAdhanFieldProps {
 }
 
 const MODE_OPTIONS: Array<{ value: AdhanMode; label: string }> = [
-  { value: "offset", label: "API ± minutes" },
-  { value: "fixed", label: "Fixed time" },
+  { value: "offset", label: "Interval" },
+  { value: "fixed", label: "Fixed" },
+  { value: "text", label: "Custom text" },
 ];
 
 export function AdminAdhanField({
@@ -45,6 +47,7 @@ export function AdminAdhanField({
   onChange,
 }: AdminAdhanFieldProps) {
   const resolvedAdhan = resolveAdhan(apiAdhan, config);
+  const resolvedDisplay = resolveAdhanDisplay(apiAdhan, config);
   const mode = config?.mode ?? "offset";
   const modeLabel =
     MODE_OPTIONS.find((option) => option.value === mode)?.label ?? "Adhan type";
@@ -65,6 +68,10 @@ export function AdminAdhanField({
               value === "fixed"
                 ? config.fixed || resolvedAdhan || ""
                 : config.fixed,
+            text:
+              value === "text"
+                ? config.text || ""
+                : config.text,
           })
         }
       >
@@ -96,7 +103,7 @@ export function AdminAdhanField({
             });
           }}
         />
-      ) : (
+      ) : mode === "fixed" ? (
         <Input
           type="time"
           disabled={disabled}
@@ -104,12 +111,24 @@ export function AdminAdhanField({
           value={config.fixed || ""}
           onChange={(event) => updateConfig({ fixed: event.target.value })}
         />
+      ) : (
+        <Input
+          disabled={disabled}
+          className="admin-adhan-field-value admin-adhan-field-text"
+          placeholder="e.g. After Maghrib"
+          value={config.text || ""}
+          onChange={(event) => updateConfig({ text: event.target.value })}
+        />
       )}
 
       {mode === "offset" && (
         <span className="admin-adhan-shown-time">
           {formatPrayerTime24h(resolvedAdhan)}
         </span>
+      )}
+
+      {mode === "text" && resolvedDisplay && (
+        <span className="admin-adhan-shown-time">{resolvedDisplay}</span>
       )}
     </div>
   );

@@ -11,15 +11,23 @@ import {
 import { PageHero } from "@/components/layout/page-hero";
 import { ClassList } from "@/components/classes/class-list";
 import { ClassRegistrationForm } from "@/components/classes/class-registration-form";
+import { EducationTeachersSection } from "@/components/education/education-teachers-section";
 import type { SerializedClass } from "@/lib/classes";
 import { IMAGES } from "@/lib/images";
 import { EDUCATION_NAV_LABEL, SITE_NAME } from "@/lib/constants";
+import type { EducationTeacher } from "@/types";
 
 interface ClassesPageContentProps {
   classes: SerializedClass[];
+  teachers?: EducationTeacher[];
+  teachersVisible?: boolean;
 }
 
-export function ClassesPageContent({ classes }: ClassesPageContentProps) {
+export function ClassesPageContent({
+  classes,
+  teachers = [],
+  teachersVisible = false,
+}: ClassesPageContentProps) {
   const [selectedClass, setSelectedClass] = useState<SerializedClass | null>(null);
 
   return (
@@ -37,6 +45,10 @@ export function ClassesPageContent({ classes }: ClassesPageContentProps) {
           <ClassList classes={classes} onRegister={setSelectedClass} />
         </div>
       </section>
+
+      {teachersVisible && teachers.length > 0 ? (
+        <EducationTeachersSection teachers={teachers} />
+      ) : null}
 
       <Dialog open={Boolean(selectedClass)} onOpenChange={(open) => !open && setSelectedClass(null)}>
         <DialogContent className="max-w-lg">

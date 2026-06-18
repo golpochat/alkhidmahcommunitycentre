@@ -1,6 +1,6 @@
 import "server-only";
 
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
 import { PDFDocument, rgb, type PDFPage } from "pdf-lib";
 import {
   getDonationStatementBranding,
@@ -27,6 +27,7 @@ import type {
   RamadanSettingsData,
 } from "@/lib/ramadan-settings-types";
 import { renderRamadanTimetablePdf } from "@/lib/ramadan-pdf";
+import { parseDateKey } from "@/lib/prayer-times-pure";
 import { generateQrPngBytes } from "@/lib/qr";
 
 const MONTHLY_PDF_PAGE = {
@@ -342,8 +343,8 @@ export async function monthlyTimetableToPdfBuffer(input: {
       page,
       y,
       [
-        format(parseISO(row.date), "d MMM"),
-        format(parseISO(row.date), "EEEE"),
+        format(parseDateKey(row.date), "d MMM"),
+        format(parseDateKey(row.date), "EEEE"),
         row.fajrAdhan,
         row.fajrIqama,
         row.sunrise,

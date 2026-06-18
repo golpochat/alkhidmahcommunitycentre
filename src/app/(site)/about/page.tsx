@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { PageHero } from "@/components/layout/page-hero";
 import { AboutValuesSection } from "@/components/about/about-values-section";
 import { AboutCommitteeSection } from "@/components/about/about-committee-section";
-import { getAboutPageContent } from "@/lib/about-content";
+import { getAboutPageContent, getPublishedCommitteeMembers } from "@/lib/about-content";
 import { getSiteBranding } from "@/lib/site-branding";
 import { IMAGES } from "@/lib/images";
 import { createPageMetadata } from "@/lib/metadata";
@@ -23,6 +23,8 @@ export default async function AboutPage() {
     getAboutPageContent(),
     getSiteBranding(),
   ]);
+
+  const publishedCommittee = getPublishedCommitteeMembers(content.committee);
 
   return (
     <>
@@ -100,8 +102,8 @@ export default async function AboutPage() {
       </section>
 
       {content.valuesVisible ? <AboutValuesSection values={content.values} /> : null}
-      {content.committeeVisible ? (
-        <AboutCommitteeSection committee={content.committee} />
+      {content.committeeVisible && publishedCommittee.length > 0 ? (
+        <AboutCommitteeSection committee={publishedCommittee} />
       ) : null}
     </>
   );

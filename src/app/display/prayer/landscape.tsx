@@ -1,8 +1,8 @@
 "use client";
 
 import type { DisplayLayoutProps } from "@/components/display/display-layout-props";
-import { DisplayLandscapeAnnouncement } from "@/components/display/display-landscape-announcement";
 import { DisplayLandscapeBottomWeather } from "@/components/display/display-landscape-bottom-weather";
+import { DisplayRotatingContent } from "@/components/display/rotating-panels/display-rotating-content";
 import { DisplayTopBar } from "@/components/display/display-top-bar";
 import { NextPrayerCountdown } from "@/components/display/next-prayer-countdown";
 import { PrayerTimesPanel } from "@/components/display/prayer-times-panel";
@@ -14,10 +14,14 @@ export function LandscapeDisplayLayout({
   schedule,
   seasonal,
   notices,
+  events,
+  ayat,
   weather,
   settings,
   now,
 }: DisplayLayoutProps) {
+  const showWeather = settings.enabledPanels.includes("weather");
+
   return (
     <div className="display-landscape-root">
       <DisplayTopBar
@@ -49,21 +53,29 @@ export function LandscapeDisplayLayout({
                 now={now}
                 variant="landscape"
               />
-              <DisplayLandscapeBottomWeather weather={weather} />
+              {showWeather ? (
+                <DisplayLandscapeBottomWeather weather={weather} />
+              ) : null}
             </div>
           </div>
         </SeasonalModeWrapper>
       </div>
 
       <div className="display-landscape-bottom-panel display-landscape-section">
-        <DisplayLandscapeAnnouncement
-          notices={notices}
+        <DisplayRotatingContent
+          enabledPanels={settings.enabledPanels}
+          excludePanels={["weather"]}
           rotationSpeed={settings.rotationSpeed}
+          notices={notices}
+          events={events}
+          ayat={ayat}
+          weather={weather}
           now={now}
+          variant="landscape"
         />
       </div>
 
-      <ScrollingTicker notices={notices} />
+      <ScrollingTicker notices={notices} now={now} />
     </div>
   );
 }

@@ -4,6 +4,8 @@ import {
   canManageSettings,
   canManageGallery,
   canManageEvents,
+  canManageAboutPage,
+  canManageClasses,
 } from "@/lib/auth";
 import { saveUploadedImage, type UploadFolder } from "@/lib/upload-image";
 
@@ -36,6 +38,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    if (folder === "about" && !canManageAboutPage(session)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    if (folder === "education" && !canManageClasses(session)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     if (!file || !(file instanceof File)) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
@@ -47,7 +57,11 @@ export async function POST(request: NextRequest) {
           ? "logo"
           : folder === "favicon"
             ? "favicon"
-            : "events";
+            : folder === "about"
+              ? "about"
+              : folder === "education"
+                ? "education"
+                : "events";
 
     const url = await saveUploadedImage(file, allowedFolder);
 

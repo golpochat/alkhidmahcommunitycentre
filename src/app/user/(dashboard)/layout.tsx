@@ -14,7 +14,7 @@ export default async function UserDashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getFreshSession();
+  const session = await getFreshSession({ syncCookie: true });
 
   if (!session || !canAccessUserRoutes(session)) {
     if (await getSession()) {

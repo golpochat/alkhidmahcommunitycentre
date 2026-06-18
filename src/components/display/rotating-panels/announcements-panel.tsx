@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { DisplayLandscapePanelShell } from "@/components/display/display-landscape-panel-shell";
 import type { SerializedDisplayNotice } from "@/lib/display-types";
+import { filterActiveDisplayNotices } from "@/lib/display-notices";
 
 interface AnnouncementsPanelProps {
   notices: SerializedDisplayNotice[];
@@ -22,8 +23,11 @@ export function AnnouncementsPanel({
   variant = "default",
 }: AnnouncementsPanelProps) {
   const items = useMemo(
-    () => notices.filter((notice) => notice.priority !== "high"),
-    [notices]
+    () =>
+      filterActiveDisplayNotices(notices).filter(
+        (notice) => notice.priority !== "high",
+      ),
+    [notices],
   );
   const itemsKey = useMemo(() => items.map((item) => item.id).join("|"), [items]);
   const [activeIndex, setActiveIndex] = useState(0);

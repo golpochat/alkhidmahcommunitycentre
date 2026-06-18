@@ -279,21 +279,9 @@ export const gallerySchema = z.object({
 });
 
 export const prayerTimesOverrideSchema = z.object({
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   eidDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-  jumuahDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   eidType: z.enum(["FITR", "ADHA"]).nullable().optional(),
-  eidShowOnFrontend: z.boolean().optional(),
-  fajrAdhan: z.string().optional().nullable(),
-  fajrIqama: z.string().optional().nullable(),
-  dhuhrAdhan: z.string().optional().nullable(),
-  dhuhrIqama: z.string().optional().nullable(),
-  asrAdhan: z.string().optional().nullable(),
-  asrIqama: z.string().optional().nullable(),
-  maghribAdhan: z.string().optional().nullable(),
-  maghribIqama: z.string().optional().nullable(),
-  ishaAdhan: z.string().optional().nullable(),
-  ishaIqama: z.string().optional().nullable(),
   iqamaConfig: z
     .record(
       z.enum(["fajr", "dhuhr", "asr", "maghrib", "isha"]),
@@ -310,20 +298,13 @@ export const prayerTimesOverrideSchema = z.object({
     .record(
       z.enum(["fajr", "dhuhr", "asr", "maghrib", "isha"]),
       z.object({
-        mode: z.enum(["offset", "fixed"]),
+        mode: z.enum(["offset", "fixed", "text"]),
         offsetMinutes: z.number().int(),
         fixed: z.string().optional().nullable(),
+        text: z.string().optional().nullable(),
       })
     )
     .optional(),
-  eidFitrAdhan1: z.string().optional().nullable(),
-  eidFitrIqama1: z.string().optional().nullable(),
-  eidFitrAdhan2: z.string().optional().nullable(),
-  eidFitrIqama2: z.string().optional().nullable(),
-  eidAdhaAdhan1: z.string().optional().nullable(),
-  eidAdhaIqama1: z.string().optional().nullable(),
-  eidAdhaAdhan2: z.string().optional().nullable(),
-  eidAdhaIqama2: z.string().optional().nullable(),
   eidPrayers: z
     .array(
       z.object({

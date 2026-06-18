@@ -20,6 +20,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import type { SerializedDisplayNotice } from "@/lib/display-types";
+import { isDisplayNoticeActive } from "@/lib/display-notices";
 import type { SerializedDisplaySettings } from "@/lib/display-settings";
 import { nowIso, toDatetimeLocalValue } from "@/lib/events";
 import { parseJsonResponse } from "@/lib/parse-json-response";
@@ -263,35 +264,48 @@ export function AdminDisplayManager() {
 
   return (
     <div className="admin-display-manager">
-      <div className="admin-display-header">
-        <div>
-          <h1 className="font-heading text-2xl font-semibold text-gold">
-            TV Display Settings
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Manage prayer time display screens and rotating content
-          </p>
-        </div>
+      <div className="admin-display-toolbar">
+        <p className="admin-display-toolbar-summary">
+          Control what appears on the mosque TV prayer screens. Adhan and iqamah
+          times are managed under{" "}
+          <a href="/admin/special-prayers" className="admin-display-inline-link">
+            Special Prayers
+          </a>
+          , not here.
+        </p>
         <a
           href="/display/prayer"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center rounded-lg border border-border px-4 py-2 text-sm font-medium transition-colors hover:border-gold/40 hover:text-gold"
+          className="admin-display-preview-link"
         >
           <Monitor className="mr-2 h-4 w-4" />
           Preview Display
         </a>
       </div>
 
-      <Tabs defaultValue="notices" className="admin-display-tabs">
-        <TabsList variant="line" className="admin-display-tabs-list">
-          <TabsTrigger value="notices">Notices</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
-          <TabsTrigger value="ayat">Ayat / Hadith</TabsTrigger>
+      <Tabs defaultValue="notices" className="admin-prayer-times-tabs">
+        <TabsList variant="line" className="admin-prayer-times-tabs-list">
+          <TabsTrigger value="notices">Announcements</TabsTrigger>
+          <TabsTrigger value="settings">Screen Setup</TabsTrigger>
+          <TabsTrigger value="ayat">Ayat &amp; Hadith</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="notices" className="admin-display-tab-content">
-          <div className="admin-display-grid">
+        <TabsContent value="notices" className="admin-prayer-times-tab-content">
+          <div className="admin-prayer-times-tab-section">
+            <div className="admin-prayer-times-tab-header">
+              <div>
+                <h2 className="admin-prayer-times-tab-title">Announcements</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Scheduled messages on the TV (for example Jumu&apos;ah parking,
+                  Eid reminders). These are notices only — not prayer times.
+                  High priority also shows in the scrolling ticker and replaces
+                  the prayer countdown; medium and low rotate in the bottom panel.
+                </p>
+              </div>
+            </div>
+
+            <div className="admin-display-grid">
             <Card>
               <CardHeader>
                 <CardTitle>
@@ -337,9 +351,15 @@ export function AdminDisplayManager() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="high">High (ticker)</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="high">
+                        High — ticker + countdown alert
+                      </SelectItem>
+                      <SelectItem value="medium">
+                        Medium — rotates in bottom panel
+                      </SelectItem>
+                      <SelectItem value="low">
+                        Low — rotates in bottom panel
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -395,12 +415,17 @@ export function AdminDisplayManager() {
                 {notices.length === 0 && (
                   <p className="text-sm text-muted-foreground">No notices yet</p>
                 )}
-                {notices.map((notice) => (
+                {notices.map((notice) => {
+                  const activeOnTv = isDisplayNoticeActive(notice);
+                  return (
                   <div key={notice.id} className="admin-display-list-item">
                     <div>
                       <div className="flex items-center gap-2">
                         <p className="font-medium">{notice.title}</p>
                         <Badge variant="outline">{notice.priority}</Badge>
+                        <Badge variant={activeOnTv ? "default" : "secondary"}>
+                          {activeOnTv ? "On TV now" : "Not on TV"}
+                        </Badge>
                       </div>
                       <p className="text-sm text-muted-foreground">{notice.message}</p>
                       {(notice.startDate || notice.endDate) && (
@@ -445,17 +470,31 @@ export function AdminDisplayManager() {
                       </Button>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </CardContent>
             </Card>
           </div>
+          </div>
         </TabsContent>
 
-        <TabsContent value="settings" className="admin-display-tab-content">
+        <TabsContent value="settings" className="admin-prayer-times-tab-content">
+          <div className="admin-prayer-times-tab-section">
+            <div className="admin-prayer-times-tab-header">
+              <div>
+                <h2 className="admin-prayer-times-tab-title">Screen Setup</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  How the TV behaves: which side panels rotate, orientation,
+                  theme, PIN, and brightness. Turn panels on here; edit their
+                  content in the other tabs.
+                </p>
+              </div>
+            </div>
+
           {settings && (
             <Card>
               <CardHeader>
-                <CardTitle>Display Configuration</CardTitle>
+                <CardTitle>Display options</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
@@ -478,7 +517,14 @@ export function AdminDisplayManager() {
                 </div>
 
                 <div className="space-y-3">
-                  <Label>Enabled panels</Label>
+                  <Label>Rotating side panels</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Choose which panels cycle on the TV. Announcements use the
+                    Announcements tab; Ayat &amp; Hadith use the Ayat &amp;
+                    Hadith tab. Events show published upcoming items from Admin
+                    → Events (sample events may exist from initial setup).
+                    Weather appears beside the countdown when enabled.
+                  </p>
                   {PANEL_OPTIONS.map((panel) => (
                     <label
                       key={panel.value}
@@ -583,15 +629,28 @@ export function AdminDisplayManager() {
 
                 <Button onClick={saveSettings} disabled={saving}>
                   {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Save Settings
+                  Save
                 </Button>
               </CardContent>
             </Card>
           )}
+          </div>
         </TabsContent>
 
-        <TabsContent value="ayat" className="admin-display-tab-content">
-          <div className="admin-display-grid">
+        <TabsContent value="ayat" className="admin-prayer-times-tab-content">
+          <div className="admin-prayer-times-tab-section">
+            <div className="admin-prayer-times-tab-header">
+              <div>
+                <h2 className="admin-prayer-times-tab-title">Ayat &amp; Hadith</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Arabic text, translation, and source for the rotating quotes
+                  panel. Enable &quot;Ayat / Hadith&quot; under Screen Setup for
+                  these to appear on the TV.
+                </p>
+              </div>
+            </div>
+
+            <div className="admin-display-grid">
             <Card>
               <CardHeader>
                 <CardTitle>
@@ -698,6 +757,7 @@ export function AdminDisplayManager() {
                 </div>
               </CardContent>
             </Card>
+          </div>
           </div>
         </TabsContent>
       </Tabs>

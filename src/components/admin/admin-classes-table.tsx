@@ -21,9 +21,14 @@ import { ADMIN_EDUCATION_PATH, EDUCATION_API_PATH, EDUCATION_NAV_LABEL } from "@
 interface AdminClassesTableProps {
   classes: SerializedClass[];
   canDelete: boolean;
+  embedded?: boolean;
 }
 
-export function AdminClassesTable({ classes, canDelete }: AdminClassesTableProps) {
+export function AdminClassesTable({
+  classes,
+  canDelete,
+  embedded = false,
+}: AdminClassesTableProps) {
   const [publishedById, setPublishedById] = useState<Record<string, boolean>>({});
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
@@ -83,12 +88,21 @@ export function AdminClassesTable({ classes, canDelete }: AdminClassesTableProps
   return (
     <div>
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="font-heading text-3xl font-semibold">Manage {EDUCATION_NAV_LABEL}</h1>
-          <p className="mt-2 text-muted-foreground">
-            Create, edit, and manage Qur&apos;an and Islamic education programmes.
-          </p>
-        </div>
+        {embedded ? (
+          <div>
+            <h2 className="font-heading text-xl font-semibold">Programmes</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Create, edit, and publish Qur&apos;an and Islamic education programmes.
+            </p>
+          </div>
+        ) : (
+          <div>
+            <h1 className="font-heading text-3xl font-semibold">Manage {EDUCATION_NAV_LABEL}</h1>
+            <p className="mt-2 text-muted-foreground">
+              Create, edit, and manage Qur&apos;an and Islamic education programmes.
+            </p>
+          </div>
+        )}
         <ButtonLink href={`${ADMIN_EDUCATION_PATH}/new`} className="btn-gold">
           <Plus className="mr-2 h-4 w-4" />
           New Programme

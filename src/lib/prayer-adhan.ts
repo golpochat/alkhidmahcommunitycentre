@@ -10,12 +10,13 @@ export const DAILY_PRAYER_KEYS: DailyPrayerKey[] = [
   "isha",
 ];
 
-export type AdhanMode = "offset" | "fixed";
+export type AdhanMode = "offset" | "fixed" | "text";
 
 export interface PrayerAdhanConfig {
   mode: AdhanMode;
   offsetMinutes: number;
   fixed?: string;
+  text?: string;
 }
 
 export type DailyAdhanConfig = Partial<Record<DailyPrayerKey, PrayerAdhanConfig>>;
@@ -87,9 +88,21 @@ export function parseDailyAdhanConfig(value: unknown): DailyAdhanConfig | null {
     if (!entry || typeof entry !== "object") continue;
 
     const raw = entry as Record<string, unknown>;
-    const mode: AdhanMode = raw.mode === "fixed" ? "fixed" : "offset";
+    const mode: AdhanMode =
+      raw.mode === "fixed"
+        ? "fixed"
+        : raw.mode === "text"
+          ? "text"
+          : "offset";
     const offsetMinutes = parseOffsetMinutes(raw.offsetMinutes) ?? 0;
     const fixed = normalizeTime(raw.fixed as string | null | undefined);
+    const text =
+      typeof raw.text === "string" ? raw.text.trim() : undefined;
+
+    if (mode === "text" && text) {
+      parsed[key] = { mode: "text", offsetMinutes: 0, text };
+      continue;
+    }
 
     if (mode === "fixed" && fixed) {
       parsed[key] = { mode: "fixed", offsetMinutes: 0, fixed };
@@ -167,6 +180,10 @@ export function resolveAdhan(
   apiAdhan: string | null | undefined,
   config: PrayerAdhanConfig | undefined
 ) {
+  if (config?.mode === "text") {
+    return null;
+  }
+
   if (config?.mode === "fixed") {
     return normalizeTime(config.fixed) || normalizeTime(apiAdhan);
   }
@@ -180,6 +197,31 @@ export function resolveAdhan(
   return addMinutesToTime(normalized, offset);
 }
 
+export function resolveAdhanDisplay(
+  apiAdhan: string | null | undefined,
+  config: PrayerAdhanConfig | undefined,
+) {
+  if (config?.mode === "text") {
+    return config.text?.trim() || null;
+  }
+
+  return resolveAdhan(apiAdhan, config);
+}
+
+export function resolveAdhanSlot(
+  apiAdhan: string | null | undefined,
+  config: PrayerAdhanConfig | undefined,
+) {
+  const adhanDisplay = resolveAdhanDisplay(apiAdhan, config);
+  const adhan =
+    config?.mode === "text" ? null : resolveAdhan(apiAdhan, config);
+
+  return {
+    adhan,
+    adhanDisplay: config?.mode === "text" ? adhanDisplay : adhan,
+  };
+}
+
 export function resolveAdhanFromApi(
   apiAdhan: string | null | undefined,
   config: PrayerAdhanConfig | undefined
@@ -191,6 +233,10 @@ export function hasAdhanOverrides(config: DailyAdhanConfig) {
   return DAILY_PRAYER_KEYS.some((key) => {
     const entry = config[key];
     if (!entry) return false;
+
+    if (entry.mode === "text") {
+      return Boolean(entry.text?.trim());
+    }
 
     if (entry.mode === "fixed") {
       return Boolean(normalizeTime(entry.fixed));

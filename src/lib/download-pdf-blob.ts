@@ -33,3 +33,36 @@ export async function downloadPdfFromResponse(response: Response, fallbackFilena
 
   return { url, filename };
 }
+
+export async function openPdfInNewTabFromResponse(
+  response: Response,
+  fallbackFilename: string,
+) {
+  const contentType = response.headers.get("content-type") ?? "";
+
+  if (!response.ok || !contentType.includes("pdf")) {
+    const data = await parseJsonResponse<{ error?: string }>(response);
+    throw new Error(data.error || "PDF generation failed");
+  }
+
+  const blob = await response.blob();
+  if (blob.size === 0) {
+    throw new Error("PDF file is empty");
+  }
+
+  const filename = filenameFromDisposition(
+    response.headers.get("content-disposition"),
+    fallbackFilename,
+  );
+  const url = URL.createObjectURL(blob);
+  const opened = window.open(url, "_blank", "noopener,noreferrer");
+
+  if (!opened) {
+    URL.revokeObjectURL(url);
+    throw new Error(
+      "Pop-up blocked. Allow pop-ups for this site to open the Ramadan timetable PDF.",
+    );
+  }
+
+  return { url, filename };
+}

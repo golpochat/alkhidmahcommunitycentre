@@ -2,7 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
-import { Loader2, Plus, RotateCcw, Save, Trash2 } from "lucide-react";
+import {
+  Loader2,
+  Plus,
+  RefreshCw,
+  RotateCcw,
+  Save,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +27,6 @@ import {
   DEFAULT_EID_ADHA_TIMES,
   DEFAULT_EID_FITR_TIMES,
   defaultJumuahAdminSlots,
-  getJumuahSaveDate,
   getEidPrayerLabel,
   getJumuahPrayerLabel,
   isFriday,
@@ -30,17 +36,21 @@ import {
 import {
   defaultAdhanConfig,
   defaultAdhanConfigEntry,
-  inferAdhanConfigFromLegacy,
   type DailyAdhanConfig,
   type PrayerAdhanConfig,
 } from "@/lib/prayer-adhan";
 import {
   defaultIqamaConfig,
   defaultIqamaConfigEntry,
+  formatIqamaDisplay,
+  resolvePrayerSlotWithIqama,
   type DailyIqamaConfig,
   type DailyPrayerKey,
   type PrayerIqamaConfig,
+  type ResolvedPrayerSlot,
 } from "@/lib/prayer-iqama";
+import { resolveAdhan } from "@/lib/prayer-adhan";
+import { formatPrayerTime24h } from "@/lib/prayer-times-client";
 import {
   AdminAdhanApiTime,
   AdminAdhanField,
@@ -51,27 +61,43 @@ import { AdminRamadanTimetableTab } from "@/components/admin/admin-ramadan-timet
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import type { PrayerTimesResponse } from "@/lib/prayer-times-client";
-import type { PrayerTimesOverrideRecord } from "@/types";
+import type { MosquePrayerConfigRecord } from "@/types";
 
 type OverrideSection = "daily" | "jumuah" | "eid";
 
 function TabActions({
   saving,
+  loading,
   disabled,
+  onLoad,
   onSave,
   onReset,
 }: {
   saving: boolean;
+  loading?: boolean;
   disabled?: boolean;
+  onLoad?: () => void;
   onSave: () => void;
   onReset?: () => void;
 }) {
   return (
     <div className="admin-prayer-times-tab-actions">
+      {onLoad && (
+        <Button
+          type="button"
+          variant="outline"
+          disabled={saving || loading || disabled}
+          onClick={onLoad}
+        >
+          {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          <RefreshCw className="mr-2 h-4 w-4" />
+          Load
+        </Button>
+      )}
       <Button
         type="button"
         className="btn-gold"
-        disabled={saving || disabled}
+        disabled={saving || loading || disabled}
         onClick={onSave}
       >
         {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -82,11 +108,11 @@ function TabActions({
         <Button
           type="button"
           variant="outline"
-          disabled={saving || disabled}
+          disabled={saving || loading || disabled}
           onClick={onReset}
         >
           <RotateCcw className="mr-2 h-4 w-4" />
-          Reset to Defaults
+          Reset
         </Button>
       )}
     </div>
@@ -155,7 +181,7 @@ function defaultEidPrayersForType(eidType: "FITR" | "ADHA") {
 }
 
 function eidPrayersFromRecord(
-  record: PrayerTimesOverrideRecord | null,
+  record: MosquePrayerConfigRecord | null,
   eidType: "FITR" | "ADHA",
 ) {
   if (record?.eidPrayers?.length && record.eidType === eidType) {
@@ -180,41 +206,66 @@ function apiAdhanFromDefaults(
   };
 }
 
+function formatAdminActualIqama(slot: ResolvedPrayerSlot): string {
+  const display = formatIqamaDisplay(slot);
+  if (/^\d{1,2}:\d{2}$/.test(display)) {
+    return formatPrayerTime24h(display);
+  }
+  return display;
+}
+
+function buildActualIqamaByPrayer(
+  form: AdminFormState,
+): Record<DailyPrayerKey, string> {
+  const maghribAdhan = resolveAdhan(
+    form.apiAdhan.maghrib,
+    form.adhanConfig.maghrib ?? defaultAdhanConfigEntry(),
+  );
+  const maghribSlot = resolvePrayerSlotWithIqama(
+    maghribAdhan,
+    form.iqamaConfig.maghrib ?? defaultIqamaConfigEntry("maghrib"),
+    { legacyIqama: form.maghribIqama },
+  );
+
+  const result = {} as Record<DailyPrayerKey, string>;
+
+  for (const { key } of DAILY_PRAYERS) {
+    const adhan = resolveAdhan(
+      form.apiAdhan[key],
+      form.adhanConfig[key] ?? defaultAdhanConfigEntry(),
+    );
+    const slot = resolvePrayerSlotWithIqama(
+      adhan,
+      form.iqamaConfig[key] ?? defaultIqamaConfigEntry(key),
+      {
+        legacyIqama: form[`${key}Iqama` as keyof AdminFormState] as string,
+        maghribSlot: key === "isha" ? maghribSlot : undefined,
+      },
+    );
+    result[key] = formatAdminActualIqama(slot);
+  }
+
+  return result;
+}
+
 function mergeDailyFormWithDefaults(
   defaults: PrayerTimesResponse,
-  override: PrayerTimesOverrideRecord | null,
+  config: MosquePrayerConfigRecord | null,
+  previewDate: string,
 ): AdminFormState {
   const apiAdhan = apiAdhanFromDefaults(defaults);
   const base = buildAdminFormDefaults(defaults, null, []);
 
-  if (!override) {
-    return {
-      date: base.date,
-      apiAdhan,
-      adhanConfig: defaultAdhanConfig(),
-      fajrIqama: base.fajrIqama,
-      dhuhrIqama: base.dhuhrIqama,
-      asrIqama: base.asrIqama,
-      maghribIqama: base.maghribIqama,
-      ishaIqama: base.ishaIqama,
-      iqamaConfig: base.iqamaConfig,
-    };
-  }
-
-  const adhanConfig = override.adhanConfig
-    ? { ...defaultAdhanConfig(), ...override.adhanConfig }
-    : inferAdhanConfigFromLegacy(override, apiAdhan);
-
   return {
-    date: base.date,
+    date: previewDate,
     apiAdhan,
-    adhanConfig,
-    fajrIqama: override.fajrIqama || base.fajrIqama,
-    dhuhrIqama: override.dhuhrIqama || base.dhuhrIqama,
-    asrIqama: override.asrIqama || base.asrIqama,
-    maghribIqama: override.maghribIqama || base.maghribIqama,
-    ishaIqama: override.ishaIqama || base.ishaIqama,
-    iqamaConfig: override.iqamaConfig ?? base.iqamaConfig,
+    adhanConfig: config?.adhanConfig ?? defaultAdhanConfig(),
+    fajrIqama: base.fajrIqama,
+    dhuhrIqama: base.dhuhrIqama,
+    asrIqama: base.asrIqama,
+    maghribIqama: base.maghribIqama,
+    ishaIqama: base.ishaIqama,
+    iqamaConfig: config?.iqamaConfig ?? defaultIqamaConfig(),
   };
 }
 
@@ -235,8 +286,8 @@ function applyEidType(
 }
 
 export function AdminPrayerTimesManager() {
-  const [selectedDate, setSelectedDate] = useState(todayDateKey);
-  const [eidDate, setEidDate] = useState(todayDateKey);
+  const [previewDate, setPreviewDate] = useState(() => todayDateKey());
+  const [eidDate, setEidDate] = useState(() => todayDateKey());
   const [eidType, setEidType] = useState<"FITR" | "ADHA">("ADHA");
   const [eidPrayers, setEidPrayers] = useState<
     Array<{ index: number; time: string }>
@@ -252,78 +303,62 @@ export function AdminPrayerTimesManager() {
   const [reloadKey, setReloadKey] = useState(0);
 
   const selectedFriday = useMemo(() => {
-    if (!selectedDate) return false;
-    return isFriday(parseISO(selectedDate));
-  }, [selectedDate]);
+    if (!previewDate) return false;
+    return isFriday(parseISO(previewDate));
+  }, [previewDate]);
 
-  useEffect(() => {
-    const date = selectedDate || todayDateKey();
+  const actualIqamaByPrayer = useMemo(
+    () => buildActualIqamaByPrayer(form),
+    [form],
+  );
 
-    async function loadDateData() {
-      setFormLoading(true);
-      try {
-        const response = await fetch(`/api/admin/prayer-times?date=${date}`);
-        if (!response.ok) throw new Error("Failed");
+  async function loadPrayerConfig(
+    date = previewDate || todayDateKey(),
+    options?: { silent?: boolean },
+  ) {
+    setFormLoading(true);
+    try {
+      const response = await fetch(`/api/admin/prayer-times?date=${date}`);
+      if (!response.ok) throw new Error("Failed");
 
-        const data = await response.json();
-        setForm(mergeDailyFormWithDefaults(data.defaults, data.override));
-      } catch {
-        toast.error("Failed to load prayer times for this date");
-        setForm({ ...emptyForm, date });
-      } finally {
-        setFormLoading(false);
-      }
-    }
+      const data = await response.json();
+      const config = (data.config ?? null) as MosquePrayerConfigRecord | null;
 
-    loadDateData();
-  }, [selectedDate, reloadKey]);
+      setForm(mergeDailyFormWithDefaults(data.defaults, config, date));
+      setJumuahSlots(
+        jumuahSlotsFromRecord(config ? { jumuah: config.jumuah } : null),
+      );
 
-  useEffect(() => {
-    async function loadActiveEid() {
-      try {
-        const response = await fetch(
-          `/api/admin/prayer-times?date=${todayDateKey()}`,
-        );
-        if (!response.ok) return;
-
-        const data = await response.json();
-        if (data.activeEid?.eidType) {
-          const activeType = data.activeEid.eidType as "FITR" | "ADHA";
-          setEidDate(data.activeEid.date);
-          setEidType(activeType);
-          setEidPrayers(eidPrayersFromRecord(data.activeEid, activeType));
-          writeLastEidType(activeType);
-          return;
-        }
-
+      if (config?.eidType) {
+        setEidType(config.eidType);
+        setEidDate(config.eidDate ?? todayDateKey());
+        setEidPrayers(eidPrayersFromRecord(config, config.eidType));
+        writeLastEidType(config.eidType);
+      } else {
         const lastType = readLastEidType();
         setEidType(lastType);
         setEidPrayers(defaultEidPrayersForType(lastType));
-      } catch {
-        // Keep the current Eid form state if the active config cannot be loaded.
       }
-    }
 
-    loadActiveEid();
-  }, [reloadKey]);
+      if (!options?.silent) {
+        toast.success("Daily prayer times loaded");
+      }
+    } catch {
+      toast.error("Failed to load prayer times");
+      setForm({ ...emptyForm, date });
+    } finally {
+      setFormLoading(false);
+    }
+  }
 
   useEffect(() => {
-    async function loadActiveJumuah() {
-      try {
-        const response = await fetch(
-          `/api/admin/prayer-times?date=${todayDateKey()}`,
-        );
-        if (!response.ok) return;
+    void loadPrayerConfig(previewDate || todayDateKey(), { silent: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [previewDate, reloadKey]);
 
-        const data = await response.json();
-        setJumuahSlots(jumuahSlotsFromRecord(data.activeJumuah ?? null));
-      } catch {
-        setJumuahSlots(defaultJumuahAdminSlots());
-      }
-    }
-
-    loadActiveJumuah();
-  }, [reloadKey]);
+  async function handleDailyLoad() {
+    await loadPrayerConfig(previewDate || todayDateKey());
+  }
 
   function updateAdhanConfig(
     prayer: DailyPrayerKey,
@@ -411,11 +446,6 @@ export function AdminPrayerTimesManager() {
   }
 
   async function saveSection(section: OverrideSection) {
-    if (section === "daily" && !selectedDate) {
-      toast.error("Please select a date");
-      return;
-    }
-
     if (section === "eid" && !eidDate) {
       toast.error("Please select an Eid date");
       return;
@@ -426,19 +456,8 @@ export function AdminPrayerTimesManager() {
       if (section === "daily") {
         await postOverride({
           section: "daily",
-          date: selectedDate,
           adhanConfig: form.adhanConfig,
           iqamaConfig: form.iqamaConfig,
-          fajrAdhan: null,
-          dhuhrAdhan: null,
-          asrAdhan: null,
-          maghribAdhan: null,
-          ishaAdhan: null,
-          fajrIqama: form.fajrIqama,
-          dhuhrIqama: form.dhuhrIqama,
-          asrIqama: form.asrIqama,
-          maghribIqama: form.maghribIqama,
-          ishaIqama: form.ishaIqama,
         });
         toast.success("Daily prayer times saved");
       }
@@ -446,12 +465,12 @@ export function AdminPrayerTimesManager() {
       if (section === "jumuah") {
         const result = await postOverride({
           section: "jumuah",
-          date: todayDateKey(),
-          jumuahDate: getJumuahSaveDate(),
           jumuah: jumuahPayloadSlots(),
         });
-        if (result?.activeJumuah) {
-          setJumuahSlots(jumuahSlotsFromRecord(result.activeJumuah));
+        if (result?.config) {
+          setJumuahSlots(
+            jumuahSlotsFromRecord({ jumuah: result.config.jumuah }),
+          );
         }
         toast.success("Jumu'ah prayer times saved");
       }
@@ -459,7 +478,6 @@ export function AdminPrayerTimesManager() {
       if (section === "eid") {
         await postOverride({
           section: "eid",
-          date: eidDate,
           eidDate,
           eidType,
           eidPrayers,
@@ -482,7 +500,6 @@ export function AdminPrayerTimesManager() {
       eid: "Eid overrides",
     };
 
-    if (section === "daily" && !selectedDate) return;
     if (section === "eid" && !eidDate) return;
 
     if (!confirm(`Reset ${labels[section]} to defaults?`)) return;
@@ -491,13 +508,6 @@ export function AdminPrayerTimesManager() {
       action: "reset",
       section,
     };
-
-    if (section === "daily") payload.date = selectedDate;
-    if (section === "jumuah") payload.jumuahDate = getJumuahSaveDate();
-    if (section === "eid") {
-      payload.date = eidDate;
-      payload.eidDate = eidDate;
-    }
 
     const response = await fetch("/api/admin/prayer-times", {
       method: "POST",
@@ -514,16 +524,31 @@ export function AdminPrayerTimesManager() {
   }
 
   return (
-    <Tabs defaultValue="daily" className="admin-prayer-times-tabs">
+    <Tabs defaultValue="schedule" className="admin-prayer-times-tabs">
       <TabsList variant="line" className="admin-prayer-times-tabs-list">
-        <TabsTrigger value="daily">Daily Prayer Times</TabsTrigger>
-        <TabsTrigger value="jumuah">Jumu&apos;ah Prayer</TabsTrigger>
-        <TabsTrigger value="eid">Eid Prayer</TabsTrigger>
+        <TabsTrigger value="schedule">Daily Timetable</TabsTrigger>
         <TabsTrigger value="ramadan">Ramadan Timetable</TabsTrigger>
         <TabsTrigger value="monthly">Monthly Timetable</TabsTrigger>
       </TabsList>
 
-      <TabsContent value="daily" className="admin-prayer-times-tab-content">
+      <TabsContent
+        value="schedule"
+        className="admin-prayer-times-tab-content admin-prayer-times-tab-content--schedule"
+      >
+        <Tabs defaultValue="daily" className="admin-prayer-times-inner-tabs">
+          <TabsList
+            variant="line"
+            className="admin-prayer-times-inner-tabs-list"
+          >
+            <TabsTrigger value="daily">Daily Prayer Times</TabsTrigger>
+            <TabsTrigger value="jumuah">Jumuah Prayer</TabsTrigger>
+            <TabsTrigger value="eid">Eid Prayer</TabsTrigger>
+          </TabsList>
+
+          <TabsContent
+            value="daily"
+            className="admin-prayer-times-inner-tab-content"
+          >
         <div className="admin-prayer-times-tab-section">
           <div className="admin-prayer-times-tab-header admin-prayer-times-tab-header-daily">
             <div>
@@ -538,12 +563,12 @@ export function AdminPrayerTimesManager() {
               )}
             </div>
             <div className="space-y-2 sm:w-56">
-              {/* <Label htmlFor="daily-date">Date</Label> */}
+              <Label htmlFor="daily-preview-date">Preview date</Label>
               <Input
-                id="daily-date"
+                id="daily-preview-date"
                 type="date"
-                value={selectedDate}
-                onChange={(event) => setSelectedDate(event.target.value)}
+                value={previewDate}
+                onChange={(event) => setPreviewDate(event.target.value)}
                 required
               />
             </div>
@@ -561,6 +586,7 @@ export function AdminPrayerTimesManager() {
                   <col className="admin-prayer-times-col-adhan-api" />
                   <col className="admin-prayer-times-col-adhan-adjust" />
                   <col className="admin-prayer-times-col-iqama" />
+                  <col className="admin-prayer-times-col-iqama-actual" />
                 </colgroup>
                 <TableHeader>
                   <TableRow className="prayer-times-table-head hover:bg-transparent">
@@ -575,6 +601,9 @@ export function AdminPrayerTimesManager() {
                     </TableHead>
                     <TableHead className="prayer-times-table-head-cell">
                       Iqama
+                    </TableHead>
+                    <TableHead className="prayer-times-table-head-cell">
+                      Actual Iqama Time
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -622,7 +651,7 @@ export function AdminPrayerTimesManager() {
                             disabled={disabled}
                             config={
                               form.iqamaConfig[prayer.key] ??
-                              defaultIqamaConfigEntry()
+                              defaultIqamaConfigEntry(prayer.key)
                             }
                             legacyIqama={
                               form[
@@ -633,6 +662,20 @@ export function AdminPrayerTimesManager() {
                               updateIqamaConfig(prayer.key, config)
                             }
                           />
+                        </TableCell>
+                        <TableCell className="prayer-times-table-cell admin-prayer-times-iqama-actual-cell">
+                          <span
+                            className={cn(
+                              "admin-iqama-actual-time",
+                              /^\d{2}:\d{2}$/.test(
+                                actualIqamaByPrayer[prayer.key],
+                              ) && "admin-iqama-actual-time--time",
+                            )}
+                          >
+                            {disabled
+                              ? "Jumu'ah"
+                              : actualIqamaByPrayer[prayer.key]}
+                          </span>
                         </TableCell>
                       </TableRow>
                     );
@@ -645,13 +688,18 @@ export function AdminPrayerTimesManager() {
 
         <TabActions
           saving={savingSection === "daily"}
+          loading={formLoading}
           disabled={formLoading}
+          onLoad={handleDailyLoad}
           onSave={() => saveSection("daily")}
           onReset={() => resetSection("daily")}
         />
-      </TabsContent>
+          </TabsContent>
 
-      <TabsContent value="jumuah" className="admin-prayer-times-tab-content">
+          <TabsContent
+            value="jumuah"
+            className="admin-prayer-times-inner-tab-content"
+          >
         <div className="admin-prayer-times-tab-section">
           <div className="admin-prayer-times-tab-header">
             <div>
@@ -740,9 +788,12 @@ export function AdminPrayerTimesManager() {
           saving={savingSection === "jumuah"}
           onSave={() => saveSection("jumuah")}
         />
-      </TabsContent>
+          </TabsContent>
 
-      <TabsContent value="eid" className="admin-prayer-times-tab-content">
+          <TabsContent
+            value="eid"
+            className="admin-prayer-times-inner-tab-content"
+          >
         <div className="admin-prayer-times-tab-section">
           <div className="admin-prayer-times-tab-header">
             <div className="space-y-1">
@@ -884,6 +935,8 @@ export function AdminPrayerTimesManager() {
           disabled={formLoading}
           onSave={() => saveSection("eid")}
         />
+          </TabsContent>
+        </Tabs>
       </TabsContent>
 
       <TabsContent value="ramadan" className="admin-prayer-times-tab-content">

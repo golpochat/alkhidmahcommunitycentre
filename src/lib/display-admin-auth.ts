@@ -1,7 +1,7 @@
-import { canManageDisplay, getSession } from "@/lib/auth";
+import { canManageDisplay, getFreshSession } from "@/lib/auth";
 
 export async function requireDisplayAdminSession() {
-  const session = await getSession();
+  const session = await getFreshSession();
   if (!session) {
     throw new Error("Unauthorized");
   }

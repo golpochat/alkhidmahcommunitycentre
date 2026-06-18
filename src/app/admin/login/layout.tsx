@@ -1,12 +1,12 @@
 import { redirect } from "next/navigation";
-import { getHomeRouteForSession, getSession } from "@/lib/auth";
+import { getFreshSession, getHomeRouteForSession } from "@/lib/auth";
 
 export default async function AdminLoginLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getSession();
+  const session = await getFreshSession();
   if (session) {
     redirect(getHomeRouteForSession(session));
   }

@@ -12,7 +12,12 @@ export const DAILY_PRAYER_KEYS: DailyPrayerKey[] = [
 
 export const FOLLOWS_MAGHRIB_LABEL = "After Maghrib";
 
-export const IQAMA_DEFAULT_INTERVAL = 15;
+export const IQAMA_DEFAULT_INTERVAL = 20;
+export const IQAMA_MAGHRIB_DEFAULT_INTERVAL = 5;
+
+export function getDefaultIqamaOffsetMinutes(prayer: DailyPrayerKey): number {
+  return prayer === "maghrib" ? IQAMA_MAGHRIB_DEFAULT_INTERVAL : IQAMA_DEFAULT_INTERVAL;
+}
 
 export interface PrayerIqamaConfig {
   mode: IqamaMode;
@@ -80,13 +85,19 @@ export function defaultIqamaConfig(): DailyIqamaConfig {
   return Object.fromEntries(
     DAILY_PRAYER_KEYS.map((key) => [
       key,
-      { mode: "interval" as const, intervalText: String(IQAMA_DEFAULT_INTERVAL) },
+      {
+        mode: "interval" as const,
+        intervalText: String(getDefaultIqamaOffsetMinutes(key)),
+      },
     ])
   ) as DailyIqamaConfig;
 }
 
-export function defaultIqamaConfigEntry(): PrayerIqamaConfig {
-  return { mode: "interval", intervalText: String(IQAMA_DEFAULT_INTERVAL) };
+export function defaultIqamaConfigEntry(prayer: DailyPrayerKey = "fajr"): PrayerIqamaConfig {
+  return {
+    mode: "interval",
+    intervalText: String(getDefaultIqamaOffsetMinutes(prayer)),
+  };
 }
 
 export function parseDailyIqamaConfig(value: unknown): DailyIqamaConfig | null {

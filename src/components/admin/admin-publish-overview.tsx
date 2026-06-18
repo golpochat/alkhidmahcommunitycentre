@@ -56,6 +56,10 @@ interface AdminPublishStatusOverviewProps {
 export function AdminPublishStatusOverview({
   overview,
 }: AdminPublishStatusOverviewProps) {
+  if (overview.rows.length === 0) {
+    return null;
+  }
+
   return (
     <Card className="admin-publish-status-overview">
       <CardHeader>

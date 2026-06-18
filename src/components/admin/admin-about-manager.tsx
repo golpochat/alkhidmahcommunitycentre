@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { ImageUpload } from "@/components/admin/image-upload";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -40,6 +42,7 @@ function createMember(): CommitteeMember {
     role: "",
     bio: "",
     imageUrl: "",
+    published: false,
   };
 }
 
@@ -118,12 +121,14 @@ export function AdminAboutManager() {
     );
   }
 
+  const publishedMemberCount = content.committee.filter((member) => member.published).length;
+
   return (
     <form onSubmit={handleSave} className="admin-about-manager">
       <div className="mb-6">
         <h1 className="font-heading text-3xl font-semibold">About Page</h1>
         <p className="mt-2 text-muted-foreground">
-          Manage the Values and Committee sections shown on the public about page.
+          Publish sections and individual committee members on the public about page.
         </p>
       </div>
 
@@ -149,16 +154,34 @@ export function AdminAboutManager() {
           <CardHeader>
             <CardTitle className="font-heading text-lg">Mosque Committee</CardTitle>
           </CardHeader>
-          <CardContent className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              Show committee members on `/about`
-            </p>
-            <Switch
-              checked={content.committeeVisible}
-              onCheckedChange={(checked) =>
-                setContent({ ...content, committeeVisible: Boolean(checked) })
-              }
-            />
+          <CardContent className="space-y-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-muted-foreground">
+                Publish the whole committee section on `/about`
+              </p>
+              <Switch
+                checked={content.committeeVisible}
+                onCheckedChange={(checked) =>
+                  setContent({ ...content, committeeVisible: Boolean(checked) })
+                }
+                aria-label="Publish committee section"
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge
+                variant="outline"
+                className={
+                  content.committeeVisible
+                    ? "border-emerald text-emerald"
+                    : "border-muted-foreground text-muted-foreground"
+                }
+              >
+                Section {content.committeeVisible ? "Published" : "Unpublished"}
+              </Badge>
+              <span className="text-sm text-muted-foreground">
+                {publishedMemberCount} of {content.committee.length} members visible
+              </span>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -249,8 +272,13 @@ export function AdminAboutManager() {
       </Card>
 
       <Card className="mb-8">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="font-heading text-lg">Committee Members</CardTitle>
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <CardTitle className="font-heading text-lg">Committee Members</CardTitle>
+            <p className="mt-1 text-sm text-muted-foreground">
+              New members start hidden until you publish them individually.
+            </p>
+          </div>
           <Button
             type="button"
             variant="outline"
@@ -269,63 +297,114 @@ export function AdminAboutManager() {
         <CardContent className="space-y-6">
           {content.committee.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No committee members yet. Add members to display them when the section is
-              published.
+              No committee members yet. Add members and publish the ones that should
+              appear on the public about page.
             </p>
           ) : (
             content.committee.map((member, index) => (
-              <div key={member.id} className="admin-about-item">
-                <div className="mb-4 flex items-center justify-between">
-                  <p className="font-medium">Member {index + 1}</p>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() =>
-                      setContent({
-                        ...content,
-                        committee: content.committee.filter(
-                          (_, itemIndex) => itemIndex !== index,
-                        ),
-                      })
-                    }
-                    aria-label={`Remove member ${index + 1}`}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </div>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor={`member-name-${member.id}`}>Name</Label>
-                    <Input
-                      id={`member-name-${member.id}`}
-                      value={member.name}
-                      onChange={(event) =>
-                        updateMember(index, { name: event.target.value })
+              <div
+                key={member.id}
+                className={
+                  member.published
+                    ? "admin-about-item"
+                    : "admin-about-item admin-about-item-unpublished"
+                }
+              >
+                <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-medium">
+                      {member.name.trim() || `Member ${index + 1}`}
+                    </p>
+                    <Badge
+                      variant="outline"
+                      className={
+                        member.published
+                          ? "border-emerald text-emerald"
+                          : "border-muted-foreground text-muted-foreground"
                       }
-                      required
-                    />
+                    >
+                      {member.published ? "Published" : "Hidden"}
+                    </Badge>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor={`member-role-${member.id}`}>Role</Label>
-                    <Input
-                      id={`member-role-${member.id}`}
-                      value={member.role}
-                      onChange={(event) =>
-                        updateMember(index, { role: event.target.value })
+                  <div className="flex items-center gap-3">
+                    <Label
+                      htmlFor={`member-published-${member.id}`}
+                      className="text-sm text-muted-foreground"
+                    >
+                      Show on site
+                    </Label>
+                    <Switch
+                      id={`member-published-${member.id}`}
+                      checked={member.published}
+                      onCheckedChange={(checked) =>
+                        updateMember(index, { published: Boolean(checked) })
                       }
-                      required
+                      aria-label={`${member.published ? "Hide" : "Show"} ${member.name || "member"}`}
                     />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() =>
+                        setContent({
+                          ...content,
+                          committee: content.committee.filter(
+                            (_, itemIndex) => itemIndex !== index,
+                          ),
+                        })
+                      }
+                      aria-label={`Remove member ${index + 1}`}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
                   </div>
                 </div>
-                <div className="mt-4 space-y-2">
-                  <Label htmlFor={`member-bio-${member.id}`}>Bio</Label>
-                  <Textarea
-                    id={`member-bio-${member.id}`}
-                    value={member.bio}
-                    onChange={(event) => updateMember(index, { bio: event.target.value })}
-                    rows={3}
+                <div className="grid gap-6 lg:grid-cols-[minmax(0,12rem)_minmax(0,1fr)]">
+                  <ImageUpload
+                    value={member.imageUrl}
+                    onChange={(imageUrl) => updateMember(index, { imageUrl })}
+                    folder="about"
+                    label="Photo"
+                    previewAlt={member.name || "Committee member"}
+                    variant="square"
                   />
+                  <div className="space-y-4">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor={`member-name-${member.id}`}>Name</Label>
+                        <Input
+                          id={`member-name-${member.id}`}
+                          value={member.name}
+                          onChange={(event) =>
+                            updateMember(index, { name: event.target.value })
+                          }
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor={`member-role-${member.id}`}>Role</Label>
+                        <Input
+                          id={`member-role-${member.id}`}
+                          value={member.role}
+                          onChange={(event) =>
+                            updateMember(index, { role: event.target.value })
+                          }
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`member-bio-${member.id}`}>Bio</Label>
+                      <Textarea
+                        id={`member-bio-${member.id}`}
+                        value={member.bio}
+                        onChange={(event) =>
+                          updateMember(index, { bio: event.target.value })
+                        }
+                        rows={3}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             ))

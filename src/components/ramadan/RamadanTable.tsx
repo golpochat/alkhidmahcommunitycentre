@@ -87,11 +87,8 @@ export function RamadanTable({ rows, onUpdateRow }: RamadanTableProps) {
   }
 
   return (
-    <details className="admin-ramadan-timetable-details rounded-lg border border-border" open>
-      <summary className="cursor-pointer px-4 py-3 font-medium">
-        Ramadan timetable table
-      </summary>
-      <div className="admin-prayer-times-table-wrap overflow-x-auto p-4 pt-0">
+    <div className="admin-ramadan-timetable-details rounded-lg border border-border">
+      <div className="admin-prayer-times-table-wrap overflow-x-auto p-4">
         <Table>
           <TableHeader>
             <TableRow>
@@ -135,6 +132,6 @@ export function RamadanTable({ rows, onUpdateRow }: RamadanTableProps) {
           </TableBody>
         </Table>
       </div>
-    </details>
+    </div>
   );
 }

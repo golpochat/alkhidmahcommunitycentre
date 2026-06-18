@@ -11,6 +11,7 @@ import {
 } from "@/lib/prayer-times-pure";
 import type { SeasonalCountdown, SeasonalFlags } from "@/lib/seasonal-types";
 import type { SerializedDisplayNotice } from "@/lib/display-types";
+import { filterActiveDisplayNotices } from "@/lib/display-notices";
 
 const JUMUAH_ADHAN_EARLIEST_MINUTES = 6 * 60;
 const JUMUAH_ADHAN_LATEST_MINUTES = 17 * 60;
@@ -198,7 +199,9 @@ export function resolveDisplayCountdown(
   emergencyNotices: SerializedDisplayNotice[],
   now = new Date()
 ): DisplayCountdownState {
-  const emergency = emergencyNotices.find((notice) => notice.priority === "high");
+  const emergency = filterActiveDisplayNotices(emergencyNotices, now).find(
+    (notice) => notice.priority === "high",
+  );
   if (emergency) {
     return {
       type: "emergency",

@@ -44,6 +44,7 @@ import {
   type RamadanPdfTextRun,
 } from "@/lib/ramadan-notes-html";
 import {
+  RAMADAN_QR_MAX_SLOTS,
   type RamadanPaymentQRItem,
   type RamadanSettingsData,
 } from "@/lib/ramadan-settings-types";
@@ -529,7 +530,7 @@ function applyRamadanTableMetrics(layout: RamadanPdfLayout, rowHeight: number) {
   syncRamadanNotesMetrics(layout);
 }
 
-function buildLayout(qrCount: number, qrSlotCount: number): RamadanPdfLayout {
+function buildLayout(qrCount: number): RamadanPdfLayout {
   return {
     titleSize: PDF_TITLE_FONT_SIZE,
     subtitleSize: 13,
@@ -539,9 +540,9 @@ function buildLayout(qrCount: number, qrSlotCount: number): RamadanPdfLayout {
     notesBodySize: 9.5,
     notesLineHeight: 11,
     notesMaxLines: 999,
-    qrSize: qrSlotCount === 6 ? 38 : 46,
-    qrColumns: Math.min(qrCount, qrSlotCount === 6 ? 6 : 3) || 3,
-    qrLabelSize: qrSlotCount === 6 ? 8.5 : 10,
+    qrSize: 38,
+    qrColumns: Math.min(qrCount, RAMADAN_QR_MAX_SLOTS) || RAMADAN_QR_MAX_SLOTS,
+    qrLabelSize: 8.5,
     qrRowGap: 3,
     sectionGap: PDF_SECTION_GAP,
   };
@@ -941,10 +942,7 @@ export async function renderRamadanTimetablePdf(input: {
   const fonts = await embedRamadanPdfFonts(pdfDoc);
   const { font, fontBold } = fonts;
   const notes = input.settings.notesMessage.trim();
-  const baseLayout = buildLayout(
-    paymentItems.length,
-    input.settings.qrSlotCount,
-  );
+  const baseLayout = buildLayout(paymentItems.length);
   const layout = fitLayoutToPage(baseLayout, {
     rowCount: rows.length,
     notes,

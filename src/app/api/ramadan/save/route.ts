@@ -40,6 +40,8 @@ const settingsSchema = z.object({
       { message: `Notes must be ${RAMADAN_NOTES_MAX_LENGTH} characters or fewer` }
     ),
   qrSlotCount: z.union([z.literal(3), z.literal(6)]).optional(),
+  startDayOffset: z.number().int().min(-5).max(5).optional(),
+  isThirtyDayMonth: z.boolean().optional(),
 });
 
 const saveSchema = z.object({

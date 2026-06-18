@@ -1,5 +1,10 @@
 import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 import { spawnSync } from "child_process";
+
+const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const isWindows = process.platform === "win32";
 
 function loadEnvFile(filePath) {
   if (!fs.existsSync(filePath)) return;
@@ -85,11 +90,109 @@ function resolveCliDatabaseUrl() {
   return databaseUrl;
 }
 
+function releasePrismaEngineLock() {
+  if (!isWindows) return 0;
+
+  const marker = path.basename(projectRoot);
+  const scriptPath = path.join(projectRoot, "scripts", "release-prisma-engine-lock.ps1");
+
+  const result = spawnSync(
+    "powershell.exe",
+    [
+      "-NoProfile",
+      "-NonInteractive",
+      "-ExecutionPolicy",
+      "Bypass",
+      "-File",
+      scriptPath,
+      "-ProjectMarker",
+      marker,
+      "-SelfPid",
+      String(process.pid),
+    ],
+    { stdio: "inherit", shell: false },
+  );
+
+  if (result.status !== 0) {
+    console.warn("Could not release Prisma engine lock automatically.");
+    return 0;
+  }
+
+  return 1;
+}
+
+function isPrismaEngineLockError(output) {
+  return (
+    output.includes("EPERM") &&
+    output.includes("query_engine") &&
+    output.includes(".dll.node")
+  );
+}
+
+function runPrisma(args, env, { capture = false } = {}) {
+  return spawnSync("npx", ["prisma", ...args], {
+    stdio: capture ? "pipe" : "inherit",
+    env,
+    shell: true,
+    encoding: capture ? "utf8" : undefined,
+  });
+}
+
+function runPrismaGenerate(env, { forceUnlock = false } = {}) {
+  const maxAttempts = isWindows ? 3 : 1;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    if (forceUnlock && attempt === 1) {
+      releasePrismaEngineLock();
+    }
+
+    const result = runPrisma(["generate"], env, { capture: isWindows });
+
+    if (result.status === 0) {
+      if (isWindows) {
+        process.stdout.write(result.stdout ?? "");
+        process.stderr.write(result.stderr ?? "");
+      }
+      return 0;
+    }
+
+    const output = `${result.stdout ?? ""}${result.stderr ?? ""}`;
+
+    if (
+      isWindows &&
+      isPrismaEngineLockError(output) &&
+      attempt < maxAttempts
+    ) {
+      console.warn(
+        `Prisma generate failed with a Windows file lock (attempt ${attempt}/${maxAttempts}).`,
+      );
+      releasePrismaEngineLock();
+      continue;
+    }
+
+    process.stdout.write(result.stdout ?? "");
+    process.stderr.write(result.stderr ?? "");
+    if (isWindows && isPrismaEngineLockError(output)) {
+      console.error(
+        "\nPrisma could not update the query engine while another process holds the file lock.",
+      );
+      console.error("Use: npm run db:generate");
+      console.error("Or:  npm run db:generate:unlock");
+      console.error("Avoid: npx prisma generate (bypasses the Windows lock handler)");
+    }
+    return result.status ?? 1;
+  }
+
+  return 1;
+}
+
 loadEnvFile(".env");
 loadEnvFile(".env.local");
 
 const prismaArgs = process.argv.slice(2);
 const subcommand = prismaArgs[0] ?? "";
+const forceUnlock = prismaArgs.includes("--unlock");
+const filteredArgs = prismaArgs.filter((arg) => arg !== "--unlock");
 const offlineCommands = new Set(["generate", "format", "validate", "version"]);
 const needsDatabase = !offlineCommands.has(subcommand);
 const env = { ...process.env };
@@ -98,10 +201,13 @@ if (needsDatabase) {
   env.DATABASE_URL = resolveCliDatabaseUrl();
 }
 
-const result = spawnSync("npx", ["prisma", ...prismaArgs], {
-  stdio: "inherit",
-  env,
-  shell: true,
-});
+let exitCode;
 
-process.exit(result.status ?? 1);
+if (subcommand === "generate") {
+  exitCode = runPrismaGenerate(env, { forceUnlock });
+} else {
+  const result = runPrisma(filteredArgs, env);
+  exitCode = result.status ?? 1;
+}
+
+process.exit(exitCode);

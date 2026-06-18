@@ -11,6 +11,7 @@ interface DisplayPortraitMiddleProps {
   seasonal: SeasonalFlags;
   now: Date | null;
   weather: WeatherPayload;
+  showWeather?: boolean;
 }
 
 export function DisplayPortraitMiddle({
@@ -18,6 +19,7 @@ export function DisplayPortraitMiddle({
   seasonal,
   now,
   weather,
+  showWeather = true,
 }: DisplayPortraitMiddleProps) {
   return (
     <section className="display-portrait-middle" aria-label="Countdown and weather">
@@ -29,7 +31,7 @@ export function DisplayPortraitMiddle({
           now={now}
           variant="portrait"
         />
-        <DisplayLandscapeBottomWeather weather={weather} />
+        {showWeather ? <DisplayLandscapeBottomWeather weather={weather} /> : null}
       </div>
     </section>
   );

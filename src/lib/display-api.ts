@@ -62,10 +62,14 @@ function isNoticeActive(
     startDate: Date | null;
     endDate: Date | null;
   },
-  now: Date
+  now: Date,
 ) {
   if (notice.startDate && notice.startDate > now) return false;
-  if (notice.endDate && notice.endDate < now) return false;
+  if (notice.endDate) {
+    const end = new Date(notice.endDate);
+    end.setHours(23, 59, 59, 999);
+    if (end < now) return false;
+  }
   return true;
 }
 

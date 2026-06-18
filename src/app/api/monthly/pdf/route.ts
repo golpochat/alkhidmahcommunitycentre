@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   generateMonthlyTimetable,
   getPublishedMonthlyTimetable,
-  listMonthlyTimetable,
 } from "@/lib/monthly-timetable";
 import {
   monthlyTimetableToPdfBuffer,
@@ -11,12 +10,7 @@ import {
 import { requireTimetableAdmin } from "@/lib/timetable-api-auth";
 
 async function buildMonthlyPdfPayload(month: number, year: number) {
-  let rows = await listMonthlyTimetable(month, year);
-  if (rows.length === 0) {
-    const generated = await generateMonthlyTimetable(month, year);
-    rows = generated.rows;
-  }
-  return { month, year, rows };
+  return generateMonthlyTimetable(month, year);
 }
 
 export async function GET(request: NextRequest) {

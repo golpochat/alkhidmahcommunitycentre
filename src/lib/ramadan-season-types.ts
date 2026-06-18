@@ -12,6 +12,21 @@ export interface RamadanSeasonSelectOption {
   endDate: string;
 }
 
+/** Upcoming Ramadan season with Hijri day adjustment and month length. */
+export interface UpcomingRamadanSeasonInfo {
+  hijriYear: number;
+  calculatedStartDate: string;
+  calculatedEndDate: string;
+  startDate: string;
+  endDate: string;
+  startDayOffset: number;
+  isThirtyDayMonth: boolean;
+  dayCount: number;
+}
+
+export const RAMADAN_START_DAY_OFFSET_MIN = -5;
+export const RAMADAN_START_DAY_OFFSET_MAX = 5;
+
 /** Effective season dates plus calculated (AlAdhan) baseline for moon-sighting UI. */
 export interface RamadanSeasonInfo {
   hijriYear: number | null;

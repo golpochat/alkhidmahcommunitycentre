@@ -123,3 +123,20 @@ export function getRamadanPdfDisplayYear(
   }
   return storageYear;
 }
+
+export async function getUpcomingRamadanSeason(): Promise<RamadanSeason> {
+  const seasons = await listRamadanSeasonsAround(new Date());
+  const todayKey = toDateKey(new Date());
+  const upcoming = seasons.find((season) => season.startDate > todayKey);
+
+  if (upcoming) {
+    return upcoming;
+  }
+
+  const last = seasons[seasons.length - 1];
+  if (!last) {
+    throw new Error("Could not determine the upcoming Ramadan season");
+  }
+
+  return getRamadanSeasonForHijriYear(last.hijriYear + 1);
+}

@@ -33,8 +33,8 @@ export function NextPrayerCountdown({
     const active = resolveDisplayCountdown(
       schedule,
       seasonal,
-      [],
-      now
+      notices,
+      now,
     );
 
     if (active.type === "none") return null;

@@ -20,6 +20,7 @@ const aboutCommitteeSchema = z.object({
   role: z.string().min(2).max(80),
   bio: z.string().max(500),
   imageUrl: z.string().max(500),
+  published: z.boolean(),
 });
 
 const aboutContentSchema = z.object({

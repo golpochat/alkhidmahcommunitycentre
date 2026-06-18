@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import {
   canManageEvents,
-  getSession,
+  getFreshSession,
   requirePermission,
   PERMISSIONS,
 } from "@/lib/auth";
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get("category");
     const includePast = searchParams.get("includePast") === "true";
     const now = new Date();
-    const session = await getSession();
+    const session = await getFreshSession();
     const canViewUnpublished = session ? canManageEvents(session) : false;
 
     const events = await db.event.findMany({

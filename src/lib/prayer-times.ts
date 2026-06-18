@@ -1,25 +1,30 @@
 import "server-only";
 
 import { format, parseISO } from "date-fns";
-import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import {
-  buildDailyAdhanConfigFromOverride,
   defaultAdhanConfig,
-  resolveAdhan,
+  resolveAdhanSlot,
   type DailyPrayerKey,
 } from "@/lib/prayer-adhan";
 import {
-  buildDailyIqamaConfigFromOverride,
+  getDefaultIqamaOffsetMinutes,
   resolvePrayerSlotWithIqama,
 } from "@/lib/prayer-iqama";
 import {
+  getDailyAdhanConfigFromMosque,
+  getDailyIqamaConfigFromMosque,
+  getMosquePrayerConfig,
+  hasSavedDailyPrayerRules,
+  type MosquePrayerConfigWithRelations,
+} from "@/lib/mosque-prayer-config";
+import {
+  addMinutesToTime,
   buildEidInfoFromRecord,
   buildScheduleDates,
   buildSlot,
   defaultJumuahSlots,
   findNextPrayer,
-  hasDailyOverrideData,
   isEidVisibleForToday,
   isFriday,
   mapJumuahOverrides,
@@ -34,11 +39,14 @@ import {
   type PrayerTimesResponse,
 } from "@/lib/prayer-times-pure";
 import { fetchAlAdhan } from "@/lib/prayer-times-aladhan";
-import type { DailyIqamaConfig } from "@/lib/prayer-iqama";
 import type { AlAdhanTimings, AlAdhanResponse } from "@/types";
-import type { DbPrayerTimesOverrideRecord } from "@/lib/prayer-times-pure";
 
 export * from "@/lib/prayer-times-pure";
+export {
+  getMosquePrayerConfig,
+  serializeMosquePrayerConfig,
+  hasSavedDailyPrayerRules,
+} from "@/lib/mosque-prayer-config";
 
 type AlAdhanSource = {
   apiTimings: AlAdhanTimings;
@@ -62,24 +70,6 @@ function buildDateLabels(
 }
 
 async function getStoredTimingsForDate(date: Date) {
-  const override = await db.prayerTimesOverride.findUnique({
-    where: { date },
-  });
-
-  if (override?.fajrAdhan && override?.maghribAdhan) {
-    return {
-      apiTimings: {
-        Fajr: override.fajrAdhan,
-        Sunrise: "",
-        Dhuhr: override.dhuhrAdhan ?? "",
-        Asr: override.asrAdhan ?? "",
-        Maghrib: override.maghribAdhan,
-        Isha: override.ishaAdhan ?? "",
-      },
-      hijri: null,
-    };
-  }
-
   const monthly = await db.monthlyTimetable.findFirst({
     where: { date },
   });
@@ -142,84 +132,73 @@ async function resolveAlAdhanSource(date: Date): Promise<AlAdhanSource> {
   }
 }
 
-function overrideRelationsInclude(): Prisma.PrayerTimesOverrideInclude {
+function mosqueEidRecord(config: MosquePrayerConfigWithRelations | null): OverrideRecord | null {
+  if (!config?.eidType) return null;
+
   return {
-    jumuahOverrides: { orderBy: { index: "asc" } },
-    eidOverrides: { orderBy: { index: "asc" } },
-  } as Prisma.PrayerTimesOverrideInclude;
+    eidType: config.eidType,
+    eidDate: config.eidDate,
+    eidPrayers: config.eidSlots.map((slot) => ({
+      index: slot.index,
+      time: slot.time || "",
+    })),
+    eidOverrides: config.eidSlots.map((slot) => ({
+      index: slot.index,
+      adhan: slot.time,
+      iqama: slot.time,
+    })),
+  };
 }
 
 export async function resolveConfiguredJumuahSlots(): Promise<JumuahSlot[]> {
-  const activeJumuah = await getActiveJumuahOverride();
-  if (activeJumuah?.jumuahOverrides?.length) {
-    return mapJumuahOverrides(activeJumuah.jumuahOverrides);
+  const config = await getMosquePrayerConfig();
+  if (config?.jumuahSlots.length) {
+    return mapJumuahOverrides(config.jumuahSlots);
   }
 
   return defaultJumuahSlots();
 }
 
-export async function getActiveEidOverride() {
-  return db.prayerTimesOverride.findFirst({
-    where: { eidType: { not: null } },
-    orderBy: { date: "asc" },
-    include: overrideRelationsInclude(),
-  }) as Promise<DbPrayerTimesOverrideRecord | null>;
-}
-
-export async function getActiveJumuahOverride() {
-  const latestSlot = await db.jumuahOverride.findFirst({
-    orderBy: { updatedAt: "desc" },
-    select: { prayerTimesOverrideId: true },
-  });
-
-  if (!latestSlot) return null;
-
-  return db.prayerTimesOverride.findUnique({
-    where: { id: latestSlot.prayerTimesOverrideId },
-    include: {
-      jumuahOverrides: { orderBy: { index: "asc" } },
-    },
-  }) as Promise<DbPrayerTimesOverrideRecord | null>;
+export async function getMosquePrayerConfigRecord() {
+  const config = await getMosquePrayerConfig();
+  return config;
 }
 
 async function resolveEidForDisplay(
   dateKey: string,
-  date: Date,
-  override: (OverrideRecord & { date?: Date }) | null
+  config: MosquePrayerConfigWithRelations | null
 ): Promise<EidInfo> {
+  const record = mosqueEidRecord(config);
+  if (!record?.eidType || !config?.eidDate) {
+    return { type: null, prayers: [] };
+  }
+
   const today = parseDateParam();
   const todayKey = toDateKey(today);
   const isViewingToday = dateKey === todayKey;
 
-  if (isViewingToday) {
-    const candidates = await db.prayerTimesOverride.findMany({
-      where: { eidType: { not: null } },
-      orderBy: { date: "asc" },
-      include: overrideRelationsInclude(),
-    });
-
-    const visibleEid = candidates.find((record) =>
-      isEidVisibleForToday(record.date, today)
-    );
-
-    if (visibleEid) {
-      const eidDateKey = toRecordDateKey(visibleEid.date);
-      return buildEidInfoFromRecord(visibleEid, {
-        isUpcoming: eidDateKey !== todayKey,
-      });
-    }
-
+  if (isViewingToday && !isEidVisibleForToday(config.eidDate, today)) {
     return { type: null, prayers: [] };
   }
 
-  if (override?.eidType) {
-    return buildEidInfoFromRecord(
-      { ...override, date: override.date ?? date },
-      { isUpcoming: false }
-    );
-  }
+  const eidDateKey = toRecordDateKey(config.eidDate);
+  return buildEidInfoFromRecord(record, {
+    isUpcoming: isViewingToday && eidDateKey !== todayKey,
+  });
+}
 
-  return { type: null, prayers: [] };
+function buildDefaultDailySlot(prayer: DailyPrayerKey, apiAdhan: string): PrayerSlot {
+  const adhan = normalizeTime(apiAdhan);
+  const iqama = adhan
+    ? addMinutesToTime(adhan, getDefaultIqamaOffsetMinutes(prayer))
+    : null;
+
+  return {
+    adhan,
+    iqama,
+    adhanDisplay: adhan,
+    iqamaDisplay: iqama,
+  };
 }
 
 export async function getDefaultPrayerTimesForDate(
@@ -243,13 +222,13 @@ export async function getDefaultPrayerTimesForDate(
     sunrise,
     isFriday: friday,
     prayers: {
-      fajr: buildSlot(apiTimings.Fajr, null, true),
+      fajr: buildDefaultDailySlot("fajr", apiTimings.Fajr),
       dhuhr: replaceDhuhrWithJumuah
         ? null
-        : buildSlot(apiTimings.Dhuhr, null, true),
-      asr: buildSlot(apiTimings.Asr, null, true),
-      maghrib: buildSlot(apiTimings.Maghrib, null, true),
-      isha: buildSlot(apiTimings.Isha, null, true),
+        : buildDefaultDailySlot("dhuhr", apiTimings.Dhuhr),
+      asr: buildDefaultDailySlot("asr", apiTimings.Asr),
+      maghrib: buildDefaultDailySlot("maghrib", apiTimings.Maghrib),
+      isha: buildDefaultDailySlot("isha", apiTimings.Isha),
     },
     jumuah,
     configuredJumuah,
@@ -272,12 +251,8 @@ export async function getPrayerTimesForDate(
   const dateKey = toDateKey(date);
   const friday = isFriday(date);
 
-  const override = (await db.prayerTimesOverride.findUnique({
-    where: { date },
-    include: overrideRelationsInclude(),
-  })) as DbPrayerTimesOverrideRecord | null;
-
-  const useDailyOverride = hasDailyOverrideData(override);
+  const config = await getMosquePrayerConfig();
+  const applySavedRules = hasSavedDailyPrayerRules(config);
 
   const { apiTimings, hijri, degraded } = await resolveAlAdhanSource(date);
   const dates = buildDateLabels(dateKey, hijri);
@@ -285,42 +260,38 @@ export async function getPrayerTimesForDate(
 
   const jumuah = friday ? await resolveConfiguredJumuahSlots() : [];
   const configuredJumuah = await resolveConfiguredJumuahSlots();
-
   const replaceDhuhrWithJumuah = friday && jumuah.length > 0;
 
-  const adhanConfig = override
-    ? buildDailyAdhanConfigFromOverride(override, {
-        Fajr: apiTimings.Fajr,
-        Dhuhr: apiTimings.Dhuhr,
-        Asr: apiTimings.Asr,
-        Maghrib: apiTimings.Maghrib,
-        Isha: apiTimings.Isha,
-      })
+  const adhanConfig = applySavedRules
+    ? getDailyAdhanConfigFromMosque(config)
     : defaultAdhanConfig();
 
-  const iqamaConfig = override
-    ? buildDailyIqamaConfigFromOverride(override)
-    : ({} as DailyIqamaConfig);
+  const iqamaConfig = applySavedRules
+    ? getDailyIqamaConfigFromMosque(config)
+    : null;
 
   const buildDailySlot = (
     prayer: DailyPrayerKey,
     apiAdhan: string,
     maghribSlot?: PrayerSlot | null
   ): PrayerSlot => {
-    const adhan =
-      useDailyOverride && override
-        ? resolveAdhan(apiAdhan, adhanConfig[prayer])
-        : normalizeTime(apiAdhan);
-
-    if (useDailyOverride && override) {
-      return resolvePrayerSlotWithIqama(adhan, iqamaConfig[prayer], {
-        legacyIqama: override[`${prayer}Iqama` as keyof OverrideRecord] as string | null,
-        deriveDefault: true,
-        maghribSlot: maghribSlot,
-      });
+    if (!applySavedRules) {
+      return buildDefaultDailySlot(prayer, apiAdhan);
     }
 
-    return buildSlot(adhan, null, true);
+    const { adhan, adhanDisplay } = resolveAdhanSlot(
+      apiAdhan,
+      adhanConfig[prayer],
+    );
+    const slot = resolvePrayerSlotWithIqama(adhan, iqamaConfig?.[prayer], {
+      deriveDefault: true,
+      maghribSlot,
+    });
+
+    return {
+      ...slot,
+      adhanDisplay: adhanDisplay ?? slot.adhan,
+    };
   };
 
   const maghrib = buildDailySlot("maghrib", apiTimings.Maghrib);
@@ -335,7 +306,7 @@ export async function getPrayerTimesForDate(
     isha: buildDailySlot("isha", apiTimings.Isha, maghrib),
   };
 
-  const eid = await resolveEidForDisplay(dateKey, date, override);
+  const eid = await resolveEidForDisplay(dateKey, config);
 
   const response: PrayerTimesResponse = {
     date: dateKey,
@@ -354,19 +325,14 @@ export async function getPrayerTimesForDate(
   };
 
   response.nextPrayer = findNextPrayer(response);
-
   return response;
 }
 
 export async function getLastEidPrayerTimes(): Promise<PrayerTimesResponse | null> {
-  const lastEid = await db.prayerTimesOverride.findFirst({
-    where: { eidType: { not: null } },
-    orderBy: { date: "desc" },
-  });
+  const config = await getMosquePrayerConfig();
+  if (!config?.eidType || !config.eidDate) return null;
 
-  if (!lastEid) return null;
-
-  return getPrayerTimesForDate(format(lastEid.date, "yyyy-MM-dd"));
+  return getPrayerTimesForDate(format(config.eidDate, "yyyy-MM-dd"));
 }
 
 function buildStoredPrayerSlot(
@@ -398,8 +364,7 @@ async function buildPrayerTimesFromMonthlyRow(
     ishaAdhan: string | null;
     ishaIqama: string | null;
     sunrise: string | null;
-  },
-  override: DbPrayerTimesOverrideRecord | null
+  }
 ): Promise<PrayerTimesResponse> {
   const friday = isFriday(date);
   let dates = buildDateLabels(dateKey, null);
@@ -413,7 +378,8 @@ async function buildPrayerTimesFromMonthlyRow(
 
   const jumuah = friday ? await resolveConfiguredJumuahSlots() : [];
   const replaceDhuhrWithJumuah = friday && jumuah.length > 0;
-  const eid = await resolveEidForDisplay(dateKey, date, override);
+  const config = await getMosquePrayerConfig();
+  const eid = await resolveEidForDisplay(dateKey, config);
 
   const response: PrayerTimesResponse = {
     date: dateKey,
@@ -440,19 +406,15 @@ async function buildPrayerTimesFromMonthlyRow(
   return response;
 }
 
-/** TV display: prefer Daily Prayer Times override, then monthly timetable row, then live schedule. */
+/** TV display: prefer live mosque rules, then monthly timetable row, then API defaults. */
 export async function getPrayerTimesForDisplay(
   dateParam?: string | null
 ): Promise<PrayerTimesResponse> {
   const date = parseDateParam(dateParam);
   const dateKey = toDateKey(date);
 
-  const override = (await db.prayerTimesOverride.findUnique({
-    where: { date },
-    include: overrideRelationsInclude(),
-  })) as DbPrayerTimesOverrideRecord | null;
-
-  if (hasDailyOverrideData(override)) {
+  const config = await getMosquePrayerConfig();
+  if (hasSavedDailyPrayerRules(config)) {
     return getPrayerTimesForDate(dateParam);
   }
 
@@ -461,7 +423,7 @@ export async function getPrayerTimesForDisplay(
   });
 
   if (monthly?.fajrAdhan) {
-    return buildPrayerTimesFromMonthlyRow(date, dateKey, monthly, override);
+    return buildPrayerTimesFromMonthlyRow(date, dateKey, monthly);
   }
 
   return getPrayerTimesForDate(dateParam);
