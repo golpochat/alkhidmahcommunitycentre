@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { GALLERY_SEED_IMAGES, IMAGES } from "../src/lib/images";
 import { getRoleIdBySlug, seedRbac } from "../src/lib/seed-rbac";
+import { seedLegalPolicies } from "../src/lib/legal-policy-seed";
 import { MEMBER_ROLE_SLUG, SUPER_ADMIN_ROLE_SLUG } from "../src/lib/rbac-seed";
 import {
   ensureSingleSuperAdmin,
@@ -12,6 +13,7 @@ const prisma = new PrismaClient();
 
 async function main() {
   await seedRbac(prisma);
+  await seedLegalPolicies(prisma);
 
   const superAdminRoleId = await getRoleIdBySlug(prisma, SUPER_ADMIN_ROLE_SLUG);
   const adminEmail = getSuperAdminEmail();
@@ -51,7 +53,7 @@ async function main() {
     { key: "social_instagram", value: "https://instagram.com/alkhidmahmosque" },
     { key: "social_youtube", value: "https://youtube.com/@alkhidmahmosque" },
     { key: "logo_path", value: "/logo/logo.png" },
-    { key: "favicon_path", value: "/favicon.svg" },
+    { key: "favicon_path", value: "/favicon.png" },
     { key: "about_values_visible", value: "true" },
     { key: "about_committee_visible", value: "true" },
   ];

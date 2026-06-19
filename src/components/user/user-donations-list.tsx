@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatDonationCents } from "@/lib/donation-processing-fee";
 import type { SerializedDonation } from "@/lib/donations";
 
 interface UserDonationRow extends SerializedDonation {
@@ -94,7 +95,7 @@ export function UserDonationsList() {
               </TableCell>
               <TableCell>{donation.categoryLabel}</TableCell>
               <TableCell>
-                €{(donation.totalCents / 100).toFixed(2)}
+                {formatDonationCents(donation.totalCents, donation.currency)}
               </TableCell>
               <TableCell>
                 <Badge variant="outline" className={statusBadgeClass(donation.status)}>

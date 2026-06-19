@@ -7,7 +7,7 @@ export const SITE_URL =
 export const LOGO_PATH = "/logo/logo.png";
 export const LOGO_SVG_PATH = "/logo/logo.svg";
 export const FAVICON_PATH = "/favicon.png";
-export const FAVICON_HREF = "/favicon.png?v=7";
+export const FAVICON_HREF = "/favicon.png?v=8";
 
 export const CONTACT = {
   address: "Unit 4, Monastery Road, Clondalkin, Dublin 22, D22 YX82",

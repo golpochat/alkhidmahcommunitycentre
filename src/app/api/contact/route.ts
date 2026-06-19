@@ -14,6 +14,7 @@ export async function POST(request: NextRequest) {
         email: validated.email,
         subject: validated.subject,
         message: validated.message,
+        privacyConsentAt: new Date(),
       },
     });
 

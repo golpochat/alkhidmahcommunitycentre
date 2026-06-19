@@ -7,6 +7,7 @@ import {
 import { resolveDonationUserId } from "@/lib/donation-user-link";
 import { resolveDonationPaymentAmount } from "@/lib/donation-payment-amount";
 import { getCategoryLabel } from "@/lib/donations";
+import { DEFAULT_DONATION_CURRENCY } from "@/lib/donation-processing-fee";
 import { getEnabledStripeGateway } from "@/lib/payment-gateway-store";
 import { getStripe } from "@/lib/stripe";
 import { donationFormSchema } from "@/lib/validations";
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Stripe is not configured" }, { status: 500 });
     }
 
-    const currency = stripeGateway.currency.toLowerCase() || "eur";
+    const currency = DEFAULT_DONATION_CURRENCY.toLowerCase();
     const payment = resolveDonationPaymentAmount(validated, stripeGateway.feeConfig);
 
     const userId = await resolveDonationUserId();
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
         amount: payment.donationData.amount,
         processingFeeCents: payment.donationData.processingFeeCents,
         coverFee: payment.donationData.coverFee,
-        currency: stripeGateway.currency,
+        currency: DEFAULT_DONATION_CURRENCY,
         category: validated.category,
         provider: "stripe",
         status: "pending",

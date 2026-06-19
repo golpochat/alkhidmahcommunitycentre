@@ -3,6 +3,7 @@ import { Mail, MapPin, Phone } from "lucide-react";
 import { SiteLogo } from "@/components/layout/site-logo";
 import { SiteSocialLinks } from "@/components/layout/site-social-links";
 import { NAV_ITEMS } from "@/lib/constants";
+import { listPublishedLegalPolicies } from "@/lib/legal-policies";
 import {
   buildMailtoHref,
   buildSiteSocialLinks,
@@ -11,7 +12,10 @@ import {
 } from "@/lib/site-contact-settings";
 
 export async function Footer({ logoPath }: { logoPath?: string }) {
-  const site = await getSiteContactSettings();
+  const [site, publishedPolicies] = await Promise.all([
+    getSiteContactSettings(),
+    listPublishedLegalPolicies(),
+  ]);
   const socialLinks = buildSiteSocialLinks(site);
   const phoneHref = buildTelHref(site.phone);
   const emailHref = buildMailtoHref(site.email);
@@ -88,10 +92,21 @@ export async function Footer({ logoPath }: { logoPath?: string }) {
 
       <div className="footer-legal">
         <div className="footer-legal-inner section-container">
-          <p className="footer-legal-copy">
-            &copy; {new Date().getFullYear()} {site.siteName}. All rights
-            reserved.
-          </p>
+          <div className="space-y-2">
+            <p className="footer-legal-copy">
+              &copy; {new Date().getFullYear()} {site.siteName}. All rights
+              reserved.
+            </p>
+            {publishedPolicies.length > 0 ? (
+              <div className="footer-legal-links">
+                {publishedPolicies.map((policy) => (
+                  <Link key={policy.slug} href={`/legal/${policy.slug}`} className="footer-link">
+                    {policy.title}
+                  </Link>
+                ))}
+              </div>
+            ) : null}
+          </div>
           {site.charityNumber && (
             <p className="footer-legal-charity">
               Registered charity: {site.charityNumber}

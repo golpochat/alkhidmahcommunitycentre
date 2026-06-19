@@ -163,19 +163,26 @@ export function getDonationNetCents(input: {
   return Math.max(0, baseCents - feeCents);
 }
 
+export const DEFAULT_DONATION_CURRENCY = "EUR";
+
+export function normalizeDonationCurrency(currency?: string | null) {
+  const normalized = currency?.trim().toUpperCase();
+  return normalized || DEFAULT_DONATION_CURRENCY;
+}
+
 export function formatDonationMoney(
   amountEuros: number,
-  currency = "EUR",
+  currency?: string | null,
   fractionDigits = 2,
 ) {
   return new Intl.NumberFormat("en-IE", {
     style: "currency",
-    currency,
+    currency: normalizeDonationCurrency(currency),
     minimumFractionDigits: fractionDigits,
     maximumFractionDigits: fractionDigits,
   }).format(amountEuros);
 }
 
-export function formatDonationCents(cents: number, currency = "EUR") {
+export function formatDonationCents(cents: number, currency?: string | null) {
   return formatDonationMoney(cents / 100, currency);
 }

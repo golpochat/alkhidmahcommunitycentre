@@ -14,9 +14,6 @@ import { loadSessionUserById } from "@/lib/access-control";
 import { getSessionUserFromDb } from "@/lib/session-user";
 import { AUTH_COOKIE, JWT_SECRET } from "@/lib/auth-cookie";
 import {
-  sessionAuthorizationChanged,
-} from "@/lib/session-sync";
-import {
   canManageEvents,
   canWriteAdminContent,
   getHomeRouteForSession,
@@ -40,6 +37,7 @@ import {
   canManagePrayerTimes,
   canManageDisplay,
   canManageAboutPage,
+  canManageLegalPolicies,
   canManageRegistrations,
   canManageContactMessages,
   canViewContentAudit,
@@ -63,6 +61,7 @@ export {
   canManagePrayerTimes,
   canManageDisplay,
   canManageAboutPage,
+  canManageLegalPolicies,
   canManageRegistrations,
   canManageSettings,
   canManageUsers,
@@ -206,24 +205,13 @@ export async function getSession(): Promise<SessionUser | null> {
   return verifySession(token);
 }
 
-export async function getFreshSession(options?: {
-  syncCookie?: boolean;
-}): Promise<SessionUser | null> {
+export async function getFreshSession(): Promise<SessionUser | null> {
   const cached = await getSession();
   if (!cached) {
     return null;
   }
 
-  const fresh = await getSessionUserFromDb(cached);
-  if (!fresh) {
-    return null;
-  }
-
-  if (options?.syncCookie && sessionAuthorizationChanged(cached, fresh)) {
-    await syncAuthCookie(fresh);
-  }
-
-  return fresh;
+  return getSessionUserFromDb(cached);
 }
 
 export async function requireSession(): Promise<SessionUser> {
@@ -252,19 +240,6 @@ export async function requireSuperAdmin(): Promise<SessionUser> {
 
 export function setAuthCookie(response: NextResponse, token: string) {
   response.cookies.set(AUTH_COOKIE, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: 60 * 60 * 24,
-    path: "/",
-  });
-}
-
-export async function syncAuthCookie(user: SessionUser) {
-  const token = await createSession(user);
-  const cookieStore = await cookies();
-
-  cookieStore.set(AUTH_COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",

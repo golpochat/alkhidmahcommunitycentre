@@ -1,3 +1,5 @@
+import { DEFAULT_DONATION_CURRENCY } from "@/lib/donation-processing-fee";
+
 export const SETTING_KEYS = {
   siteName: "site_name",
   siteUrl: "site_url",
@@ -59,7 +61,7 @@ export const DEFAULT_SETTINGS: Record<string, string> = {
   [SETTING_KEYS.paypalClientId]: "",
   [SETTING_KEYS.paypalClientSecret]: "",
   [SETTING_KEYS.paypalMode]: "sandbox",
-  [SETTING_KEYS.donationCurrency]: "EUR",
+  [SETTING_KEYS.donationCurrency]: DEFAULT_DONATION_CURRENCY,
   [SETTING_KEYS.smtpHost]: "",
   [SETTING_KEYS.smtpPort]: "587",
   [SETTING_KEYS.smtpSecure]: "false",

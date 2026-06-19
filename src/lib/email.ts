@@ -1,7 +1,11 @@
 import { format } from "date-fns";
 import type { Donation } from "@prisma/client";
 import { getCategoryLabel } from "@/lib/donations";
-import { getDonationTotalCents } from "@/lib/donation-processing-fee";
+import {
+  formatDonationMoney,
+  getDonationTotalCents,
+  normalizeDonationCurrency,
+} from "@/lib/donation-processing-fee";
 import { generateDonationReceiptPdf } from "@/lib/generate-donation-receipt";
 import { getDonationStatementBranding } from "@/lib/donation-statement-branding";
 import { getSiteBranding } from "@/lib/site-branding";
@@ -79,13 +83,15 @@ export async function sendDonationReceipt(donation: Donation) {
   const categoryLabel = getCategoryLabel(donation.category);
   const formattedDate = format(donation.createdAt, "d MMMM yyyy HH:mm");
   const transactionId = donation.providerId || "—";
+  const currency = normalizeDonationCurrency(donation.currency);
+  const formattedAmount = formatDonationMoney(donation.amount, currency);
 
   const htmlBody = `
       <h2>Thank you for your donation</h2>
       <p>Dear ${donorLabel},</p>
       <p>We have received your donation to ${siteName}.</p>
       <table style="border-collapse:collapse;margin:16px 0">
-        <tr><td style="padding:8px;border:1px solid #ddd"><strong>Amount</strong></td><td style="padding:8px;border:1px solid #ddd">${donation.currency} ${donation.amount.toFixed(2)}</td></tr>
+        <tr><td style="padding:8px;border:1px solid #ddd"><strong>Amount</strong></td><td style="padding:8px;border:1px solid #ddd">${formattedAmount}</td></tr>
         <tr><td style="padding:8px;border:1px solid #ddd"><strong>Category</strong></td><td style="padding:8px;border:1px solid #ddd">${categoryLabel}</td></tr>
         <tr><td style="padding:8px;border:1px solid #ddd"><strong>Date</strong></td><td style="padding:8px;border:1px solid #ddd">${formattedDate}</td></tr>
         <tr><td style="padding:8px;border:1px solid #ddd"><strong>Provider</strong></td><td style="padding:8px;border:1px solid #ddd">${donation.provider}</td></tr>
@@ -107,7 +113,7 @@ export async function sendDonationReceipt(donation: Donation) {
     to: donation.donorEmail,
     subject: `Donation Receipt — ${categoryLabel}`,
     html: htmlBody,
-    text: `Thank you for your donation to ${siteName}. Amount: ${donation.currency} ${donation.amount.toFixed(2)}. Download receipt: ${receiptUrl}`,
+    text: `Thank you for your donation to ${siteName}. Amount: ${formattedAmount}. Download receipt: ${receiptUrl}`,
     attachments: [
       {
         filename,
@@ -134,17 +140,19 @@ export async function sendDonationAdminNotification(donation: Donation) {
   const formattedDate = format(donation.createdAt, "d MMMM yyyy HH:mm");
   const transactionId = donation.providerId || "—";
   const totalEuros = getDonationTotalCents(donation) / 100;
+  const currency = normalizeDonationCurrency(donation.currency);
+  const formattedAmount = formatDonationMoney(totalEuros, currency);
 
   const result = await sendEmail({
     to: notificationEmail,
     replyTo: donation.donorEmail || undefined,
-    subject: `[Donation] ${categoryLabel} — €${totalEuros.toFixed(2)}`,
-    text: `Donor: ${donorLabel}\nEmail: ${donorEmail}\nAmount: ${donation.currency} ${totalEuros.toFixed(2)}\nCategory: ${categoryLabel}\nProvider: ${donation.provider}\nDate: ${formattedDate}\nTransaction ID: ${transactionId}`,
+    subject: `[Donation] ${categoryLabel} — ${formattedAmount}`,
+    text: `Donor: ${donorLabel}\nEmail: ${donorEmail}\nAmount: ${formattedAmount}\nCategory: ${categoryLabel}\nProvider: ${donation.provider}\nDate: ${formattedDate}\nTransaction ID: ${transactionId}`,
     html: `
       <h2>New Donation Received</h2>
       <p><strong>Donor:</strong> ${donorLabel}</p>
       <p><strong>Email:</strong> ${donorEmail}</p>
-      <p><strong>Amount:</strong> ${donation.currency} ${totalEuros.toFixed(2)}</p>
+      <p><strong>Amount:</strong> ${formattedAmount}</p>
       <p><strong>Category:</strong> ${categoryLabel}</p>
       <p><strong>Provider:</strong> ${donation.provider}</p>
       <p><strong>Date:</strong> ${formattedDate}</p>

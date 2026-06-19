@@ -5,6 +5,7 @@ import {
   getHomeRouteForSession,
 } from "@/lib/auth";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
+import { SessionCookieSync } from "@/components/auth/session-cookie-sync";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { ADMIN_PAGE_TITLES } from "@/lib/dashboard-titles";
 import { getSiteBranding } from "@/lib/site-branding";
@@ -14,7 +15,7 @@ export default async function AdminDashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getFreshSession({ syncCookie: true });
+  const session = await getFreshSession();
 
   if (!session) {
     redirect("/login");
@@ -28,6 +29,7 @@ export default async function AdminDashboardLayout({
 
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
+      <SessionCookieSync />
       <AdminSidebar session={session} siteName={branding.siteName} />
       <div className="flex flex-1 flex-col overflow-hidden">
         <DashboardShell

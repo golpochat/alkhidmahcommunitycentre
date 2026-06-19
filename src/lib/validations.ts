@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ADMIN_EVENT_CATEGORIES } from "@/lib/events";
+import { DEFAULT_DONATION_CURRENCY } from "@/lib/donation-processing-fee";
 import { validateMessageScheduleValues } from "@/lib/message-validation";
 
 /** Uploaded files stored under /public or absolute CDN URLs */
@@ -16,6 +17,9 @@ export const contactFormSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   subject: z.string().min(3, "Subject must be at least 3 characters"),
   message: z.string().min(10, "Message must be at least 10 characters"),
+  privacyConsent: z.boolean().refine((value) => value === true, {
+    message: "You must agree to the Privacy Policy",
+  }),
 });
 
 export const classSchema = z.object({
@@ -39,6 +43,9 @@ export const registrationSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   phone: z.string().min(7, "Please enter a valid phone number").optional().nullable(),
   notes: z.string().optional().nullable(),
+  privacyConsent: z.boolean().refine((value) => value === true, {
+    message: "You must agree to the Privacy Policy",
+  }),
 });
 
 export const donationFormSchema = z.object({
@@ -57,7 +64,7 @@ export const paymentGatewaySchema = z
     name: z.string().min(1, "Name is required"),
     type: paymentGatewayTypeSchema,
     isEnabled: z.boolean().optional(),
-    currency: z.string().min(3).max(3),
+    currency: z.literal(DEFAULT_DONATION_CURRENCY).default(DEFAULT_DONATION_CURRENCY),
     publishableKey: z.string().optional(),
     secretKey: z.string().optional(),
     webhookSecret: z.string().optional(),
@@ -123,6 +130,19 @@ export const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
+  privacyConsent: z.boolean().refine((value) => value === true, {
+    message: "You must agree to the Privacy Policy",
+  }),
+});
+
+export const legalPolicyUpdateSchema = z.object({
+  title: z.string().min(3, "Title is required").max(120),
+  summary: z.string().max(300).optional().nullable(),
+  content: z.string().min(50, "Policy content is too short"),
+  published: z.boolean(),
+  version: z.string().min(1).max(20),
+  effectiveDate: z.string().datetime().optional().nullable(),
+  lastReviewedAt: z.string().datetime().optional().nullable(),
 });
 
 export const resendVerificationSchema = z.object({

@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  DEFAULT_DONATION_CURRENCY,
   DEFAULT_PAYPAL_FEE_CONFIG,
   DEFAULT_STRIPE_FEE_CONFIG,
 } from "@/lib/donation-processing-fee";
@@ -52,7 +53,7 @@ const emptyValues: PaymentGatewayFormValues = {
   name: "",
   type: "STRIPE",
   isEnabled: true,
-  currency: "EUR",
+  currency: DEFAULT_DONATION_CURRENCY,
   publishableKey: "",
   secretKey: "",
   webhookSecret: "",
@@ -102,7 +103,7 @@ export function PaymentGatewayModal({
         name: gateway.name,
         type: gateway.type,
         isEnabled: gateway.isEnabled,
-        currency: gateway.currency,
+        currency: DEFAULT_DONATION_CURRENCY,
         publishableKey: gateway.publishableKey ?? "",
         secretKey: gateway.hasSecrets ? PASSWORD_MASK : "",
         webhookSecret: gateway.hasSecrets ? PASSWORD_MASK : "",
@@ -201,19 +202,14 @@ export function PaymentGatewayModal({
             )}
           </div>
 
+          <input type="hidden" {...register("currency")} />
+
           <div className="space-y-2">
-            <Label htmlFor="currency" className="text-gold">
-              Currency <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="currency"
-              maxLength={3}
-              {...register("currency")}
-              placeholder="EUR"
-            />
-            {errors.currency && (
-              <p className="text-sm text-destructive">{errors.currency.message}</p>
-            )}
+            <Label className="text-gold">Currency</Label>
+            <Input value="EUR (€)" readOnly disabled className="bg-muted" />
+            <p className="text-xs text-muted-foreground">
+              All donations are processed in Euro.
+            </p>
           </div>
 
           {type === "STRIPE" && (

@@ -152,3 +152,13 @@ export function sumDonationAccounting(
 
   return totals;
 }
+
+/** Gross inflow for statements: fees plus net received (equals total charged). */
+export function getStatementCharitableTotalCents(
+  totals: Pick<
+    DonationAccountingTotals,
+    "processingFeeTotalCents" | "netReceivedCents" | "totalChargedCents"
+  >,
+) {
+  return totals.processingFeeTotalCents + totals.netReceivedCents;
+}

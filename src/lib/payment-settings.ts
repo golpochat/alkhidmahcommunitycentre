@@ -3,7 +3,10 @@ import {
   getEnabledPayPalGateway,
   getEnabledStripeGateway,
 } from "@/lib/payment-gateway-store";
-import type { GatewayFeeConfig } from "@/lib/donation-processing-fee";
+import {
+  DEFAULT_DONATION_CURRENCY,
+  type GatewayFeeConfig,
+} from "@/lib/donation-processing-fee";
 import type { BankTransferDetails } from "@/lib/payment-gateway-types";
 
 export interface PaymentSettings {
@@ -25,8 +28,7 @@ export async function getPaymentSettings(): Promise<PaymentSettings> {
   const paypal = await getEnabledPayPalGateway();
   const bank = await getEnabledBankTransferGateway();
 
-  const donationCurrency =
-    stripe?.currency ?? paypal?.currency ?? bank?.currency ?? "EUR";
+  const donationCurrency = DEFAULT_DONATION_CURRENCY;
 
   return {
     stripeEnabled: Boolean(stripe),

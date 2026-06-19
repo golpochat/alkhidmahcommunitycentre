@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getFreshSession, getSession, canAccessSuperAdminRoutes } from "@/lib/auth";
 import { SuperAdminSidebar } from "@/components/super-admin/super-admin-sidebar";
+import { SessionCookieSync } from "@/components/auth/session-cookie-sync";
 import { SuperAdminShell } from "@/components/super-admin/super-admin-shell";
 import { getSiteBranding } from "@/lib/site-branding";
 
@@ -9,7 +10,7 @@ export default async function SuperAdminDashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getFreshSession({ syncCookie: true });
+  const session = await getFreshSession();
 
   if (!session || !canAccessSuperAdminRoutes(session)) {
     if (await getSession()) {
@@ -22,6 +23,7 @@ export default async function SuperAdminDashboardLayout({
 
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
+      <SessionCookieSync />
       <SuperAdminSidebar siteName={branding.siteName} />
       <div className="flex flex-1 flex-col overflow-hidden">
         <SuperAdminShell email={session.email} name={session.name} siteName={branding.siteName}>

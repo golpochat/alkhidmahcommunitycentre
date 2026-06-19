@@ -75,6 +75,12 @@ export const DEFAULT_PERMISSIONS = [
     group: "about",
   },
   {
+    key: PERMISSIONS.legal.manage,
+    name: "Manage legal policies",
+    description: "Edit privacy, cookie, and terms documents",
+    group: "legal",
+  },
+  {
     key: PERMISSIONS.registrations.manage,
     name: "Manage registrations",
     description: "View class and programme registrations",
@@ -172,6 +178,7 @@ export const DEFAULT_ROLES: Array<{
       PERMISSIONS.registrations.manage,
       PERMISSIONS.contact.manage,
       PERMISSIONS.about.manage,
+      PERMISSIONS.legal.manage,
       PERMISSIONS.content.write,
       PERMISSIONS.content.audit,
     ],

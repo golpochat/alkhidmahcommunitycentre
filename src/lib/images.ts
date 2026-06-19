@@ -110,7 +110,7 @@ const GALLERY_CATEGORY_IMAGES: Record<string, string> = {
 };
 
 const GALLERY_TITLE_IMAGES: Record<string, string> = {
-  "Jumuah Congregation": IMAGES.gallery.jumuah,
+  "Jumu'ah Congregation": IMAGES.gallery.jumuah,
   "Ramadan Programme": IMAGES.gallery.ramadan,
   "Ramadan Night Programme": IMAGES.gallery.ramadan,
   "Ramadan Iftar": IMAGES.events.iftar,
@@ -171,7 +171,7 @@ export function resolveEventImageUrl(
 
 export const GALLERY_SEED_IMAGES = [
   {
-    title: "Jumuah Congregation",
+    title: "Jumu'ah Congregation",
     category: "community",
     image: IMAGES.gallery.jumuah,
   },

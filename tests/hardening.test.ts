@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { isValidCronRequest } from "@/lib/cron-auth";
 import { calculateDonationFeeBreakdown, getDonationNetCents } from "@/lib/donation-processing-fee";
-import { resolveDonationAccounting } from "@/lib/donation-accounting";
+import { resolveDonationAccounting, sumDonationAccounting, getStatementCharitableTotalCents } from "@/lib/donation-accounting";
 import { ALL_PERMISSION_KEYS } from "@/lib/permission-keys";
 import {
   permissionsEqual,
@@ -89,6 +89,66 @@ describe("resolveDonationAccounting", () => {
   });
 });
 
+describe("sumDonationAccounting", () => {
+  it("keeps gift totals separate from charged totals when donors cover fees", () => {
+    const totals = sumDonationAccounting(
+      [
+        {
+          amount: 500,
+          processingFeeCents: 736,
+          coverFee: true,
+          provider: "stripe",
+          status: "succeeded",
+        },
+        {
+          amount: 20,
+          processingFeeCents: 53,
+          coverFee: false,
+          provider: "stripe",
+          status: "pending",
+        },
+      ],
+      {
+        stripe: { feePercent: 1.4, feeFixedCents: 25, allowCoverFee: true },
+      },
+    );
+
+    expect(totals.giftTotalCents).toBe(52000);
+    expect(totals.totalChargedCents).toBe(52736);
+    expect(totals.processingFeeTotalCents).toBe(789);
+    expect(totals.netReceivedCents).toBe(51947);
+    expect(totals.succeededNetReceivedCents).toBe(50000);
+    expect(totals.feesCoveredByDonorsCents).toBe(736);
+    expect(totals.feesDeductedFromGiftsCents).toBe(53);
+    expect(getStatementCharitableTotalCents(totals)).toBe(
+      totals.processingFeeTotalCents + totals.netReceivedCents,
+    );
+    expect(getStatementCharitableTotalCents(totals)).toBe(totals.totalChargedCents);
+  });
+});
+
+describe("toPdfSafeText", () => {
+  it("strips unsupported unicode from WinAnsi-only PDF text", async () => {
+    const { toPdfSafeText } = await import("@/lib/donation-pdf-layout");
+    const { formatDonationMoney } = await import("@/lib/donation-processing-fee");
+
+    expect(formatDonationMoney(4030)).toBe("€4,030.00");
+    expect(toPdfSafeText("€4,030.00")).toBe("4,030.00");
+  });
+});
+
+describe("normalizeDonationCurrency", () => {
+  it("defaults missing values to EUR", async () => {
+    const { normalizeDonationCurrency, formatDonationMoney } = await import(
+      "@/lib/donation-processing-fee"
+    );
+
+    expect(normalizeDonationCurrency()).toBe("EUR");
+    expect(normalizeDonationCurrency("")).toBe("EUR");
+    expect(formatDonationMoney(10)).toBe("€10.00");
+  });
+});
+
 describe("formatExportTransactionId", () => {
   it("masks sample PayPal IDs and empty provider IDs", async () => {
     const { formatExportTransactionId } = await import(
@@ -150,13 +210,36 @@ describe("session authorization sync", () => {
   });
 });
 
+describe("legal policy placeholders", () => {
+  it("replaces site branding tokens in policy content", async () => {
+    const { applyLegalPolicyPlaceholders } = await import("@/lib/legal-policy-placeholders");
+
+    const rendered = applyLegalPolicyPlaceholders(
+      "{{siteName}} · {{charityNumber}} · {{email}}",
+      {
+        siteName: "Al Khidmah Community Centre",
+        charityNumber: "CHY 22345",
+        address: "Unit 4, Monastery Road",
+        phone: "+353 1 457 8900",
+        email: "info@alkhidmahmosque.ie",
+        website: "https://alkhidmah.ie",
+      },
+    );
+
+    expect(rendered).toBe(
+      "Al Khidmah Community Centre · CHY 22345 · info@alkhidmahmosque.ie",
+    );
+  });
+});
+
 describe("permission keys", () => {
   it("includes dedicated permissions for standalone admin features", () => {
     expect(ALL_PERMISSION_KEYS).toContain("contact.manage");
     expect(ALL_PERMISSION_KEYS).toContain("content.audit");
     expect(ALL_PERMISSION_KEYS).toContain("display.manage");
     expect(ALL_PERMISSION_KEYS).toContain("about.manage");
-    expect(ALL_PERMISSION_KEYS.length).toBe(16);
+    expect(ALL_PERMISSION_KEYS).toContain("legal.manage");
+    expect(ALL_PERMISSION_KEYS.length).toBe(17);
   });
 });
 

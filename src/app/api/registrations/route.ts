@@ -28,6 +28,7 @@ export async function POST(request: NextRequest) {
         email: validated.email,
         phone: validated.phone ?? null,
         notes: validated.notes ?? null,
+        privacyConsentAt: new Date(),
       },
       include: {
         class: { select: { title: true, slug: true } },

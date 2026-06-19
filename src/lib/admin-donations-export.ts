@@ -6,14 +6,20 @@ import {
   formatProviderLabel,
   resolveDonationAccounting,
   sumDonationAccounting,
+  getStatementCharitableTotalCents,
   type DonationProviderFeeConfigs,
 } from "@/lib/donation-accounting";
-import { getCategoryLabel } from "@/lib/donations";
-import { formatDonationMoney, formatDonationCents } from "@/lib/donation-processing-fee";
+import { getCategoryLabel, type DonationStatus } from "@/lib/donations";
+import {
+  formatDonationCents,
+  formatDonationMoney,
+  normalizeDonationCurrency,
+} from "@/lib/donation-processing-fee";
+import { embedDonationPdfFonts } from "@/lib/donation-pdf-fonts";
 import type { DonationStatementBranding } from "@/lib/donation-statement-branding";
 import {
   buildStatementFooterPrimaryLine,
-  buildStatementFooterSecondaryLine,
+  buildStatementFooterPageLine,
   formatExportTransactionId,
   formatStatementPeriodDate,
   formatStatementPrintedAt,
@@ -23,11 +29,19 @@ import {
 import {
   BRAND_GREEN,
   BRAND_GOLD,
-  drawDonationStatementFooters,
-  drawLetterhead,
-  embedStandardFonts,
-  getPdfFontVerticalMetrics,
+  MUTED,
   PDF_MARGIN,
+  STATEMENT_FOOTER_HEIGHT,
+  STATEMENT_LETTERHEAD_RULE_GAP,
+  STATEMENT_TABLE_HEADER_HEIGHT,
+  STATEMENT_TABLE_ROW_HEIGHT,
+  STATEMENT_TITLE_RULE_CLEARANCE,
+  STATEMENT_TITLE_SIZE,
+  buildDonationStatementLetterheadOptions,
+  drawDonationStatementFooters,
+  drawHorizontalRule,
+  drawLetterhead,
+  getPdfFontVerticalMetrics,
   toPdfSafeText,
   wrapText,
 } from "@/lib/donation-pdf-layout";
@@ -35,18 +49,13 @@ import {
 export type DonationExportFormat = "csv" | "xlsx" | "pdf";
 
 const PDF_LANDSCAPE = { width: 841.89, height: 595.28 };
-const PDF_FOOTER_HEIGHT = 62;
-const CONTENT_BOTTOM_LANDSCAPE = PDF_MARGIN + PDF_FOOTER_HEIGHT;
-const TABLE_HEADER_HEIGHT = 18;
-const TABLE_ROW_HEIGHT = 16;
-const MUTED = rgb(0.35, 0.35, 0.35);
-const TABLE_HEADER_FILL = rgb(0.94, 0.94, 0.94);
-const STATEMENT_TITLE_SIZE = 17;
-const STATEMENT_LETTERHEAD_SCALE = 0.88;
-/** Matches ruleGap passed to drawLetterhead for this PDF. */
-const STATEMENT_LETTERHEAD_RULE_GAP = 10;
-/** Clear space between the letterhead gold rule and the title ascenders. */
-const STATEMENT_TITLE_RULE_CLEARANCE = 12;
+const CONTENT_BOTTOM_LANDSCAPE = PDF_MARGIN + STATEMENT_FOOTER_HEIGHT;
+const TABLE_HEADER_FONT_SIZE = 8;
+const TABLE_HEADER_RULE_GAP = 6;
+const SUMMARY_TO_TABLE_GAP = 14;
+const STATUS_SUMMARY_LINE_HEIGHT = 11;
+
+const PDF_STATUS_SECTIONS: DonationStatus[] = ["succeeded", "pending", "failed"];
 
 export interface DonationExportRow {
   donorName: string;
@@ -59,26 +68,27 @@ export interface DonationExportRow {
   category: string;
   provider: string;
   status: string;
+  statusKey: DonationStatus;
   transactionId: string;
   date: string;
 }
 
 type PdfColumn = {
   label: string;
-  width: number;
+  widthRatio: number;
   align: "left" | "right";
 };
 
+/** Full-width PDF table columns — Date, Donor, Category, Charged, Fee, Received, Provider, Status */
 const PDF_COLUMNS: PdfColumn[] = [
-  { label: "Donor", width: 96, align: "left" },
-  { label: "Charged", width: 58, align: "right" },
-  { label: "Fee", width: 50, align: "right" },
-  { label: "Net", width: 54, align: "right" },
-  { label: "Category", width: 76, align: "left" },
-  { label: "Provider", width: 54, align: "left" },
-  { label: "Status", width: 54, align: "left" },
-  { label: "Date", width: 98, align: "left" },
-  { label: "Transaction ID", width: 118, align: "left" },
+  { label: "Date", widthRatio: 0.16, align: "left" },
+  { label: "Donor", widthRatio: 0.18, align: "left" },
+  { label: "Category", widthRatio: 0.16, align: "left" },
+  { label: "Charged", widthRatio: 0.1, align: "right" },
+  { label: "Fee", widthRatio: 0.08, align: "right" },
+  { label: "Received", widthRatio: 0.1, align: "right" },
+  { label: "Provider", widthRatio: 0.1, align: "right" },
+  { label: "Status", widthRatio: 0.12, align: "right" },
 ];
 
 export type DonationCategoryLookup = { slug: string; name: string };
@@ -90,22 +100,20 @@ export function mapDonationsToExportRows(
 ): DonationExportRow[] {
   return donations.map((donation) => {
     const accounting = resolveDonationAccounting(donation, feeConfigs);
-    const currency = donation.currency || "EUR";
-    const totalChargedCents = accounting.totalChargedCents;
-    const processingFeeCents = accounting.processingFeeCents;
-    const netReceivedCents = Math.max(0, totalChargedCents - processingFeeCents);
+    const currency = normalizeDonationCurrency(donation.currency);
 
     return {
       donorName: donation.donorName || "Anonymous",
       donorEmail: donation.donorEmail || "",
-      totalCharged: centsToEuros(totalChargedCents),
-      processingFee: centsToEuros(processingFeeCents),
-      netReceived: centsToEuros(netReceivedCents),
+      totalCharged: centsToEuros(accounting.totalChargedCents),
+      processingFee: centsToEuros(accounting.processingFeeCents),
+      netReceived: centsToEuros(accounting.netReceivedCents),
       feeCoveredByDonor: accounting.coverFee,
       currency,
       category: getCategoryLabel(donation.category, categories),
       provider: formatProviderLabel(donation.provider),
       status: formatStatementStatus(donation.status),
+      statusKey: donation.status as DonationStatus,
       transactionId: formatExportTransactionId(
         donation.provider,
         donation.providerId,
@@ -174,59 +182,147 @@ export function donationsToXlsxBuffer(rows: DonationExportRow[]) {
 }
 
 function formatMoneyForPdf(amountEuros: number, currency: string) {
-  return toPdfSafeText(formatDonationMoney(amountEuros, currency));
+  return formatDonationMoney(amountEuros, currency);
 }
 
-function drawSummaryLine(
+function resolvePdfColumnWidths(tableWidth: number) {
+  const columns = PDF_COLUMNS.map((column) => ({
+    ...column,
+    width: Math.floor(tableWidth * column.widthRatio),
+  }));
+  const usedWidth = columns.reduce((sum, column) => sum + column.width, 0);
+  columns[columns.length - 1].width += tableWidth - usedWidth;
+  return columns;
+}
+
+function drawStatusSummaryColumn(
   page: PDFPage,
-  label: string,
-  value: string,
-  y: number,
+  x: number,
+  width: number,
+  topY: number,
+  status: DonationStatus,
+  totals: ReturnType<typeof sumDonationAccounting>,
+  currency: string,
   font: PDFFont,
   fontBold: PDFFont,
-  x: number,
-  valueColor = rgb(0, 0, 0),
 ) {
-  page.drawText(label, {
-    x,
-    y,
-    size: 9,
+  let colY = topY;
+
+  page.drawText(formatStatementStatus(status), {
+    x: x + 4,
+    y: colY,
+    size: 10,
     font: fontBold,
-    color: rgb(0, 0, 0),
+    color: BRAND_GREEN,
   });
-  page.drawText(value, {
-    x: x + 156,
-    y,
-    size: 9,
-    font,
-    color: valueColor,
+  colY -= 14;
+
+  const lines: Array<[string, string]> = [
+    [
+      "Total charitable amount:",
+      formatDonationCents(getStatementCharitableTotalCents(totals), currency),
+    ],
+    ["Total fees:", formatDonationCents(totals.processingFeeTotalCents, currency)],
+    ["Total Received:", formatDonationCents(totals.netReceivedCents, currency)],
+  ];
+
+  for (const [label, value] of lines) {
+    page.drawText(label, {
+      x: x + 4,
+      y: colY,
+      size: 8,
+      font: fontBold,
+      color: rgb(0, 0, 0),
+    });
+
+    const valueText = value;
+    const valueWidth = font.widthOfTextAtSize(valueText, 8);
+    page.drawText(valueText, {
+      x: x + width - 4 - valueWidth,
+      y: colY,
+      size: 8,
+      font,
+      color: rgb(0, 0, 0),
+    });
+    colY -= STATUS_SUMMARY_LINE_HEIGHT;
+  }
+
+  return colY;
+}
+
+function drawHorizontalStatusSummaries(
+  page: PDFPage,
+  topY: number,
+  tableWidth: number,
+  margin: number,
+  summaries: Array<{
+    status: DonationStatus;
+    totals: ReturnType<typeof sumDonationAccounting>;
+  }>,
+  currency: string,
+  font: PDFFont,
+  fontBold: PDFFont,
+) {
+  const columnWidth = tableWidth / summaries.length;
+  let lowestY = topY;
+
+  summaries.forEach((summary, index) => {
+    const columnX = margin + index * columnWidth;
+    const columnBottom = drawStatusSummaryColumn(
+      page,
+      columnX,
+      columnWidth,
+      topY,
+      summary.status,
+      summary.totals,
+      currency,
+      font,
+      fontBold,
+    );
+    lowestY = Math.min(lowestY, columnBottom);
   });
+
+  summaries.forEach((_, index) => {
+    if (index === 0) {
+      return;
+    }
+
+    const columnX = margin + index * columnWidth;
+    page.drawLine({
+      start: { x: columnX, y: topY + 4 },
+      end: { x: columnX, y: lowestY + 4 },
+      thickness: 0.5,
+      color: BRAND_GOLD,
+    });
+  });
+
+  return lowestY - SUMMARY_TO_TABLE_GAP;
 }
 
 function drawTableCell(
   page: PDFPage,
   text: string,
-  column: PdfColumn,
+  column: PdfColumn & { width: number },
   columnX: number,
   y: number,
   font: PDFFont,
+  color = rgb(0, 0, 0),
 ) {
   const fontSize = 8;
-  const safeText = toPdfSafeText(text);
   const padding = 4;
   let x = columnX + padding;
 
   if (column.align === "right") {
-    const textWidth = font.widthOfTextAtSize(safeText, fontSize);
+    const textWidth = font.widthOfTextAtSize(text, fontSize);
     x = columnX + column.width - padding - textWidth;
   }
 
-  page.drawText(safeText, {
+  page.drawText(text, {
     x,
     y,
     size: fontSize,
     font,
-    color: rgb(0, 0, 0),
+    color,
   });
 }
 
@@ -234,7 +330,7 @@ function drawStatementFooters(
   pdfDoc: PDFDocument,
   branding: DonationStatementBranding,
   printedAt: string,
-  fonts: Awaited<ReturnType<typeof embedStandardFonts>>,
+  fonts: Awaited<ReturnType<typeof embedDonationPdfFonts>>,
 ) {
   drawDonationStatementFooters(
     pdfDoc,
@@ -251,7 +347,7 @@ function drawStatementFooters(
         website: statementBranding.website,
       }),
     (pageNumber, totalPages) =>
-      buildStatementFooterSecondaryLine(pageNumber, totalPages, printedAt),
+      buildStatementFooterPageLine(pageNumber, totalPages),
   );
 }
 
@@ -269,10 +365,14 @@ export async function donationsToPdfBuffer(
   const { branding } = options;
   const printedAt = formatStatementPrintedAt();
   const pdfDoc = await PDFDocument.create();
-  const fonts = await embedStandardFonts(pdfDoc);
+  const fonts = await embedDonationPdfFonts(pdfDoc);
   const { font, fontBold } = fonts;
   const pageWidth = PDF_LANDSCAPE.width;
   const pageHeight = PDF_LANDSCAPE.height;
+  const tableWidth = pageWidth - PDF_MARGIN * 2;
+  const pdfColumns = resolvePdfColumnWidths(tableWidth);
+  const donations = options.donations ?? [];
+  const feeConfigs = options.feeConfigs ?? {};
 
   let page = pdfDoc.addPage([pageWidth, pageHeight]);
   let y = pageHeight - PDF_MARGIN;
@@ -284,17 +384,10 @@ export async function donationsToPdfBuffer(
     branding,
     fonts,
     options.logoPng,
-    {
-      pageWidth,
-      combineEmailAndWebsite: true,
-      fontScale: STATEMENT_LETTERHEAD_SCALE,
-      compact: true,
-      ruleGap: STATEMENT_LETTERHEAD_RULE_GAP,
-    },
+    buildDonationStatementLetterheadOptions({ pageWidth, pageHeight }),
   );
 
   const titleMetrics = getPdfFontVerticalMetrics(fontBold, STATEMENT_TITLE_SIZE);
-  // drawLetterhead returns one ruleGap below the rule; title glyphs extend above the baseline.
   y -=
     titleMetrics.ascent +
     STATEMENT_TITLE_RULE_CLEARANCE -
@@ -307,9 +400,9 @@ export async function donationsToPdfBuffer(
     y,
     size: STATEMENT_TITLE_SIZE,
     font: fontBold,
-    color: rgb(0, 0, 0),
+    color: BRAND_GREEN,
   });
-  y -= titleMetrics.descent + 14;
+  y -= titleMetrics.descent + 10;
 
   const periodLabel =
     options.from && options.to
@@ -321,9 +414,9 @@ export async function donationsToPdfBuffer(
     y,
     size: 10,
     font,
-    color: rgb(0, 0, 0),
+    color: MUTED,
   });
-  y -= 24;
+  y -= 18;
 
   if (rows.length === 0) {
     page.drawText("No donations found for the selected filters.", {
@@ -338,232 +431,120 @@ export async function donationsToPdfBuffer(
     return Buffer.from(pdfBytes);
   }
 
-  const currency = rows[0]?.currency || "EUR";
-  const totals =
-    options.donations && options.donations.length > 0
-      ? sumDonationAccounting(options.donations, options.feeConfigs ?? {})
-      : {
-          recordCount: rows.length,
-          giftTotalCents: 0,
-          processingFeeTotalCents: rows.reduce(
-            (sum, row) => sum + Math.round(row.processingFee * 100),
-            0,
-          ),
-          totalChargedCents: rows.reduce(
-            (sum, row) => sum + Math.round(row.totalCharged * 100),
-            0,
-          ),
-          netReceivedCents: rows.reduce(
-            (sum, row) => sum + Math.round(row.netReceived * 100),
-            0,
-          ),
-          feesCoveredByDonorsCents: rows.reduce(
-            (sum, row) =>
-              sum +
-              (row.feeCoveredByDonor ? Math.round(row.processingFee * 100) : 0),
-            0,
-          ),
-          feesDeductedFromGiftsCents: rows.reduce(
-            (sum, row) =>
-              sum +
-              (!row.feeCoveredByDonor ? Math.round(row.processingFee * 100) : 0),
-            0,
-          ),
-          succeededNetReceivedCents: rows
-            .filter((row) => row.status.toLowerCase() === "succeeded")
-            .reduce((sum, row) => sum + Math.round(row.netReceived * 100), 0),
-        };
+  const currency = normalizeDonationCurrency(rows[0]?.currency);
 
-  if (!options.donations?.length) {
-    totals.giftTotalCents = totals.totalChargedCents;
-  }
-
-  const giftsEqualCharged = totals.giftTotalCents === totals.totalChargedCents;
-  const showSucceededNetSeparately =
-    totals.succeededNetReceivedCents !== totals.netReceivedCents;
-  const summaryLineCount =
-    2 +
-    1 +
-    (giftsEqualCharged ? 1 : 2) +
-    (showSucceededNetSeparately ? 1 : 0) +
-    2;
-  const summaryHeight = summaryLineCount * 12 + 16;
-
-  page.drawRectangle({
-    x: PDF_MARGIN,
-    y: y - summaryHeight + 8,
-    width: pageWidth - PDF_MARGIN * 2,
-    height: summaryHeight,
-    color: rgb(0.97, 0.98, 0.97),
-    borderColor: BRAND_GOLD,
-    borderWidth: 0.5,
-  });
-
-  const summaryLeftX = PDF_MARGIN + 12;
-  const summaryRightX = pageWidth / 2 + 8;
-  let summaryY = y - 6;
-
-  page.drawText(`Total records: ${totals.recordCount}`, {
-    x: summaryLeftX,
-    y: summaryY,
-    size: 10,
-    font: fontBold,
-    color: rgb(0, 0, 0),
-  });
-  summaryY -= 14;
-
-  drawSummaryLine(
-    page,
-    "Total charitable gifts (gross):",
-    formatDonationCents(totals.giftTotalCents, currency),
-    summaryY,
-    font,
-    fontBold,
-    summaryLeftX,
-    BRAND_GREEN,
-  );
-  summaryY -= 12;
-
-  if (!giftsEqualCharged) {
-    drawSummaryLine(
-      page,
-      "Total charged to donors:",
-      formatDonationCents(totals.totalChargedCents, currency),
-      summaryY,
-      font,
-      fontBold,
-      summaryLeftX,
-    );
-    summaryY -= 12;
-  }
-
-  drawSummaryLine(
-    page,
-    "Total processing fees:",
-    formatDonationCents(totals.processingFeeTotalCents, currency),
-    summaryY,
-    font,
-    fontBold,
-    summaryLeftX,
-  );
-
-  let summaryRightY = y - 20;
-  drawSummaryLine(
-    page,
-    showSucceededNetSeparately ? "Net received (all):" : "Net received:",
-    formatDonationCents(totals.netReceivedCents, currency),
-    summaryRightY,
-    font,
-    fontBold,
-    summaryRightX,
-    BRAND_GREEN,
-  );
-  summaryRightY -= 12;
-
-  if (showSucceededNetSeparately) {
-    drawSummaryLine(
-      page,
-      "Net received (succeeded):",
-      formatDonationCents(totals.succeededNetReceivedCents, currency),
-      summaryRightY,
-      font,
-      fontBold,
-      summaryRightX,
-      BRAND_GREEN,
-    );
-    summaryRightY -= 12;
-  }
-
-  drawSummaryLine(
-    page,
-    "Fees covered by donors:",
-    formatDonationCents(totals.feesCoveredByDonorsCents, currency),
-    summaryRightY,
-    font,
-    fontBold,
-    summaryRightX,
-  );
-  summaryRightY -= 12;
-
-  drawSummaryLine(
-    page,
-    "Fees deducted from gifts:",
-    formatDonationCents(totals.feesDeductedFromGiftsCents, currency),
-    summaryRightY,
-    font,
-    fontBold,
-    summaryRightX,
-  );
-
-  y -= summaryHeight + 12;
-
-  function drawTableHeader() {
-    const tableWidth = pageWidth - PDF_MARGIN * 2;
-    page.drawRectangle({
-      x: PDF_MARGIN,
-      y: y - 2,
-      width: tableWidth,
-      height: 16,
-      color: TABLE_HEADER_FILL,
-    });
-
-    let columnX = PDF_MARGIN;
-    for (const column of PDF_COLUMNS) {
-      drawTableCell(page, column.label, column, columnX, y + 1, fontBold);
-      columnX += column.width;
-    }
-
-    y -= TABLE_HEADER_HEIGHT;
-  }
-
-  function startContinuationPage() {
-    page = pdfDoc.addPage([pageWidth, pageHeight]);
-    y = pageHeight - PDF_MARGIN;
-    drawTableHeader();
-  }
-
-  function ensureTableRowSpace() {
-    if (y >= CONTENT_BOTTOM_LANDSCAPE + TABLE_ROW_HEIGHT) {
+  function ensureSpace(requiredHeight: number, repeatTableHeader = false) {
+    if (y >= CONTENT_BOTTOM_LANDSCAPE + requiredHeight) {
       return;
     }
 
-    startContinuationPage();
+    page = pdfDoc.addPage([pageWidth, pageHeight]);
+    y = pageHeight - PDF_MARGIN;
+
+    if (repeatTableHeader) {
+      drawTableHeaderRow();
+    }
   }
 
-  if (y < CONTENT_BOTTOM_LANDSCAPE + TABLE_HEADER_HEIGHT + TABLE_ROW_HEIGHT) {
-    startContinuationPage();
-  } else {
-    drawTableHeader();
+  function drawTableHeaderRow() {
+    const headerMetrics = getPdfFontVerticalMetrics(fontBold, TABLE_HEADER_FONT_SIZE);
+    const rowMetrics = getPdfFontVerticalMetrics(font, TABLE_HEADER_FONT_SIZE);
+    let columnX = PDF_MARGIN;
+
+    for (const column of pdfColumns) {
+      drawTableCell(
+        page,
+        column.label,
+        column,
+        columnX,
+        y,
+        fontBold,
+        BRAND_GREEN,
+      );
+      columnX += column.width;
+    }
+
+    const ruleY = y - headerMetrics.descent - TABLE_HEADER_RULE_GAP;
+    drawHorizontalRule(page, ruleY, pageWidth);
+    y = ruleY - TABLE_HEADER_RULE_GAP - rowMetrics.ascent;
   }
 
-  for (const row of rows) {
-    ensureTableRowSpace();
-
+  function drawDataRow(row: DonationExportRow) {
     const donorLines = wrapText(
-      toPdfSafeText(row.donorName),
+      row.donorName,
       font,
       8,
-      PDF_COLUMNS[0].width - 8,
+      pdfColumns[1].width - 8,
+    );
+    const categoryLines = wrapText(
+      row.category,
+      font,
+      8,
+      pdfColumns[2].width - 8,
     );
     const cells = [
+      row.date,
       donorLines[0] ?? "",
+      categoryLines[0] ?? "",
       formatMoneyForPdf(row.totalCharged, row.currency),
       formatMoneyForPdf(row.processingFee, row.currency),
       formatMoneyForPdf(row.netReceived, row.currency),
-      row.category,
       row.provider,
       row.status,
-      row.date,
-      row.transactionId || "—",
     ];
 
     let columnX = PDF_MARGIN;
-    for (let i = 0; i < PDF_COLUMNS.length; i += 1) {
-      drawTableCell(page, cells[i], PDF_COLUMNS[i], columnX, y, font);
-      columnX += PDF_COLUMNS[i].width;
+    for (let i = 0; i < pdfColumns.length; i += 1) {
+      drawTableCell(page, cells[i], pdfColumns[i], columnX, y, font);
+      columnX += pdfColumns[i].width;
     }
 
-    y -= TABLE_ROW_HEIGHT;
+    y -= STATEMENT_TABLE_ROW_HEIGHT;
+  }
+
+  const statusSummaries = PDF_STATUS_SECTIONS.flatMap((status) => {
+    const statusDonations = donations.filter((donation) => donation.status === status);
+    if (statusDonations.length === 0) {
+      return [];
+    }
+
+    return [
+      {
+        status,
+        totals: sumDonationAccounting(statusDonations, feeConfigs),
+      },
+    ];
+  });
+
+  const sortedRows = donations
+    .map((donation, index) => ({ donation, row: rows[index] }))
+    .sort(
+      (a, b) => b.donation.createdAt.getTime() - a.donation.createdAt.getTime(),
+    )
+    .map((entry) => entry.row);
+
+  const summaryBlockHeight = 14 + STATUS_SUMMARY_LINE_HEIGHT * 3 + SUMMARY_TO_TABLE_GAP;
+  const tableStartHeight =
+    summaryBlockHeight + STATEMENT_TABLE_HEADER_HEIGHT + STATEMENT_TABLE_ROW_HEIGHT;
+
+  ensureSpace(tableStartHeight);
+
+  y = drawHorizontalStatusSummaries(
+    page,
+    y,
+    tableWidth,
+    PDF_MARGIN,
+    statusSummaries,
+    currency,
+    font,
+    fontBold,
+  );
+
+  drawTableHeaderRow();
+
+  for (const row of sortedRows) {
+    ensureSpace(STATEMENT_TABLE_ROW_HEIGHT, true);
+    drawDataRow(row);
   }
 
   drawStatementFooters(pdfDoc, branding, printedAt, fonts);

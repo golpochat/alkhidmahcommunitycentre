@@ -31,6 +31,9 @@ export const PERMISSIONS = {
   about: {
     manage: "about.manage",
   },
+  legal: {
+    manage: "legal.manage",
+  },
   registrations: {
     manage: "registrations.manage",
   },
@@ -56,6 +59,7 @@ export type PermissionKey =
   | typeof PERMISSIONS.prayerTimes.manage
   | typeof PERMISSIONS.display.manage
   | typeof PERMISSIONS.about.manage
+  | typeof PERMISSIONS.legal.manage
   | typeof PERMISSIONS.registrations.manage
   | typeof PERMISSIONS.contact.manage
   | typeof PERMISSIONS.content.write
@@ -74,6 +78,7 @@ export const ALL_PERMISSION_KEYS: PermissionKey[] = [
   PERMISSIONS.prayerTimes.manage,
   PERMISSIONS.display.manage,
   PERMISSIONS.about.manage,
+  PERMISSIONS.legal.manage,
   PERMISSIONS.registrations.manage,
   PERMISSIONS.contact.manage,
   PERMISSIONS.content.write,
@@ -90,6 +95,7 @@ export const PERMISSION_GROUP_LABELS: Record<string, string> = {
   prayer_times: "Prayer times",
   display: DISPLAY_ADMIN_NAV_LABEL,
   about: "About page",
+  legal: "Legal policies",
   registrations: "Registrations",
   contact: "Contact",
   content: "Content",

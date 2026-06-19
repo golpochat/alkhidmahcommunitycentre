@@ -67,7 +67,7 @@ describe("findNextPrayer on Friday", () => {
     expect(next?.time).toBe("04:57");
   });
 
-  it("returns the first Jumuah after Sunrise", () => {
+  it("returns the first Jumu'ah after Sunrise", () => {
     const next = findNextPrayer(schedule, dublinTime(5, 0));
     expect(next?.type).toBe("jumuah");
     expect(next?.time).toBe("13:15");
@@ -97,12 +97,12 @@ describe("resolveDisplayCountdown on Friday", () => {
     expect(active.label).toBe("Sunrise in");
   });
 
-  it("counts down to the first Jumuah after Sunrise", () => {
+  it("counts down to the first Jumu'ah after Sunrise", () => {
     const active = resolveDisplayCountdown(schedule, seasonalOff, [], dublinTime(5, 0));
 
     expect(active.type).toBe("prayer");
     if (active.type !== "prayer") return;
 
-    expect(active.label).toBe("1st Jumuah in");
+    expect(active.label).toBe("1st Jumu'ah in");
   });
 });

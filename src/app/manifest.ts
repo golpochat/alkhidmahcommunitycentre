@@ -11,7 +11,7 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
       "Prayer times, education, and community services for Clondalkin and surrounding areas.",
     start_url: "/",
     display: "standalone",
-    background_color: "#0f1419",
+    background_color: "#0f6b4a",
     theme_color: "#D4AF37",
     orientation: "portrait-primary",
     icons: [

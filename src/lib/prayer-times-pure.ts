@@ -119,7 +119,7 @@ export interface PrayerTimesResponse {
     isha: PrayerSlot;
   };
   jumuah: JumuahSlot[];
-  /** Saved Jumuah times from admin (used every Friday). */
+  /** Saved Jumu'ah times from admin (used every Friday). */
   configuredJumuah: JumuahSlot[];
   eid: EidInfo;
   nextPrayer: NextPrayer | null;
@@ -283,7 +283,7 @@ export function getEidPrayerLabel(index: number) {
 }
 
 export function getJumuahPrayerLabel(index: number) {
-  return `Jumuah Prayer ${index}`;
+  return `Jumu'ah Prayer ${index}`;
 }
 
 export function formatJumuahOrdinal(index: number) {
@@ -300,7 +300,7 @@ export function formatJumuahOrdinal(index: number) {
 }
 
 export function getJumuahOrdinalLabel(index: number) {
-  return `${formatJumuahOrdinal(index)} Jumuah`;
+  return `${formatJumuahOrdinal(index)} Jumu'ah`;
 }
 
 export function formatJamaahLabel(index: number) {

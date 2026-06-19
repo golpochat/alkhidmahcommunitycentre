@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { decryptSecret, encryptSecret } from "@/lib/encryption";
 import type { PaymentGatewayTypeId } from "@/lib/payment-gateway-presets";
 import {
+  DEFAULT_DONATION_CURRENCY,
   DEFAULT_PAYPAL_FEE_CONFIG,
   DEFAULT_STRIPE_FEE_CONFIG,
   normalizeGatewayFeeConfig,
@@ -265,7 +266,7 @@ function toPublic(record: {
     name: record.name,
     type: toTypeId(record.type),
     isEnabled: record.isEnabled,
-    currency: record.currency,
+    currency: DEFAULT_DONATION_CURRENCY,
     hasSecrets: Boolean(record.secretsEnc) || record.type === "BANK_TRANSFER",
     ...parsePublicConfig(record.type, record.publicConfig),
     createdAt: record.createdAt.toISOString(),
@@ -308,7 +309,7 @@ async function migrateLegacyIfEmpty() {
     return;
   }
 
-  const currency = map[SETTING_KEYS.donationCurrency] || "EUR";
+  const currency = DEFAULT_DONATION_CURRENCY;
 
   if (
     map[SETTING_KEYS.stripeEnabled] === "true" &&
@@ -388,7 +389,7 @@ function resolveStripe(record: {
 
   return {
     id: record.id,
-    currency: record.currency,
+    currency: DEFAULT_DONATION_CURRENCY,
     publishableKey,
     secretKey: secrets.secretKey,
     webhookSecret: secrets.webhookSecret || "",
@@ -415,7 +416,7 @@ function resolvePayPal(record: {
 
   return {
     id: record.id,
-    currency: record.currency,
+    currency: DEFAULT_DONATION_CURRENCY,
     clientId,
     clientSecret: secrets.clientSecret,
     mode: rawConfig.mode === "live" ? "live" : "sandbox",
@@ -436,7 +437,7 @@ function resolveBankTransfer(record: {
 
   return {
     id: record.id,
-    currency: record.currency,
+    currency: DEFAULT_DONATION_CURRENCY,
     accountName: publicFields.accountName ?? "",
     bankName: publicFields.bankName ?? "",
     iban: publicFields.iban ?? "",
@@ -483,7 +484,7 @@ export async function createPaymentGateway(input: PaymentGatewayInput) {
       name: input.name.trim(),
       type: input.type,
       isEnabled: input.isEnabled ?? true,
-      currency: input.currency.trim().toUpperCase() || "EUR",
+      currency: DEFAULT_DONATION_CURRENCY,
       publicConfig: buildPublicConfig(input),
       secretsEnc: input.type === "BANK_TRANSFER" ? "" : encryptSecrets(secrets),
     },
@@ -511,7 +512,7 @@ export async function updatePaymentGateway(
     data: {
       name: input.name.trim(),
       type: input.type,
-      currency: input.currency.trim().toUpperCase() || "EUR",
+      currency: DEFAULT_DONATION_CURRENCY,
       publicConfig: buildPublicConfig(input),
       secretsEnc:
         input.type === "BANK_TRANSFER" ? "" : encryptSecrets(secrets),

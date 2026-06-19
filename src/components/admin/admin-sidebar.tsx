@@ -17,6 +17,7 @@ import {
   Mail,
   Menu,
   Monitor,
+  Scale,
 } from "lucide-react";
 import {
   Sheet,
@@ -34,6 +35,7 @@ import {
   canManagePrayerTimes,
   canManageDisplay,
   canManageAboutPage,
+  canManageLegalPolicies,
   canManageRegistrations,
   canManageContactMessages,
   canViewContentAudit,
@@ -65,6 +67,12 @@ const navLinks = [
     label: "About Page",
     icon: Info,
     canAccess: canManageAboutPage,
+  },
+  {
+    href: "/admin/legal",
+    label: "Legal Policies",
+    icon: Scale,
+    canAccess: canManageLegalPolicies,
   },
   {
     href: "/admin/gallery",

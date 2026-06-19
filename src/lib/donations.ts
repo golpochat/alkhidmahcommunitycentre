@@ -3,6 +3,7 @@ import {
   resolveDonationAccounting,
   type DonationProviderFeeConfigs,
 } from "@/lib/donation-accounting";
+import { normalizeDonationCurrency } from "@/lib/donation-processing-fee";
 import { DONATION_CATEGORIES } from "@/lib/constants";
 
 export type DonationProvider = "stripe" | "paypal";
@@ -70,7 +71,7 @@ export function serializeDonation(
     totalCents: accounting.totalChargedCents,
     netCents: accounting.netReceivedCents,
     feeEstimated: accounting.feeEstimated,
-    currency: donation.currency,
+    currency: normalizeDonationCurrency(donation.currency),
     category: donation.category,
     provider: donation.provider as DonationProvider,
     providerId: donation.providerId,

@@ -15,6 +15,7 @@ import {
 } from "@/lib/admin-dashboard-access";
 import { getPublishStatusOverview } from "@/lib/admin-publish-status";
 import { getDashboardAnalytics } from "@/lib/admin-analytics";
+import { formatDonationMoney } from "@/lib/donation-processing-fee";
 import { DISPLAY_ADMIN_NAV_LABEL } from "@/lib/constants";
 import { getFreshSession } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -144,14 +145,14 @@ export default async function AdminDashboardPage() {
       {
         title: "Donations (All Time)",
         value: analytics.stats.totalDonations,
-        sub: `€${analytics.stats.allTimeDonationTotal.toLocaleString()} raised`,
+        sub: `${formatDonationMoney(analytics.stats.allTimeDonationTotal)} raised`,
         icon: Heart,
         color: "text-gold",
       },
       {
         title: "Donations (This Month)",
         value: analytics.stats.monthDonations,
-        sub: `€${analytics.stats.monthDonationTotal.toLocaleString()} this month`,
+        sub: `${formatDonationMoney(analytics.stats.monthDonationTotal)} this month`,
         icon: Heart,
         color: "text-emerald",
       },
@@ -384,7 +385,9 @@ export default async function AdminDashboardPage() {
                             {donation.category.replace("-", " ")}
                           </span>
                         </div>
-                        <span className="text-gold">€{donation.amount}</span>
+                        <span className="text-gold">
+                          {formatDonationMoney(donation.amount)}
+                        </span>
                       </li>
                     ))}
                   </ul>

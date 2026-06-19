@@ -7,7 +7,7 @@ export function buildDefaultMetadata(branding: SiteBranding): Metadata {
     metadataBase: new URL(branding.siteUrl || SITE_URL),
     icons: {
       icon: [{ url: branding.faviconPath || FAVICON_HREF, type: "image/png" }],
-      apple: [{ url: "/logo/favicon.png?v=7", type: "image/png" }],
+      apple: [{ url: "/logo/favicon.png?v=8", type: "image/png" }],
       shortcut: branding.faviconPath || FAVICON_HREF,
     },
     alternates: {

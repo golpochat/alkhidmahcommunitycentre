@@ -35,6 +35,7 @@ export async function POST(request: NextRequest) {
         passwordHash,
         roleId: memberRoleId,
         emailVerified: false,
+        privacyConsentAt: new Date(),
       },
       select: {
         id: true,

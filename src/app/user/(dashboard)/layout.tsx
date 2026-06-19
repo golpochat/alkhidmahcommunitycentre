@@ -5,6 +5,7 @@ import {
   getSession,
 } from "@/lib/auth";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
+import { SessionCookieSync } from "@/components/auth/session-cookie-sync";
 import { UserSidebar } from "@/components/user/user-sidebar";
 import { USER_PAGE_TITLES } from "@/lib/dashboard-titles";
 import { getSiteBranding } from "@/lib/site-branding";
@@ -14,7 +15,7 @@ export default async function UserDashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getFreshSession({ syncCookie: true });
+  const session = await getFreshSession();
 
   if (!session || !canAccessUserRoutes(session)) {
     if (await getSession()) {
@@ -27,6 +28,7 @@ export default async function UserDashboardLayout({
 
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
+      <SessionCookieSync />
       <UserSidebar siteName={branding.siteName} />
       <div className="flex flex-1 flex-col overflow-hidden">
         <DashboardShell

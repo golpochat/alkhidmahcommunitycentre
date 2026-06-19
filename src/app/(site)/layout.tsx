@@ -1,3 +1,5 @@
+import { CookieNotice } from "@/components/legal/cookie-notice";
+import { SessionCookieSync } from "@/components/auth/session-cookie-sync";
 import { Footer } from "@/components/layout/footer";
 import { Navbar } from "@/components/layout/navbar";
 import { PwaRegister } from "@/components/layout/pwa-register";
@@ -13,7 +15,7 @@ export default async function SiteLayout({
   children: React.ReactNode;
 }) {
   const [session, branding] = await Promise.all([
-    getFreshSession({ syncCookie: true }),
+    getFreshSession(),
     getSiteBranding(),
   ]);
   const authNav = buildSiteAuthNav(session);
@@ -23,11 +25,13 @@ export default async function SiteLayout({
       value={{ siteName: branding.siteName, logoPath: branding.logoPath }}
     >
       <div className="flex min-h-screen max-w-full flex-col overflow-x-hidden">
+        <SessionCookieSync />
         <PwaRegister />
         <SiteStructuredData />
         <Navbar authNav={authNav} logoPath={branding.logoPath} />
         <main className="flex-1 max-w-full overflow-x-hidden">{children}</main>
         <Footer logoPath={branding.logoPath} />
+        <CookieNotice />
       </div>
     </SiteBrandingProvider>
   );

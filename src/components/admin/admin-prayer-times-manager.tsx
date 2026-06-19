@@ -545,7 +545,7 @@ export function AdminPrayerTimesManager() {
             className="admin-prayer-times-inner-tabs-list"
           >
             <TabsTrigger value="daily">Daily Prayer Times</TabsTrigger>
-            <TabsTrigger value="jumuah">Jumuah Prayer</TabsTrigger>
+            <TabsTrigger value="jumuah">Jumu&apos;ah Prayer</TabsTrigger>
             <TabsTrigger value="eid">Eid Prayer</TabsTrigger>
           </TabsList>
 

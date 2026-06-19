@@ -85,6 +85,10 @@ export function canManageAboutPage(session: SessionUser) {
   return hasPermission(session, PERMISSIONS.about.manage);
 }
 
+export function canManageLegalPolicies(session: SessionUser) {
+  return hasPermission(session, PERMISSIONS.legal.manage);
+}
+
 export function canManageRegistrations(session: SessionUser) {
   return hasPermission(session, PERMISSIONS.registrations.manage);
 }

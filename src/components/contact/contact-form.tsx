@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { PrivacyConsentField } from "@/components/legal/privacy-consent-field";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -21,6 +22,7 @@ export function ContactForm() {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors },
   } = useForm<ContactFormValues>({
     resolver: zodResolver(contactFormSchema),
@@ -29,6 +31,7 @@ export function ContactForm() {
       email: "",
       subject: "",
       message: "",
+      privacyConsent: false,
     },
   });
 
@@ -149,6 +152,18 @@ export function ContactForm() {
               <p className="text-sm text-destructive">{errors.message.message}</p>
             )}
           </div>
+
+          <Controller
+            name="privacyConsent"
+            control={control}
+            render={({ field }) => (
+              <PrivacyConsentField
+                checked={Boolean(field.value)}
+                onCheckedChange={field.onChange}
+                error={errors.privacyConsent?.message}
+              />
+            )}
+          />
 
           <Button type="submit" className="btn-gold w-full" disabled={submitting}>
             {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

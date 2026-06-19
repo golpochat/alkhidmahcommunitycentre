@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
+import { PrivacyConsentField } from "@/components/legal/privacy-consent-field";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -27,9 +28,13 @@ export function RegisterForm() {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
+    defaultValues: {
+      privacyConsent: false,
+    },
   });
 
   async function onSubmit(data: RegisterFormValues) {
@@ -108,6 +113,17 @@ export function RegisterForm() {
                 </p>
               )}
             </div>
+            <Controller
+              name="privacyConsent"
+              control={control}
+              render={({ field }) => (
+                <PrivacyConsentField
+                  checked={Boolean(field.value)}
+                  onCheckedChange={field.onChange}
+                  error={errors.privacyConsent?.message}
+                />
+              )}
+            />
             <Button type="submit" className="btn-gold w-full" disabled={submitting}>
               {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Create Account

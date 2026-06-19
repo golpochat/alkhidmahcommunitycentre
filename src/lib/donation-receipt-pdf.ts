@@ -7,11 +7,12 @@ import {
 } from "@/lib/donation-accounting";
 import { getCategoryLabel } from "@/lib/donations";
 import type { DonationCategoryLookup } from "@/lib/admin-donations-export";
-import { formatDonationCents } from "@/lib/donation-processing-fee";
+import { formatDonationCents, normalizeDonationCurrency } from "@/lib/donation-processing-fee";
+import { embedDonationPdfFonts } from "@/lib/donation-pdf-fonts";
 import type { DonationStatementBranding } from "@/lib/donation-statement-branding";
 import {
   buildStatementFooterPrimaryLine,
-  buildStatementFooterSecondaryLine,
+  buildStatementFooterPageLine,
   formatExportTransactionId,
   formatStatementPrintedAt,
   formatStatementStatus,
@@ -22,15 +23,16 @@ import {
   BRAND_GREEN,
   PDF_MARGIN,
   PDF_PAGE,
+  PDF_BORDER_WIDTH,
+  PDF_SUMMARY_FILL,
+  buildDonationStatementLetterheadOptions,
   drawDonationStatementFooters,
   drawLetterhead,
-  embedStandardFonts,
   getPdfFontVerticalMetrics,
   toPdfSafeText,
 } from "@/lib/donation-pdf-layout";
 
 const RECEIPT_TITLE_SIZE = 17;
-const RECEIPT_LETTERHEAD_SCALE = 0.88;
 const RECEIPT_LETTERHEAD_RULE_GAP = 10;
 const RECEIPT_TITLE_RULE_CLEARANCE = 16;
 
@@ -81,18 +83,19 @@ export async function donationReceiptToPdfBuffer(
 ) {
   const printedAt = formatStatementPrintedAt();
   const pdfDoc = await PDFDocument.create();
-  const fonts = await embedStandardFonts(pdfDoc);
+  const fonts = await embedDonationPdfFonts(pdfDoc);
   const { font, fontBold } = fonts;
   const accounting = resolveDonationAccounting(donation, options.feeConfigs ?? {});
-  const currency = donation.currency || "EUR";
+  const currency = normalizeDonationCurrency(donation.currency);
 
   const page = pdfDoc.addPage([PDF_PAGE.width, PDF_PAGE.height]);
   let y = PDF_PAGE.height - PDF_MARGIN;
 
   y = await drawLetterhead(pdfDoc, page, y, branding, fonts, logoPng, {
-    combineEmailAndWebsite: true,
-    fontScale: RECEIPT_LETTERHEAD_SCALE,
-    compact: true,
+    ...buildDonationStatementLetterheadOptions({
+      pageHeight: PDF_PAGE.height,
+    }),
+    fontScale: 0.88,
     ruleGap: RECEIPT_LETTERHEAD_RULE_GAP,
   });
 
@@ -109,7 +112,7 @@ export async function donationReceiptToPdfBuffer(
     y,
     size: RECEIPT_TITLE_SIZE,
     font: fontBold,
-    color: rgb(0, 0, 0),
+    color: BRAND_GREEN,
   });
   y -= titleMetrics.descent + 14;
 
@@ -185,9 +188,9 @@ export async function donationReceiptToPdfBuffer(
     y: boxTop - boxHeight,
     width: PDF_PAGE.width - PDF_MARGIN * 2,
     height: boxHeight,
-    color: rgb(0.97, 0.98, 0.97),
+    color: PDF_SUMMARY_FILL,
     borderColor: BRAND_GOLD,
-    borderWidth: 0.5,
+    borderWidth: PDF_BORDER_WIDTH,
   });
 
   let rowY = boxTop - 18;
@@ -201,7 +204,7 @@ export async function donationReceiptToPdfBuffer(
     });
 
     const valueX = PDF_MARGIN + 168;
-    page.drawText(toPdfSafeText(detail.value), {
+    page.drawText(detail.value, {
       x: valueX,
       y: rowY,
       size: 10,
@@ -242,7 +245,7 @@ export async function donationReceiptToPdfBuffer(
         website: statementBranding.website,
       }),
     (pageNumber, totalPages) =>
-      buildStatementFooterSecondaryLine(pageNumber, totalPages, printedAt),
+      buildStatementFooterPageLine(pageNumber, totalPages),
   );
 
   const pdfBytes = await pdfDoc.save();

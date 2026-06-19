@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { PrivacyConsentField } from "@/components/legal/privacy-consent-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,6 +29,7 @@ export function ClassRegistrationForm({
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors },
   } = useForm<RegistrationFormValues>({
     resolver: zodResolver(registrationSchema),
@@ -37,6 +39,7 @@ export function ClassRegistrationForm({
       email: "",
       phone: "",
       notes: "",
+      privacyConsent: false,
     },
   });
 
@@ -55,7 +58,7 @@ export function ClassRegistrationForm({
       }
 
       toast.success(`Registration submitted for ${classTitle}`);
-      reset({ classId, name: "", email: "", phone: "", notes: "" });
+      reset({ classId, name: "", email: "", phone: "", notes: "", privacyConsent: false });
       onSuccess?.();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Registration failed");
@@ -109,6 +112,18 @@ export function ClassRegistrationForm({
           <p className="text-sm text-destructive">{errors.notes.message}</p>
         )}
       </div>
+
+      <Controller
+        name="privacyConsent"
+        control={control}
+        render={({ field }) => (
+          <PrivacyConsentField
+            checked={Boolean(field.value)}
+            onCheckedChange={field.onChange}
+            error={errors.privacyConsent?.message}
+          />
+        )}
+      />
 
       <Button type="submit" className="btn-gold w-full" disabled={submitting}>
         {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

@@ -39,6 +39,7 @@ import {
   todayDateInputValue,
 } from "@/lib/admin-donations-filters";
 import type { DonationExportFormat } from "@/lib/admin-donations-export";
+import { formatDonationCents, formatDonationMoney } from "@/lib/donation-processing-fee";
 import { DONATION_PROVIDERS, DONATION_STATUSES, getCategoryLabel } from "@/lib/donations";
 import type { SerializedDonation, SerializedDonationCategory } from "@/lib/donations";
 
@@ -363,12 +364,15 @@ export function AdminDonationsManager() {
                         </p>
                       </TableCell>
                       <TableCell className="font-medium text-gold">
-                        €{donation.amount}
+                        {formatDonationMoney(donation.amount, donation.currency)}
                       </TableCell>
                       <TableCell className="text-sm">
                         {donation.processingFeeCents > 0 ? (
                           <>
-                            €{(donation.processingFeeCents / 100).toFixed(2)}
+                            {formatDonationCents(
+                              donation.processingFeeCents,
+                              donation.currency,
+                            )}
                             <span className="block text-xs text-muted-foreground">
                               {donation.coverFee ? "Covered" : "Deducted"}
                               {donation.feeEstimated ? " · est." : ""}
@@ -379,7 +383,7 @@ export function AdminDonationsManager() {
                         )}
                       </TableCell>
                       <TableCell className="text-sm font-medium">
-                        €{(donation.netCents / 100).toFixed(2)}
+                        {formatDonationCents(donation.netCents, donation.currency)}
                       </TableCell>
                       <TableCell>
                         {getCategoryLabel(donation.category, categoryOptions)}

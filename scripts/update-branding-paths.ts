@@ -11,8 +11,8 @@ async function main() {
 
   await prisma.setting.upsert({
     where: { key: "favicon_path" },
-    update: { value: "/favicon.svg" },
-    create: { key: "favicon_path", value: "/favicon.svg" },
+    update: { value: "/favicon.png" },
+    create: { key: "favicon_path", value: "/favicon.png" },
   });
 
   console.log("Updated logo_path and favicon_path in database.");

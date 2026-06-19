@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Building2, CreditCard, Loader2 } from "lucide-react";
+import { DonationLegalNotice } from "@/components/legal/donation-legal-notice";
 import { DonationAmountSelector } from "@/components/donations/donation-amount-selector";
 import { DonationProcessingFeeOption } from "@/components/donations/donation-processing-fee-option";
 import { DonationStripeEmbedded } from "@/components/donations/donation-stripe-embedded";
@@ -11,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import type { GatewayFeeConfig } from "@/lib/donation-processing-fee";
+import { formatDonationMoney, type GatewayFeeConfig } from "@/lib/donation-processing-fee";
 import type { BankTransferDetails } from "@/lib/payment-gateway-types";
 import {
   donationFormSchema,
@@ -257,10 +258,7 @@ export function DonationForm({
       <div className="donation-bank-details space-y-4">
         <p className="text-sm text-muted-foreground">
           Please transfer{" "}
-          <strong>
-            {bankDetails.currency === "EUR" ? "€" : bankDetails.currency}
-            {bankDetails.amount}
-          </strong>{" "}
+          <strong>{formatDonationMoney(bankDetails.amount, bankDetails.currency)}</strong>{" "}
           using the details below. Use the reference exactly so we can match your
           donation.
         </p>
@@ -410,18 +408,21 @@ export function DonationForm({
       </div>
 
       {!showStripeCheckout && hasAnyMethod && (
-        <Button
-          type="button"
-          className="btn-gold w-full"
-          size="lg"
-          disabled={isSubmitting || loadingCheckout}
-          onClick={handleContinue}
-        >
-          {(isSubmitting || loadingCheckout) && (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          )}
-          {continueLabel()}
-        </Button>
+        <div className="space-y-3">
+          <DonationLegalNotice />
+          <Button
+            type="button"
+            className="btn-gold w-full"
+            size="lg"
+            disabled={isSubmitting || loadingCheckout}
+            onClick={handleContinue}
+          >
+            {(isSubmitting || loadingCheckout) && (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            )}
+            {continueLabel()}
+          </Button>
+        </div>
       )}
 
       {provider === "stripe" && stripeEnabled && (

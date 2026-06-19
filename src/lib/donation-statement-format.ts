@@ -78,10 +78,19 @@ export function buildStatementFooterPrimaryLine(input: {
   ].join(" · ");
 }
 
+export function buildStatementFooterPageLine(pageNumber: number, totalPages: number) {
+  return `Page ${pageNumber} of ${totalPages}`;
+}
+
+export function buildStatementFooterPrintedLine(printedAt: string) {
+  return `Printed: ${printedAt}`;
+}
+
+/** @deprecated Use buildStatementFooterPageLine + buildStatementFooterPrintedLine */
 export function buildStatementFooterSecondaryLine(
   pageNumber: number,
   totalPages: number,
   printedAt: string,
 ) {
-  return `Page ${pageNumber} of ${totalPages} · Printed: ${printedAt}`;
+  return `${buildStatementFooterPageLine(pageNumber, totalPages)} · ${buildStatementFooterPrintedLine(printedAt)}`;
 }

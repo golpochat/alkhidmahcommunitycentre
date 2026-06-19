@@ -14,6 +14,17 @@ export const LETTERHEAD_TIMETABLE_CONTACT_MAX_WIDTH = 420;
 export const BRAND_GREEN = rgb(15 / 255, 107 / 255, 74 / 255);
 export const BRAND_GOLD = rgb(212 / 255, 175 / 255, 55 / 255);
 export const MUTED = rgb(0.35, 0.35, 0.35);
+export const PDF_SUMMARY_FILL = rgb(0.97, 0.98, 0.97);
+export const PDF_BORDER_WIDTH = 0.75;
+export const STATEMENT_FOOTER_HEIGHT = 62;
+export const STATEMENT_TITLE_SIZE = 17;
+export const STATEMENT_LETTERHEAD_SCALE = 0.92;
+export const STATEMENT_LETTERHEAD_LOGO_SCALE = 1.5;
+export const STATEMENT_LETTERHEAD_TOP_INSET = 24;
+export const STATEMENT_LETTERHEAD_RULE_GAP = 10;
+export const STATEMENT_TITLE_RULE_CLEARANCE = 12;
+export const STATEMENT_TABLE_HEADER_HEIGHT = 18;
+export const STATEMENT_TABLE_ROW_HEIGHT = 16;
 
 /** Shared timetable PDF letterhead/title spacing (monthly + Ramadan). */
 export const PDF_LETTERHEAD_FONT_SCALE = 1.1;
@@ -26,12 +37,31 @@ export function drawHorizontalRule(
   y: number,
   pageWidth: number = PDF_PAGE.width,
   margin: number = PDF_MARGIN,
+  thickness: number = PDF_BORDER_WIDTH,
 ) {
   page.drawLine({
     start: { x: margin, y },
     end: { x: pageWidth - margin, y },
-    thickness: 0.75,
+    thickness,
     color: BRAND_GOLD,
+  });
+}
+
+export function drawBrandedPanel(
+  page: PDFPage,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+) {
+  page.drawRectangle({
+    x,
+    y,
+    width,
+    height,
+    color: PDF_SUMMARY_FILL,
+    borderColor: BRAND_GOLD,
+    borderWidth: PDF_BORDER_WIDTH,
   });
 }
 
@@ -55,8 +85,11 @@ export type PdfFonts = Awaited<ReturnType<typeof embedStandardFonts>>;
 
 export type LetterheadOptions = {
   pageWidth?: number;
+  pageHeight?: number;
   margin?: number;
-  contactAlign?: "left" | "center";
+  letterheadTopInset?: number;
+  contactAlign?: "left" | "center" | "right";
+  logoPosition?: "left" | "center";
   fontScale?: number;
   combineEmailAndWebsite?: boolean;
   compact?: boolean;
@@ -158,6 +191,23 @@ export function buildTimetableLetterheadOptions(
   };
 }
 
+export function buildDonationStatementLetterheadOptions(
+  overrides: Partial<LetterheadOptions> = {},
+): LetterheadOptions {
+  return {
+    combineEmailAndWebsite: true,
+    fontScale: STATEMENT_LETTERHEAD_SCALE,
+    compact: true,
+    ruleGap: STATEMENT_LETTERHEAD_RULE_GAP,
+    logoPosition: "center",
+    logoScale: STATEMENT_LETTERHEAD_LOGO_SCALE,
+    contactAlign: "right",
+    contactMaxWidth: LETTERHEAD_CONTACT_MIN_WIDTH,
+    letterheadTopInset: STATEMENT_LETTERHEAD_TOP_INSET,
+    ...overrides,
+  };
+}
+
 const LETTERHEAD_DONATION_QR_SIZE = 52;
 
 function splitPostcodeFromAddress(address: string): {
@@ -232,6 +282,238 @@ function drawZoneCenteredLine(
   });
 }
 
+function drawZoneRightAlignedLine(
+  page: PDFPage,
+  text: string,
+  y: number,
+  zoneRight: number,
+  font: PdfFonts["font"],
+  size: number,
+  color: ReturnType<typeof rgb>,
+) {
+  const safeText = toPdfSafeText(text);
+  const textWidth = font.widthOfTextAtSize(safeText, size);
+  page.drawText(safeText, {
+    x: zoneRight - textWidth,
+    y,
+    size,
+    font,
+    color,
+  });
+}
+
+type LetterheadContactLineLayout = {
+  text: string;
+  size: number;
+  bold: boolean;
+  color: ReturnType<typeof rgb>;
+  lineHeight: number;
+};
+
+function layoutLetterheadContactLines(
+  branding: DonationStatementBranding,
+  options: LetterheadOptions,
+  fonts: PdfFonts,
+  contactMaxWidth: number,
+): { lines: LetterheadContactLineLayout[]; height: number } {
+  const fontScale = options.fontScale ?? 1;
+  const compact = options.compact ?? false;
+  const { font, fontBold } = fonts;
+  const siteNameSize = 14 * fontScale;
+  const contactSize = 9 * fontScale;
+  const siteNameLineHeight = (compact ? 16 : 18) * fontScale;
+  const contactLineHeight = (compact ? 10 : 12) * fontScale;
+  const lines: LetterheadContactLineLayout[] = [];
+  let height = 0;
+
+  lines.push({
+    text: toPdfSafeText(branding.siteName),
+    size: siteNameSize,
+    bold: true,
+    color: BRAND_GREEN,
+    lineHeight: siteNameLineHeight,
+  });
+  height += siteNameLineHeight;
+
+  for (const line of buildLetterheadContactLines(branding, options)) {
+    const wrapped = wrapText(
+      toPdfSafeText(line),
+      font,
+      contactSize,
+      contactMaxWidth,
+    );
+    for (const wrappedLine of wrapped) {
+      lines.push({
+        text: wrappedLine,
+        size: contactSize,
+        bold: false,
+        color: MUTED,
+        lineHeight: contactLineHeight,
+      });
+      height += contactLineHeight;
+    }
+  }
+
+  return { lines, height };
+}
+
+async function computeLogoDimensions(
+  pdfDoc: PDFDocument,
+  logoPng: Uint8Array,
+  logoScale: number,
+  maxLogoWidth: number,
+) {
+  const logoImage = await pdfDoc.embedPng(logoPng);
+  const logoDims = logoImage.scale(0.35);
+  const logoMaxHeight = LETTERHEAD_LOGO_MAX_HEIGHT * logoScale;
+  let logoWidth = Math.min(
+    (logoDims.width / logoDims.height) * logoMaxHeight,
+    logoDims.width,
+    maxLogoWidth,
+  );
+  let logoHeight = (logoDims.height / logoDims.width) * logoWidth;
+  logoHeight = Math.min(logoHeight, logoMaxHeight);
+
+  return { logoImage, logoWidth, logoHeight };
+}
+
+async function drawCenterLogoLetterhead(
+  pdfDoc: PDFDocument,
+  page: PDFPage,
+  yStart: number,
+  branding: DonationStatementBranding,
+  fonts: PdfFonts,
+  logoPng: Uint8Array | null | undefined,
+  options: LetterheadOptions,
+) {
+  const pageWidth = options.pageWidth ?? PDF_PAGE.width;
+  const pageHeight = options.pageHeight ?? PDF_PAGE.height;
+  const margin = options.margin ?? PDF_MARGIN;
+  const fontScale = options.fontScale ?? 1;
+  const logoScale = options.logoScale ?? 1;
+  const compact = options.compact ?? false;
+  const ruleGap = options.ruleGap ?? (compact ? 8 : 10);
+  const contentWidth = pageWidth - margin * 2;
+  const { font, fontBold } = fonts;
+  const siteNameSize = 14 * fontScale;
+  const siteNameMetrics = getPdfFontVerticalMetrics(fontBold, siteNameSize);
+  const headerTopBaseline =
+    options.letterheadTopInset != null
+      ? pageHeight - options.letterheadTopInset - siteNameMetrics.ascent
+      : yStart;
+  const donationQrSize = LETTERHEAD_DONATION_QR_SIZE * fontScale;
+  const donationQrLabel = options.donationQrLabel ?? "Donate now";
+  const donationQrLabelSize = 9 * fontScale;
+  const hasDonationQr = Boolean(options.donationQrPng);
+  const donationQrReserve = hasDonationQr
+    ? donationQrSize + 24 * fontScale
+    : 0;
+  const rightColumnReserve = Math.max(
+    donationQrReserve,
+    options.contactRightReserve ?? 0,
+  );
+  const contactMaxWidth = options.contactMaxWidth ?? LETTERHEAD_CONTACT_MIN_WIDTH;
+  const contactRightEdge = pageWidth - margin - rightColumnReserve;
+  const contactLayout = layoutLetterheadContactLines(
+    branding,
+    options,
+    fonts,
+    contactMaxWidth,
+  );
+
+  let logoWidth = 0;
+  let logoHeight = 0;
+  let logoImage: Awaited<ReturnType<typeof pdfDoc.embedPng>> | null = null;
+  const maxLogoWidth =
+    options.logoMaxWidth ??
+    Math.max(
+      80,
+      contentWidth - contactMaxWidth - LETTERHEAD_LOGO_CONTACT_GAP * 2,
+    );
+
+  if (logoPng) {
+    const logoDimensions = await computeLogoDimensions(
+      pdfDoc,
+      logoPng,
+      logoScale,
+      maxLogoWidth,
+    );
+    logoImage = logoDimensions.logoImage;
+    logoWidth = logoDimensions.logoWidth;
+    logoHeight = logoDimensions.logoHeight;
+  }
+
+  const headerHeight = Math.max(contactLayout.height, logoHeight);
+
+  if (logoImage) {
+    const logoX = (pageWidth - logoWidth) / 2;
+    const logoY =
+      headerTopBaseline - (headerHeight - logoHeight) / 2 - logoHeight;
+
+    page.drawImage(logoImage, {
+      x: logoX,
+      y: logoY,
+      width: logoWidth,
+      height: logoHeight,
+    });
+  }
+
+  let contactY =
+    headerTopBaseline - (headerHeight - contactLayout.height) / 2;
+  for (const line of contactLayout.lines) {
+    const contactFont = line.bold ? fontBold : font;
+    drawZoneRightAlignedLine(
+      page,
+      line.text,
+      contactY,
+      contactRightEdge,
+      contactFont,
+      line.size,
+      line.color,
+    );
+    contactY -= line.lineHeight;
+  }
+
+  let qrBottomY = headerTopBaseline - headerHeight;
+  if (hasDonationQr && options.donationQrPng) {
+    const qrX = pageWidth - margin - donationQrSize;
+    const qrY = headerTopBaseline - donationQrSize + 8;
+    const qrImage = await pdfDoc.embedPng(options.donationQrPng);
+
+    page.drawImage(qrImage, {
+      x: qrX,
+      y: qrY,
+      width: donationQrSize,
+      height: donationQrSize,
+    });
+
+    const label = toPdfSafeText(donationQrLabel);
+    const labelWidth = fontBold.widthOfTextAtSize(label, donationQrLabelSize);
+    const labelY = qrY - 6 - donationQrLabelSize;
+    page.drawText(label, {
+      x: qrX + (donationQrSize - labelWidth) / 2,
+      y: labelY,
+      size: donationQrLabelSize,
+      font: fontBold,
+      color: BRAND_GREEN,
+    });
+
+    qrBottomY = labelY - donationQrLabelSize;
+  }
+
+  let y = headerTopBaseline - headerHeight;
+  y = Math.min(y, qrBottomY);
+
+  if (options.drawBottomRule !== false) {
+    y -= ruleGap;
+    drawHorizontalRule(page, y, pageWidth, margin);
+  } else {
+    y -= ruleGap;
+  }
+
+  return y - ruleGap;
+}
+
 export async function drawLetterhead(
   pdfDoc: PDFDocument,
   page: PDFPage,
@@ -241,6 +523,18 @@ export async function drawLetterhead(
   logoPng?: Uint8Array | null,
   options: LetterheadOptions = {},
 ) {
+  if (options.logoPosition === "center") {
+    return drawCenterLogoLetterhead(
+      pdfDoc,
+      page,
+      yStart,
+      branding,
+      fonts,
+      logoPng,
+      options,
+    );
+  }
+
   const pageWidth = options.pageWidth ?? PDF_PAGE.width;
   const margin = options.margin ?? PDF_MARGIN;
   const contactAlign = options.contactAlign ?? "left";
@@ -334,6 +628,19 @@ export async function drawLetterhead(
         lineY,
         contactZoneLeft,
         contactZoneWidth,
+        contactFont,
+        lineSize,
+        lineColor,
+      );
+      return;
+    }
+
+    if (contactAlign === "right") {
+      drawZoneRightAlignedLine(
+        page,
+        line,
+        lineY,
+        pageWidth - margin - rightColumnReserve,
         contactFont,
         lineSize,
         lineColor,
@@ -525,26 +832,26 @@ export function drawDonationStatementFooters(
   printedAt: string,
   fonts: PdfFonts,
   buildPrimaryLine: (branding: DonationStatementBranding) => string,
-  buildSecondaryLine: (pageNumber: number, totalPages: number) => string,
+  buildPageLine: (pageNumber: number, totalPages: number) => string,
 ) {
   const { font } = fonts;
   const pages = pdfDoc.getPages();
   const totalPages = pages.length;
   const footerFontSize = 7;
   const lineHeight = 9;
+  const bottomY = PDF_MARGIN + 10;
 
   pages.forEach((footerPage, index) => {
     const { width: pageWidth } = footerPage.getSize();
     const contentWidth = pageWidth - PDF_MARGIN * 2;
     const primaryLine = toPdfSafeText(buildPrimaryLine(branding));
-    const secondaryLine = toPdfSafeText(
-      buildSecondaryLine(index + 1, totalPages),
-    );
+    const pageLine = toPdfSafeText(buildPageLine(index + 1, totalPages));
+    const printedLine = toPdfSafeText(`Printed: ${printedAt}`);
     const primaryLines = wrapText(primaryLine, font, footerFontSize, contentWidth);
-    const secondaryWidth = font.widthOfTextAtSize(secondaryLine, footerFontSize);
-    const secondaryY = PDF_MARGIN + 10;
+    const pageLineWidth = font.widthOfTextAtSize(pageLine, footerFontSize);
+    const printedLineWidth = font.widthOfTextAtSize(printedLine, footerFontSize);
     const ruleY =
-      secondaryY +
+      bottomY +
       lineHeight +
       6 +
       primaryLines.length * lineHeight +
@@ -565,9 +872,17 @@ export function drawDonationStatementFooters(
       primaryY -= lineHeight;
     }
 
-    footerPage.drawText(secondaryLine, {
-      x: Math.max(PDF_MARGIN, (pageWidth - secondaryWidth) / 2),
-      y: secondaryY,
+    footerPage.drawText(printedLine, {
+      x: Math.max(PDF_MARGIN, (pageWidth - printedLineWidth) / 2),
+      y: bottomY,
+      size: footerFontSize,
+      font,
+      color: MUTED,
+    });
+
+    footerPage.drawText(pageLine, {
+      x: pageWidth - PDF_MARGIN - pageLineWidth,
+      y: bottomY,
       size: footerFontSize,
       font,
       color: MUTED,

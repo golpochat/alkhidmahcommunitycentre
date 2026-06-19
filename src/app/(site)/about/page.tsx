@@ -42,7 +42,7 @@ export default async function AboutPage() {
             <h2 className="heading-section mb-6">Our Mission</h2>
             <p className="mb-4 text-muted-foreground">
               To serve the Muslim community of Clondalkin by providing a centre
-              for the five daily prayers, Jumuah, Islamic education, and
+              for the five daily prayers, Jumu&apos;ah, Islamic education, and
               charitable outreach — while fostering understanding and good
               relations with our neighbours.
             </p>

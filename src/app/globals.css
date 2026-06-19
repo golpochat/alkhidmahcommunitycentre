@@ -247,6 +247,22 @@
     @apply text-neutral-500;
   }
 
+  .footer-legal-links {
+    @apply flex flex-wrap gap-x-4 gap-y-1;
+  }
+
+  .cookie-notice {
+    @apply fixed inset-x-0 bottom-0 z-50 border-t border-gold/20 bg-mosque-black/95 backdrop-blur;
+  }
+
+  .cookie-notice-inner {
+    @apply flex flex-col gap-3 py-4 md:flex-row md:items-center md:justify-between;
+  }
+
+  .cookie-notice-text {
+    @apply text-sm text-neutral-300;
+  }
+
   .navbar-donate-link {
     @apply px-3 py-2 text-sm;
   }
@@ -2400,10 +2416,6 @@
   .display-prayer-times-grid-default {
     @apply grid w-full grid-cols-5 gap-[clamp(0.5rem,1vw,2rem)] text-center;
     grid-template-columns: repeat(5, minmax(0, 1fr));
-  }
-
-  .display-prayer-card-empty {
-    @apply pointer-events-none border-transparent bg-transparent opacity-0;
   }
 
   .display-prayer-card {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { resolveDonationUserId } from "@/lib/donation-user-link";
 import { assertActiveDonationCategory } from "@/lib/donation-categories";
+import { DEFAULT_DONATION_CURRENCY } from "@/lib/donation-processing-fee";
 import { getEnabledBankTransferGateway } from "@/lib/payment-gateway-store";
 import { donationFormSchema } from "@/lib/validations";
 
@@ -35,7 +36,7 @@ export async function POST(request: NextRequest) {
         donorEmail: validated.donorEmail.trim(),
         userId,
         amount: validated.amount,
-        currency: gateway.currency,
+        currency: DEFAULT_DONATION_CURRENCY,
         category: validated.category,
         provider: "bank_transfer",
         providerId: gateway.id,
@@ -56,7 +57,7 @@ export async function POST(request: NextRequest) {
         iban: gateway.iban,
         bic: gateway.bic,
         reference,
-        currency: gateway.currency,
+        currency: DEFAULT_DONATION_CURRENCY,
         amount: validated.amount,
       },
     });

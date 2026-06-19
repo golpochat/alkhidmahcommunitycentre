@@ -6,7 +6,6 @@ import { PrayerCard } from "@/components/display/prayer-card";
 import { getDisplayEffectiveNow } from "@/lib/display-time";
 import {
   filterValidJumuahSlots,
-  isBeforeLastJumuah,
 } from "@/lib/seasonal-client";
 import {
   findNextPrayer,
@@ -32,10 +31,7 @@ export function PrayerTimesPanel({
   const effectiveNow = getDisplayEffectiveNow(schedule, now);
   const nextPrayer = findNextPrayer(schedule, effectiveNow);
   const validJumuah = filterValidJumuahSlots(schedule);
-  const showJumuah =
-    schedule.isFriday &&
-    isBeforeLastJumuah(schedule, effectiveNow) &&
-    validJumuah.length > 0;
+  const fridayWithJumuah = schedule.isFriday && validJumuah.length > 0;
   const combinedMaghribIsha = isCombinedMaghribIsha(schedule);
 
   const isNextFard = (name: string) =>
@@ -46,7 +42,7 @@ export function PrayerTimesPanel({
     isFardPrayerActive(schedule, name, effectiveNow);
 
   const activeJumuahIndex =
-    showJumuah && effectiveNow
+    fridayWithJumuah && effectiveNow
       ? getActiveJumuahIndex(
           validJumuah,
           effectiveNow,
@@ -54,9 +50,9 @@ export function PrayerTimesPanel({
         )
       : null;
 
-  let dhuhrColumn: ReactNode;
+  let dhuhrColumn: ReactNode = null;
 
-  if (showJumuah) {
+  if (fridayWithJumuah) {
     dhuhrColumn = (
       <JumuahCard
         slots={validJumuah.map((slot) => ({
@@ -68,14 +64,7 @@ export function PrayerTimesPanel({
         isActive={activeJumuahIndex !== null}
       />
     );
-  } else if (schedule.isFriday) {
-    dhuhrColumn = (
-      <div
-        className="display-prayer-card display-prayer-card-empty"
-        aria-hidden="true"
-      />
-    );
-  } else {
+  } else if (!schedule.isFriday) {
     dhuhrColumn = (
       <PrayerCard
         name="Dhuhr"

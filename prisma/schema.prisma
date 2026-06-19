@@ -80,8 +80,9 @@ model User {
   email          String          @unique
   passwordHash   String
   name           String?
-  emailVerified  Boolean         @default(false)
-  roleId         String
+  emailVerified      Boolean         @default(false)
+  privacyConsentAt   DateTime?
+  roleId             String
   isActive       Boolean         @default(true)
   role           AccessRole      @relation(fields: [roleId], references: [id])
   createdAt      DateTime        @default(now())
@@ -149,6 +150,23 @@ model ContentAuditLog {
   @@index([createdAt])
 }
 
+model LegalPolicy {
+  id             String    @id @default(cuid())
+  slug           String    @unique
+  title          String
+  summary        String?
+  content        String    @db.Text
+  published      Boolean   @default(false)
+  version        String    @default("1.0")
+  effectiveDate  DateTime?
+  lastReviewedAt DateTime?
+  sortOrder      Int       @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([published, sortOrder])
+}
+
 model Event {
   id          String    @id @default(cuid())
   title       String
@@ -190,14 +208,15 @@ model Class {
 }
 
 model Registration {
-  id        String   @id @default(cuid())
-  name      String
-  email     String
-  phone     String?
-  notes     String?
-  classId   String
-  createdAt DateTime @default(now())
-  class     Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  id               String    @id @default(cuid())
+  name             String
+  email            String
+  phone            String?
+  notes            String?
+  classId          String
+  privacyConsentAt DateTime?
+  createdAt        DateTime  @default(now())
+  class            Class     @relation(fields: [classId], references: [id], onDelete: Cascade)
 }
 
 model GalleryAlbum {
@@ -348,15 +367,16 @@ model MosqueEidSlot {
 }
 
 model ContactMessage {
-  id        String    @id @default(cuid())
-  name      String
-  email     String
-  phone     String?
-  subject   String
-  message   String
-  status    String    @default("pending")
-  handledAt DateTime?
-  createdAt DateTime  @default(now())
+  id               String    @id @default(cuid())
+  name             String
+  email            String
+  phone            String?
+  subject          String
+  message          String
+  status           String    @default("pending")
+  privacyConsentAt DateTime?
+  handledAt        DateTime?
+  createdAt        DateTime  @default(now())
 
   @@index([status, createdAt])
 }

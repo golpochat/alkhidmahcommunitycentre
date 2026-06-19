@@ -15,6 +15,7 @@ import {
   YAxis,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatDonationMoney } from "@/lib/donation-processing-fee";
 import type {
   DonationCategoryPoint,
   DonationProviderPoint,
@@ -135,7 +136,9 @@ export function AdminDashboardCharts({
                   cx="50%"
                   cy="50%"
                   outerRadius={100}
-                  label={({ name, value }) => `${name}: €${value}`}
+                  label={({ name, value }) =>
+                    `${name}: ${formatDonationMoney(Number(value))}`
+                  }
                 >
                   {donationsByProvider.map((entry, index) => (
                     <Cell

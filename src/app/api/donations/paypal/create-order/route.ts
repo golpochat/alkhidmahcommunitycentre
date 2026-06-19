@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { resolveDonationUserId } from "@/lib/donation-user-link";
 import { createPayPalOrder } from "@/lib/paypal";
 import { resolveDonationPaymentAmount } from "@/lib/donation-payment-amount";
+import { DEFAULT_DONATION_CURRENCY } from "@/lib/donation-processing-fee";
 import { getEnabledPayPalGateway } from "@/lib/payment-gateway-store";
 import { assertActiveDonationCategory } from "@/lib/donation-categories";
 import { donationFormSchema } from "@/lib/validations";
@@ -36,7 +37,7 @@ export async function POST(request: NextRequest) {
         amount: payment.donationData.amount,
         processingFeeCents: payment.donationData.processingFeeCents,
         coverFee: payment.donationData.coverFee,
-        currency: paypalGateway.currency,
+        currency: DEFAULT_DONATION_CURRENCY,
         category: validated.category,
         provider: "paypal",
         status: "pending",
@@ -45,7 +46,7 @@ export async function POST(request: NextRequest) {
 
     const order = await createPayPalOrder({
       amount: payment.chargeCents / 100,
-      currency: paypalGateway.currency,
+      currency: DEFAULT_DONATION_CURRENCY,
       category: validated.category,
       donationId: donation.id,
     });

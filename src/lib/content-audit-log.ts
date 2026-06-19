@@ -8,7 +8,8 @@ export type ContentAuditEntityType =
   | "class"
   | "gallery_album"
   | "gallery_item"
-  | "donation_category";
+  | "donation_category"
+  | "legal_policy";
 
 export async function logContentPublishAction(input: {
   entityType: ContentAuditEntityType;
