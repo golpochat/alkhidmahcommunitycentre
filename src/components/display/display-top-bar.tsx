@@ -35,11 +35,7 @@ export function DisplayTopBar({
     return (
       <header className={topBarClass}>
         <div className={logoBlockClass}>
-          <img
-            src={LOGO_PATH}
-            alt="Al Khidmah Logo"
-            className={logoClass}
-          />
+          <img src={LOGO_PATH} alt="Al Khidmah Logo" className={logoClass} />
         </div>
         <DisplayLiveTime className="display-top-bar-clock-center" />
         <DisplayLandscapeDates schedule={schedule} now={now} />

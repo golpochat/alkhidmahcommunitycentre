@@ -221,17 +221,6 @@ export function resolveDisplayCountdown(
     }
   }
 
-  if (shouldShowJumuahCountdown(schedule, now)) {
-    const jumuah = getJumuahCountdown(schedule, now);
-    if (jumuah) {
-      return {
-        type: "seasonal",
-        countdown: jumuah,
-        totalSeconds: 7200,
-      };
-    }
-  }
-
   const nextPrayer = findNextPrayer(schedule, now);
   if (!nextPrayer) return { type: "none" };
 

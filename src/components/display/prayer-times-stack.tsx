@@ -1,18 +1,27 @@
 "use client";
 
-import { EidPrayerBanner } from "@/components/prayer-times/eid-prayer-banner";
+import { getDisplayEffectiveNow } from "@/lib/display-time";
 import { PrayerTimesDisplay } from "@/components/prayer-times/prayer-times-display";
-import type { PrayerTimesResponse } from "@/lib/prayer-times-client";
+import { findNextPrayer, type PrayerTimesResponse } from "@/lib/prayer-times-client";
 
 interface PrayerTimesStackProps {
   schedule: PrayerTimesResponse;
+  now?: Date | null;
 }
 
-export function PrayerTimesStack({ schedule }: PrayerTimesStackProps) {
+export function PrayerTimesStack({ schedule, now = null }: PrayerTimesStackProps) {
+  const effectiveNow = getDisplayEffectiveNow(schedule, now);
+  const nextPrayer = findNextPrayer(schedule, effectiveNow);
+
   return (
     <section className="display-prayer-times-stack display-portrait-section">
-      {schedule.eid.type && <EidPrayerBanner eid={schedule.eid} compact />}
-      <PrayerTimesDisplay schedule={schedule} showEidBanner={false} showBadges />
+      <PrayerTimesDisplay
+        schedule={schedule}
+        showEidBanner={false}
+        showBadges={false}
+        nextPrayer={nextPrayer}
+        now={effectiveNow}
+      />
     </section>
   );
 }

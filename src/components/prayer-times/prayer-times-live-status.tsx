@@ -43,7 +43,7 @@ export function PrayerTimesCountdownFooter({ schedule }: PrayerTimesCountdownFoo
   const nextPrayer = findNextPrayer(schedule, now);
   if (!nextPrayer) return null;
 
-  const countdownSeconds = getCountdownToNextPrayer(nextPrayer, now);
+  const countdownSeconds = getCountdownToNextPrayer(nextPrayer, now, schedule);
   if (countdownSeconds === null) return null;
 
   return (

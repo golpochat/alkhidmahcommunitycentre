@@ -8,11 +8,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { FOLLOWS_MAGHRIB_LABEL } from "@/lib/prayer-iqama";
 import {
   formatAdhanDisplay,
   formatIqamaDisplay,
   formatJumuahNoticeLine,
-  formatPrayerTime24h,
+  isCombinedMaghribIsha,
   type NextPrayer,
   type PrayerSlot,
   type PrayerTimesResponse,
@@ -35,12 +36,21 @@ function PrayerTableRow({
   row,
   nextPrayer,
   notice,
+  adhanDisplay,
+  iqamaDisplay,
 }: {
   row: PrayerRow;
   nextPrayer: NextPrayer | null;
   notice?: string;
+  adhanDisplay?: string;
+  iqamaDisplay?: string;
 }) {
   const isNext = isNextRow(nextPrayer, row.name);
+  const adhanLabel = adhanDisplay ?? formatAdhanDisplay(row.slot);
+  const iqamaLabel =
+    row.key === "sunrise"
+      ? "—"
+      : (iqamaDisplay ?? formatIqamaDisplay(row.slot));
 
   return (
     <TableRow
@@ -57,10 +67,10 @@ function PrayerTableRow({
         )}
       </TableCell>
       <TableCell className="prayer-times-table-cell prayer-times-table-cell-time text-right">
-        {formatAdhanDisplay(row.slot)}
+        {adhanLabel}
       </TableCell>
       <TableCell className="prayer-times-table-cell prayer-times-table-cell-time text-right">
-        {row.key === "sunrise" ? "—" : formatIqamaDisplay(row.slot)}
+        {iqamaLabel}
       </TableCell>
     </TableRow>
   );
@@ -70,14 +80,23 @@ interface PrayerTimesDisplayProps {
   schedule: PrayerTimesResponse;
   showEidBanner?: boolean;
   showBadges?: boolean;
+  nextPrayer?: NextPrayer | null;
+  now?: Date | null;
 }
 
 export function PrayerTimesDisplay({
   schedule,
   showEidBanner = true,
   showBadges = true,
+  nextPrayer: nextPrayerOverride,
+  now = null,
 }: PrayerTimesDisplayProps) {
-  const nextPrayer = schedule.nextPrayer;
+  const nextPrayer = nextPrayerOverride ?? schedule.nextPrayer;
+  const combinedMaghribIsha = isCombinedMaghribIsha(schedule);
+  const afterMaghribLabel =
+    schedule.prayers.isha.iqamaDisplay ??
+    schedule.prayers.isha.adhanDisplay ??
+    FOLLOWS_MAGHRIB_LABEL;
   const fridayJumuah = schedule.isFriday && schedule.jumuah.length > 0;
   const jumuahNotice =
     !schedule.isFriday && schedule.configuredJumuah.length > 0
@@ -153,6 +172,7 @@ export function PrayerTimesDisplay({
                 jumuah={schedule.jumuah}
                 nextPrayer={nextPrayer}
                 asrAdhan={schedule.prayers.asr.adhan}
+                now={now}
               />
             ) : (
               dhuhrRow && (
@@ -169,7 +189,21 @@ export function PrayerTimesDisplay({
             )}
 
             {tailRows.map((row) => (
-              <PrayerTableRow key={row.key} row={row} nextPrayer={nextPrayer} />
+              <PrayerTableRow
+                key={row.key}
+                row={row}
+                nextPrayer={nextPrayer}
+                adhanDisplay={
+                  row.key === "isha" && combinedMaghribIsha
+                    ? afterMaghribLabel
+                    : undefined
+                }
+                iqamaDisplay={
+                  row.key === "isha" && combinedMaghribIsha
+                    ? afterMaghribLabel
+                    : undefined
+                }
+              />
             ))}
           </TableBody>
         </Table>

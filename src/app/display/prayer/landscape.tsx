@@ -49,7 +49,7 @@ export function LandscapeDisplayLayout({
         </div>
 
         <div className="display-landscape-stage display-landscape-section">
-          <div className="display-landscape-support-row">
+          <div className="display-landscape-countdown-center">
             <NextPrayerCountdown
               schedule={schedule}
               seasonal={seasonal}
@@ -57,9 +57,6 @@ export function LandscapeDisplayLayout({
               now={now}
               variant="landscape"
             />
-            {showWeather ? (
-              <DisplayLandscapeBottomWeather weather={weather} />
-            ) : null}
           </div>
         </div>
       </div>
@@ -72,6 +69,11 @@ export function LandscapeDisplayLayout({
           ayatRotationSpeed={settings.rotationSpeed}
           variant="landscape"
         />
+        {showWeather ? (
+          <div className="display-landscape-weather-anchor">
+            <DisplayLandscapeBottomWeather weather={weather} />
+          </div>
+        ) : null}
       </div>
     </div>
   );

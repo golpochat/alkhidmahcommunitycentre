@@ -41,11 +41,9 @@ export function CountdownRing({
     : "display-countdown-ring-time";
 
   const ringClass =
-    variant === "landscape"
-      ? "display-countdown-ring display-countdown-ring-landscape"
-      : variant === "portrait"
-        ? "display-countdown-ring display-countdown-ring-portrait"
-        : "display-countdown-ring";
+    variant === "landscape" || variant === "portrait"
+      ? `display-countdown-ring display-countdown-ring-display display-countdown-ring-${variant}`
+      : "display-countdown-ring";
 
   return (
     <div className={ringClass}>

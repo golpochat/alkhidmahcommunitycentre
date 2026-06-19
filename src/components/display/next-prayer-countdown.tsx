@@ -4,7 +4,6 @@ import { CountdownRing } from "@/components/display/countdown-ring";
 import type { SerializedDisplayNotice } from "@/lib/display-types";
 import {
   resolveDisplayCountdown,
-  shouldShowJumuahCountdown,
 } from "@/lib/seasonal-client";
 import type { SeasonalFlags } from "@/lib/seasonal-types";
 import {
@@ -69,7 +68,6 @@ export function NextPrayerCountdown({
   const emergency = notices.find((notice) => notice.priority === "high");
   if (emergency) return null;
   if (seasonal.isRamadan) return null;
-  if (shouldShowJumuahCountdown(schedule, now)) return null;
 
   const active = resolveDisplayCountdown(schedule, seasonal, notices, now);
   if (active.type !== "prayer") return null;

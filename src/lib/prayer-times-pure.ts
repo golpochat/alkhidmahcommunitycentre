@@ -745,24 +745,47 @@ export function getActiveJumuahIndex(
   if (jumuah.length === 0) return null;
 
   const sorted = [...jumuah].sort((a, b) => a.index - b.index);
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const currentMinutes = getDisplayMinutes(now);
+  const asrMinutes = asrAdhan ? parseTimeToMinutes(asrAdhan) : null;
 
-  if (asrAdhan) {
-    const asrMinutes = parseTimeToMinutes(asrAdhan);
-    if (currentMinutes >= asrMinutes) {
-      return null;
-    }
+  if (asrMinutes !== null && currentMinutes >= asrMinutes) {
+    return null;
   }
 
-  for (const slot of sorted) {
+  for (let i = 0; i < sorted.length; i++) {
+    const slot = sorted[i];
     if (!slot.adhan) continue;
 
-    if (parseTimeToMinutes(slot.adhan) > currentMinutes) {
+    const start = parseTimeToMinutes(slot.adhan);
+    const iqamaMinutes = slot.iqama ? parseTimeToMinutes(slot.iqama) : null;
+    const nextAdhanMinutes = sorted[i + 1]?.adhan
+      ? parseTimeToMinutes(sorted[i + 1].adhan!)
+      : null;
+
+    let end: number | null = null;
+    if (iqamaMinutes !== null && nextAdhanMinutes !== null) {
+      end = Math.min(iqamaMinutes, nextAdhanMinutes);
+    } else if (iqamaMinutes !== null) {
+      end = iqamaMinutes;
+    } else if (nextAdhanMinutes !== null) {
+      end = nextAdhanMinutes;
+    } else {
+      end = asrMinutes;
+    }
+
+    if (end === null || end <= start) continue;
+
+    const isActive =
+      iqamaMinutes !== null
+        ? currentMinutes >= start && currentMinutes <= end
+        : currentMinutes >= start && currentMinutes < end;
+
+    if (isActive) {
       return slot.index;
     }
   }
 
-  return sorted[sorted.length - 1].index;
+  return null;
 }
 
 export function buildAdminFormDefaults(

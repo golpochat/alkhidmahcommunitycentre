@@ -21,7 +21,10 @@ interface AdminMessageListPanelProps {
   onEdit: (message: SerializedMessage) => void;
   onDuplicate: (message: SerializedMessage) => void;
   onDelete: (id: string) => void;
-  onToggleRotation: (message: SerializedMessage, includeInRotation: boolean) => void;
+  onToggleRotation: (
+    message: SerializedMessage,
+    includeInRotation: boolean,
+  ) => void;
   onReorder: (
     state: "PRIORITY" | "NON_PRIORITY",
     orderedIds: string[],
@@ -48,7 +51,10 @@ function MessageTableSection({
   onEdit: (message: SerializedMessage) => void;
   onDuplicate: (message: SerializedMessage) => void;
   onDelete: (id: string) => void;
-  onToggleRotation: (message: SerializedMessage, includeInRotation: boolean) => void;
+  onToggleRotation: (
+    message: SerializedMessage,
+    includeInRotation: boolean,
+  ) => void;
   onReorder: (
     state: "PRIORITY" | "NON_PRIORITY",
     orderedIds: string[],
@@ -57,10 +63,7 @@ function MessageTableSection({
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropTargetId, setDropTargetId] = useState<string | null>(null);
 
-  const ordered = useMemo(
-    () => sortMessagesByOrder(messages),
-    [messages],
-  );
+  const ordered = useMemo(() => sortMessagesByOrder(messages), [messages]);
 
   async function handleDrop(targetId: string) {
     if (!draggingId || draggingId === targetId) {
@@ -94,12 +97,19 @@ function MessageTableSection({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="admin-table-col-drag" aria-label="Reorder" />
+              <TableHead
+                className="admin-table-col-drag"
+                aria-label="Reorder"
+              />
               <TableHead>Title</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="admin-table-col-hide-md">Queue</TableHead>
-              <TableHead className="admin-table-col-hide-lg">Validity</TableHead>
-              <TableHead className="admin-table-col-hide-xl">Schedule</TableHead>
+              <TableHead className="admin-table-col-hide-lg">
+                Validity
+              </TableHead>
+              <TableHead className="admin-table-col-hide-xl">
+                Schedule
+              </TableHead>
               <TableHead>Rotation</TableHead>
               <TableHead className="admin-table-col-actions">Actions</TableHead>
             </TableRow>
@@ -107,10 +117,7 @@ function MessageTableSection({
           <TableBody>
             {ordered.length === 0 ? (
               <TableRow>
-                <TableCell
-                  colSpan={8}
-                  className="admin-messages-table-empty"
-                >
+                <TableCell colSpan={8} className="admin-messages-table-empty">
                   No messages in this section yet.
                 </TableCell>
               </TableRow>

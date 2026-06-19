@@ -2,10 +2,13 @@
 
 import type { DisplayLayoutProps } from "@/components/display/display-layout-props";
 import { DisplayFullscreenButton } from "@/components/display/display-fullscreen-button";
-import { DisplayPortraitHeader } from "@/components/display/display-portrait-header";
+import { DisplayLandscapeBottomWeather } from "@/components/display/display-landscape-bottom-weather";
+import { DisplayTopBar } from "@/components/display/display-top-bar";
+import { PrayerTimesStack } from "@/components/display/prayer-times-stack";
+import { NextPrayerCountdown } from "@/components/display/next-prayer-countdown";
 import { RotationContainer } from "@/components/display/rotation-container";
-import { DisplayPortraitMiddle } from "@/components/display/display-portrait-middle";
-import { DisplayPortraitPrayerTable } from "@/components/display/display-portrait-prayer-table";
+import { SeasonalModeWrapper } from "@/components/display/seasonal-mode-wrapper";
+import { EidPrayerBanner } from "@/components/prayer-times/eid-prayer-banner";
 
 export function PortraitDisplayLayout({
   schedule,
@@ -23,24 +26,48 @@ export function PortraitDisplayLayout({
 
   return (
     <div className="display-portrait-root">
-      <DisplayPortraitHeader schedule={schedule} now={now} />
+      <div className="display-portrait-padded">
+        <DisplayTopBar schedule={schedule} now={now} variant="landscape" />
 
-      <DisplayPortraitPrayerTable schedule={schedule} now={now} />
+        <div className="display-portrait-main display-portrait-section">
+          <SeasonalModeWrapper seasonal={seasonal} schedule={schedule} now={now}>
+            {schedule.eid.type ? (
+              <div className="display-portrait-eid-banner display-portrait-section">
+                <EidPrayerBanner eid={schedule.eid} compact />
+              </div>
+            ) : null}
 
-      <DisplayPortraitMiddle
-        schedule={schedule}
-        seasonal={seasonal}
-        weather={weather}
-        showWeather={showWeather}
-        now={now}
-      />
+            <PrayerTimesStack schedule={schedule} now={now} />
+          </SeasonalModeWrapper>
+        </div>
 
-      <RotationContainer
-        messages={announcementMessages}
-        ayat={ayat}
-        ayatEnabled={ayatEnabled}
-        ayatRotationSpeed={settings.rotationSpeed}
-      />
+        <div className="display-portrait-stage display-portrait-section">
+          <div className="display-portrait-countdown-center">
+            <NextPrayerCountdown
+              schedule={schedule}
+              seasonal={seasonal}
+              notices={[]}
+              now={now}
+              variant="portrait"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="display-portrait-messages">
+        <RotationContainer
+          messages={announcementMessages}
+          ayat={ayat}
+          ayatEnabled={ayatEnabled}
+          ayatRotationSpeed={settings.rotationSpeed}
+          variant="landscape"
+        />
+        {showWeather ? (
+          <div className="display-portrait-weather-anchor">
+            <DisplayLandscapeBottomWeather weather={weather} />
+          </div>
+        ) : null}
+      </div>
 
       <DisplayFullscreenButton />
     </div>

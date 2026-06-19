@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import {
   formatPrayerTime24h,
@@ -16,47 +16,40 @@ interface JumuahFridayRowProps {
   jumuah: JumuahSlot[];
   nextPrayer: NextPrayer | null;
   asrAdhan?: string | null;
+  now?: Date | null;
 }
 
 function jumuahSlotsKey(slots: JumuahSlot[]) {
-  return slots.map((slot) => `${slot.index}:${slot.adhan ?? ""}`).join("|");
+  return slots.map((slot) => `${slot.index}:${slot.adhan ?? ""}:${slot.iqama ?? ""}`).join("|");
 }
 
 export function JumuahFridayRow({
   jumuah,
   nextPrayer,
   asrAdhan,
+  now = null,
 }: JumuahFridayRowProps) {
   const sorted = useMemo(
     () => [...jumuah].sort((a, b) => a.index - b.index),
     [jumuah]
   );
   const slotsKey = useMemo(() => jumuahSlotsKey(sorted), [sorted]);
-  const sortedRef = useRef(sorted);
-  sortedRef.current = sorted;
-  const asrAdhanRef = useRef(asrAdhan);
-  asrAdhanRef.current = asrAdhan;
-
-  const [activeIndex, setActiveIndex] = useState<number | null>(() =>
-    getActiveJumuahIndex(sorted, new Date(), asrAdhan)
-  );
+  const [liveNow, setLiveNow] = useState(() => new Date());
 
   useEffect(() => {
-    setActiveIndex(
-      getActiveJumuahIndex(sortedRef.current, new Date(), asrAdhanRef.current)
-    );
-  }, [slotsKey, asrAdhan]);
+    if (now) return;
 
-  useEffect(() => {
-    const syncActiveJumuah = () => {
-      setActiveIndex(
-        getActiveJumuahIndex(sortedRef.current, new Date(), asrAdhanRef.current)
-      );
-    };
-
-    const interval = setInterval(syncActiveJumuah, 30_000);
+    const syncLiveNow = () => setLiveNow(new Date());
+    syncLiveNow();
+    const interval = setInterval(syncLiveNow, 30_000);
     return () => clearInterval(interval);
-  }, [slotsKey, asrAdhan]);
+  }, [now, slotsKey, asrAdhan]);
+
+  const effectiveNow = now ?? liveNow;
+  const activeIndex = useMemo(
+    () => getActiveJumuahIndex(sorted, effectiveNow, asrAdhan),
+    [sorted, effectiveNow, asrAdhan]
+  );
 
   const isNext = sorted.some(
     (slot) =>
