@@ -1,6 +1,6 @@
 import type { CachedAyah } from "@/lib/display-cache";
 import type { WeatherPayload } from "@/lib/display-types";
-import type { SerializedDisplaySettings } from "@/lib/display-settings";
+import type { SerializedDisplaySettings } from "@/lib/display-settings-types";
 import type { SerializedEvent } from "@/lib/events";
 import type { RotationMessage } from "@/lib/rotation-client";
 import type { SeasonalFlags } from "@/lib/seasonal-types";

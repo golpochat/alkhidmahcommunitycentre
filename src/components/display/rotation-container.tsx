@@ -15,6 +15,7 @@ interface RotationContainerProps {
   ayatEnabled?: boolean;
   ayatRotationSpeed?: number;
   variant?: "default" | "landscape";
+  fillStage?: boolean;
 }
 
 const ROTATION_FADE_MS = 500;
@@ -32,16 +33,19 @@ function PortraitAnnouncementSlide({
     <article
       className={`display-portrait-info-panel${isPriority ? " display-portrait-info-panel-emergency" : ""}`}
     >
-      <p
-        className={
-          isPriority
-            ? "display-portrait-panel-kicker display-portrait-panel-kicker-emergency"
-            : "display-portrait-panel-kicker display-portrait-panel-kicker-gold"
-        }
-      >
-        {isPriority ? "Important notice" : "Announcements"}
-      </p>
-      <p className="display-portrait-panel-body">{`${title}: ${body}`}</p>
+      {!isPriority ? (
+        <p className="display-portrait-panel-kicker display-portrait-panel-kicker-gold">
+          Announcements
+        </p>
+      ) : null}
+      {isPriority ? (
+        <>
+          <p className="display-portrait-panel-title">{title}</p>
+          <p className="display-portrait-panel-body">{body}</p>
+        </>
+      ) : (
+        <p className="display-portrait-panel-body">{`${title}: ${body}`}</p>
+      )}
     </article>
   );
 }
@@ -59,15 +63,11 @@ function LandscapeAnnouncementSlide({
     <article
       className={`display-landscape-announcement-block${isPriority ? " display-landscape-announcement-priority" : ""}`}
     >
-      <p
-        className={
-          isPriority
-            ? "display-landscape-announcement-kicker"
-            : "display-landscape-announcement-kicker display-landscape-announcement-kicker-gold"
-        }
-      >
-        {isPriority ? "Important notice" : "Announcements"}
-      </p>
+      {!isPriority ? (
+        <p className="display-landscape-announcement-kicker display-landscape-announcement-kicker-gold">
+          Announcements
+        </p>
+      ) : null}
       <p className="display-landscape-announcement-title">{title}</p>
       <p className="display-landscape-announcement-message">{body}</p>
     </article>
@@ -160,6 +160,7 @@ export function RotationContainer({
   ayatEnabled = false,
   ayatRotationSpeed = 15,
   variant = "default",
+  fillStage = false,
 }: RotationContainerProps) {
   const slides = useMemo(
     () =>
@@ -218,7 +219,7 @@ export function RotationContainer({
   const activeSlide = slides[currentIndex % slides.length];
   const isLandscape = variant === "landscape";
   const sectionClass = isLandscape
-    ? "display-rotating-panels display-rotating-panels-landscape"
+    ? `display-rotating-panels display-rotating-panels-landscape${fillStage ? " display-rotating-panels-stage" : ""}`
     : "display-portrait-info-section display-rotating-panels";
 
   const dots =
@@ -236,12 +237,13 @@ export function RotationContainer({
 
   return (
     <section className={sectionClass} aria-label="Rotating display content">
-      {isLandscape ? dots : null}
+      {isLandscape && !fillStage ? dots : null}
       <div
         className={`display-rotating-panels-inner${visible ? " display-rotating-panels-visible" : " display-rotating-panels-hidden"}`}
       >
         {renderSlide(activeSlide, variant)}
       </div>
+      {isLandscape && fillStage ? dots : null}
       {!isLandscape ? dots : null}
     </section>
   );

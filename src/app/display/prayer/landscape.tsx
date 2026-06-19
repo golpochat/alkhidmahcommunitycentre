@@ -1,13 +1,13 @@
 "use client";
 
 import type { DisplayLayoutProps } from "@/components/display/display-layout-props";
-import { DisplayLandscapeBottomWeather } from "@/components/display/display-landscape-bottom-weather";
+import { DisplayBottomBar } from "@/components/display/display-bottom-bar";
 import { RotationContainer } from "@/components/display/rotation-container";
 import { DisplayTopBar } from "@/components/display/display-top-bar";
-import { NextPrayerCountdown } from "@/components/display/next-prayer-countdown";
 import { PrayerTimesPanel } from "@/components/display/prayer-times-panel";
 import { SeasonalModeWrapper } from "@/components/display/seasonal-mode-wrapper";
 import { EidPrayerBanner } from "@/components/prayer-times/eid-prayer-banner";
+import { isWeatherEnabled } from "@/lib/display-settings-types";
 
 export function LandscapeDisplayLayout({
   schedule,
@@ -18,10 +18,7 @@ export function LandscapeDisplayLayout({
   settings,
   now,
 }: DisplayLayoutProps) {
-  const showWeather = settings.enabledPanels.includes("weather");
-  const announcementsEnabled = settings.enabledPanels.includes("announcements");
-  const ayatEnabled = settings.enabledPanels.includes("ayat");
-  const announcementMessages = announcementsEnabled ? rotationMessages : [];
+  const showWeather = isWeatherEnabled(settings.enabledPanels);
 
   return (
     <div className="display-landscape-root">
@@ -49,32 +46,25 @@ export function LandscapeDisplayLayout({
         </div>
 
         <div className="display-landscape-stage display-landscape-section">
-          <div className="display-landscape-countdown-center">
-            <NextPrayerCountdown
-              schedule={schedule}
-              seasonal={seasonal}
-              notices={[]}
-              now={now}
-              variant="landscape"
-            />
-          </div>
+          <RotationContainer
+            messages={rotationMessages}
+            ayat={ayat}
+            ayatEnabled
+            ayatRotationSpeed={settings.rotationSpeed}
+            variant="landscape"
+            fillStage
+          />
         </div>
       </div>
 
-      <div className="display-landscape-messages">
-        <RotationContainer
-          messages={announcementMessages}
-          ayat={ayat}
-          ayatEnabled={ayatEnabled}
-          ayatRotationSpeed={settings.rotationSpeed}
-          variant="landscape"
-        />
-        {showWeather ? (
-          <div className="display-landscape-weather-anchor">
-            <DisplayLandscapeBottomWeather weather={weather} />
-          </div>
-        ) : null}
-      </div>
+      <DisplayBottomBar
+        schedule={schedule}
+        seasonal={seasonal}
+        now={now}
+        weather={weather}
+        showWeather={showWeather}
+        variant="landscape"
+      />
     </div>
   );
 }

@@ -64,7 +64,7 @@ export const DEFAULT_PERMISSIONS = [
   },
   {
     key: PERMISSIONS.display.manage,
-    name: "Manage TV display",
+    name: "Manage screen & announcements",
     description: "Configure mosque TV screen notices, ayat, ticker, and settings",
     group: "display",
   },

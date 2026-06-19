@@ -1,14 +1,14 @@
 "use client";
 
 import type { DisplayLayoutProps } from "@/components/display/display-layout-props";
+import { DisplayBottomBar } from "@/components/display/display-bottom-bar";
 import { DisplayFullscreenButton } from "@/components/display/display-fullscreen-button";
-import { DisplayLandscapeBottomWeather } from "@/components/display/display-landscape-bottom-weather";
 import { DisplayTopBar } from "@/components/display/display-top-bar";
 import { PrayerTimesStack } from "@/components/display/prayer-times-stack";
-import { NextPrayerCountdown } from "@/components/display/next-prayer-countdown";
 import { RotationContainer } from "@/components/display/rotation-container";
 import { SeasonalModeWrapper } from "@/components/display/seasonal-mode-wrapper";
 import { EidPrayerBanner } from "@/components/prayer-times/eid-prayer-banner";
+import { isWeatherEnabled } from "@/lib/display-settings-types";
 
 export function PortraitDisplayLayout({
   schedule,
@@ -19,10 +19,7 @@ export function PortraitDisplayLayout({
   settings,
   now,
 }: DisplayLayoutProps) {
-  const showWeather = settings.enabledPanels.includes("weather");
-  const announcementsEnabled = settings.enabledPanels.includes("announcements");
-  const ayatEnabled = settings.enabledPanels.includes("ayat");
-  const announcementMessages = announcementsEnabled ? rotationMessages : [];
+  const showWeather = isWeatherEnabled(settings.enabledPanels);
 
   return (
     <div className="display-portrait-root">
@@ -42,32 +39,25 @@ export function PortraitDisplayLayout({
         </div>
 
         <div className="display-portrait-stage display-portrait-section">
-          <div className="display-portrait-countdown-center">
-            <NextPrayerCountdown
-              schedule={schedule}
-              seasonal={seasonal}
-              notices={[]}
-              now={now}
-              variant="portrait"
-            />
-          </div>
+          <RotationContainer
+            messages={rotationMessages}
+            ayat={ayat}
+            ayatEnabled
+            ayatRotationSpeed={settings.rotationSpeed}
+            variant="landscape"
+            fillStage
+          />
         </div>
       </div>
 
-      <div className="display-portrait-messages">
-        <RotationContainer
-          messages={announcementMessages}
-          ayat={ayat}
-          ayatEnabled={ayatEnabled}
-          ayatRotationSpeed={settings.rotationSpeed}
-          variant="landscape"
-        />
-        {showWeather ? (
-          <div className="display-portrait-weather-anchor">
-            <DisplayLandscapeBottomWeather weather={weather} />
-          </div>
-        ) : null}
-      </div>
+      <DisplayBottomBar
+        schedule={schedule}
+        seasonal={seasonal}
+        now={now}
+        weather={weather}
+        showWeather={showWeather}
+        variant="portrait"
+      />
 
       <DisplayFullscreenButton />
     </div>

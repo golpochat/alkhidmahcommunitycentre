@@ -9,6 +9,7 @@ function serializeAyah(item: {
   arabic: string;
   english: string;
   source: string;
+  includeInRotation: boolean;
   createdAt: Date;
 }) {
   return {
@@ -16,6 +17,7 @@ function serializeAyah(item: {
     arabic: item.arabic,
     english: item.english,
     source: item.source,
+    includeInRotation: item.includeInRotation,
     createdAt: item.createdAt.toISOString(),
   };
 }
@@ -46,6 +48,7 @@ export async function POST(request: NextRequest) {
         arabic: validated.arabic.trim(),
         english: validated.english.trim(),
         source: validated.source.trim(),
+        includeInRotation: validated.includeInRotation ?? true,
       },
     });
 

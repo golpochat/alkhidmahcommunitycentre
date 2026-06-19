@@ -737,6 +737,94 @@ export function buildEidInfoFromRecord(
   };
 }
 
+export type FardPrayerKey = "fajr" | "dhuhr" | "asr" | "maghrib" | "isha";
+
+function isMinutesInPrayerWindow(
+  currentMinutes: number,
+  start: number,
+  end: number,
+  hasIqama: boolean
+) {
+  return hasIqama
+    ? currentMinutes >= start && currentMinutes <= end
+    : currentMinutes >= start && currentMinutes < end;
+}
+
+export function getActiveFardPrayer(
+  schedule: PrayerTimesResponse,
+  now: Date = new Date()
+): FardPrayerKey | null {
+  const currentMinutes = getDisplayMinutes(now);
+  const fridayWithJumuah = schedule.isFriday && schedule.jumuah.length > 0;
+
+  const entries: Array<{ key: FardPrayerKey; slot: PrayerSlot }> = [
+    { key: "fajr", slot: schedule.prayers.fajr },
+  ];
+
+  if (!fridayWithJumuah && schedule.prayers.dhuhr) {
+    entries.push({ key: "dhuhr", slot: schedule.prayers.dhuhr });
+  }
+
+  entries.push(
+    { key: "asr", slot: schedule.prayers.asr },
+    { key: "maghrib", slot: schedule.prayers.maghrib },
+    { key: "isha", slot: schedule.prayers.isha }
+  );
+
+  for (let i = 0; i < entries.length; i++) {
+    const { key, slot } = entries[i];
+    const adhan = normalizeTime(slot.adhan);
+    if (!adhan) continue;
+
+    const start = parseTimeToMinutes(adhan);
+    const iqama = normalizeTime(slot.iqama);
+    const iqamaMinutes = iqama ? parseTimeToMinutes(iqama) : null;
+    const nextAdhan = entries[i + 1]?.slot.adhan
+      ? normalizeTime(entries[i + 1].slot.adhan)
+      : null;
+    const nextAdhanMinutes = nextAdhan ? parseTimeToMinutes(nextAdhan) : null;
+
+    let end: number | null = null;
+    if (iqamaMinutes !== null && nextAdhanMinutes !== null) {
+      end = Math.min(iqamaMinutes, nextAdhanMinutes);
+    } else if (iqamaMinutes !== null) {
+      end = iqamaMinutes;
+    } else if (nextAdhanMinutes !== null) {
+      end = nextAdhanMinutes;
+    }
+
+    if (end === null || end <= start) continue;
+
+    if (
+      isMinutesInPrayerWindow(
+        currentMinutes,
+        start,
+        end,
+        iqamaMinutes !== null
+      )
+    ) {
+      return key;
+    }
+  }
+
+  return null;
+}
+
+export function isFardPrayerActive(
+  schedule: PrayerTimesResponse,
+  prayer: FardPrayerKey,
+  now: Date = new Date()
+): boolean {
+  const active = getActiveFardPrayer(schedule, now);
+  if (active === prayer) return true;
+
+  return (
+    prayer === "isha" &&
+    isCombinedMaghribIsha(schedule) &&
+    active === "maghrib"
+  );
+}
+
 export function getActiveJumuahIndex(
   jumuah: JumuahSlot[],
   now: Date = new Date(),

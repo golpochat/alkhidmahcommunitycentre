@@ -45,7 +45,7 @@ export function DisplayPinGate({ pinCode, children }: DisplayPinGateProps) {
     <div className="display-pin-gate">
       <form onSubmit={handleSubmit} className="display-pin-gate-form">
         <h1 className="font-heading text-2xl font-semibold">Display Locked</h1>
-        <p className="text-sm opacity-80">Enter the TV display PIN to continue.</p>
+        <p className="text-sm opacity-80">Enter the screen PIN to continue.</p>
         <Input
           type="password"
           inputMode="numeric"

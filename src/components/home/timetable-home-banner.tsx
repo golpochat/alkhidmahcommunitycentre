@@ -5,11 +5,17 @@ import { isHijriRamadanStorageYear } from "@/lib/ramadan-season-types";
 import {
   getActiveRamadanYear,
   getRamadanSeasonDates,
+  isRamadanTimetableHomePublished,
   listRamadanTimetable,
 } from "@/lib/ramadan-timetable";
 import { getPublishedMonthlyTimetable } from "@/lib/monthly-timetable";
+import { isPrayerTimetablesHomeBannerVisible } from "@/lib/timetable-home-banner";
 
 export async function TimetableHomeBanner() {
+  if (!(await isPrayerTimetablesHomeBannerVisible())) {
+    return null;
+  }
+
   const [ramadanYear, publishedMonthly] = await Promise.all([
     getActiveRamadanYear(),
     getPublishedMonthlyTimetable(),
@@ -18,7 +24,7 @@ export async function TimetableHomeBanner() {
   let ramadanLink: string | null = null;
   let ramadanLabel: string | null = null;
 
-  if (ramadanYear) {
+  if (ramadanYear && (await isRamadanTimetableHomePublished())) {
     try {
       const season = await getRamadanSeasonDates(ramadanYear);
       const rows = await listRamadanTimetable(ramadanYear);

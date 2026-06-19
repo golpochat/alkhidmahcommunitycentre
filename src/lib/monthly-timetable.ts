@@ -9,6 +9,7 @@ import {
   addMinutesToTime,
   buildDateKey,
   formatAdhanDisplay,
+  formatPrayerTime24h,
   getGregorianMonthDayCount,
   IQAMA_OFFSET_MINUTES,
   normalizeTime,
@@ -16,6 +17,7 @@ import {
   parseDateKey,
   toRecordDateKey,
   type PrayerSlot,
+  type PrayerTimesResponse,
 } from "@/lib/prayer-times-pure";
 import { formatIqamaDisplay } from "@/lib/prayer-iqama";
 import { fetchAlAdhanGregorianCalendar } from "@/lib/prayer-times-aladhan";
@@ -42,19 +44,71 @@ export interface MonthlyDayRow {
 }
 
 function defaultIqama(adhan: string) {
-  return adhan ? addMinutesToTime(adhan, IQAMA_OFFSET_MINUTES) : "";
+  const normalized = normalizeTime(adhan);
+  if (!normalized || !/^\d{2}:\d{2}$/.test(normalized)) {
+    return "";
+  }
+
+  return addMinutesToTime(normalized, IQAMA_OFFSET_MINUTES);
 }
 
 function monthlyAdhanValue(slot: PrayerSlot, apiFallback: string) {
   const display = formatAdhanDisplay(slot);
-  if (display !== "—") return display;
+  if (display !== "—") {
+    const normalized = normalizeTime(display);
+    if (normalized && /^\d{2}:\d{2}$/.test(normalized)) {
+      return normalized;
+    }
+    return display;
+  }
   return normalizeTime(apiFallback) ?? "";
 }
 
 function monthlyIqamaValue(slot: PrayerSlot, adhanFallback: string) {
   const display = formatIqamaDisplay(slot);
-  if (display !== "—") return display;
-  return normalizeTime(slot.iqama) ?? defaultIqama(adhanFallback);
+  if (display !== "—") {
+    const normalized = normalizeTime(display);
+    if (normalized && /^\d{2}:\d{2}$/.test(normalized)) {
+      return normalized;
+    }
+    return display;
+  }
+
+  const iqama = normalizeTime(slot.iqama);
+  if (iqama && /^\d{2}:\d{2}$/.test(iqama)) {
+    return iqama;
+  }
+
+  return defaultIqama(adhanFallback);
+}
+
+function resolveMonthlyJumuahDhuhr(resolved: PrayerTimesResponse) {
+  const slots = [...resolved.jumuah].sort((a, b) => a.index - b.index);
+  const adhanTimes = slots
+    .map((slot) => normalizeTime(slot.adhan))
+    .filter((time): time is string => Boolean(time && /^\d{2}:\d{2}$/.test(time)));
+  const iqamaTimes = slots
+    .map((slot) => normalizeTime(slot.iqama ?? slot.adhan))
+    .filter((time): time is string => Boolean(time && /^\d{2}:\d{2}$/.test(time)));
+
+  if (iqamaTimes.length > 0) {
+    return {
+      adhan: adhanTimes[0] ?? iqamaTimes[0],
+      iqama: iqamaTimes.map((time) => formatPrayerTime24h(time)).join(" / "),
+    };
+  }
+
+  if (adhanTimes.length > 0) {
+    return {
+      adhan: adhanTimes[0],
+      iqama: defaultIqama(adhanTimes[0]) || "Jumu'ah",
+    };
+  }
+
+  return {
+    adhan: "Jumu'ah",
+    iqama: "Jumu'ah",
+  };
 }
 
 async function buildMonthlyRowFromDailyPrayerTimes(
@@ -70,6 +124,18 @@ async function buildMonthlyRowFromDailyPrayerTimes(
 ): Promise<MonthlyDayRow> {
   const date = parseDateKey(dateKey);
   const resolved = await getPrayerTimesForDate(dateKey);
+  const emptyDhuhrSlot: PrayerSlot = {
+    adhan: null,
+    iqama: null,
+    iqamaDisplay: null,
+  };
+  const dhuhrSlot = resolved.prayers.dhuhr ?? emptyDhuhrSlot;
+  const dhuhrAdhanFallback =
+    normalizeTime(resolved.prayers.dhuhr?.adhan) ?? apiTimings.Dhuhr;
+  const jumuahDhuhr =
+    resolved.isFriday && resolved.jumuah.length > 0
+      ? resolveMonthlyJumuahDhuhr(resolved)
+      : null;
 
   return {
     date: dateKey,
@@ -80,14 +146,12 @@ async function buildMonthlyRowFromDailyPrayerTimes(
       normalizeTime(resolved.prayers.fajr.adhan) ?? apiTimings.Fajr,
     ),
     sunrise: normalizeTime(resolved.sunrise ?? apiTimings.Sunrise) ?? "",
-    dhuhrAdhan: monthlyAdhanValue(
-      resolved.prayers.dhuhr ?? { adhan: null, iqama: null, iqamaDisplay: null },
-      apiTimings.Dhuhr,
-    ),
-    dhuhrIqama: monthlyIqamaValue(
-      resolved.prayers.dhuhr ?? { adhan: null, iqama: null, iqamaDisplay: null },
-      normalizeTime(resolved.prayers.dhuhr?.adhan) ?? apiTimings.Dhuhr,
-    ),
+    dhuhrAdhan:
+      jumuahDhuhr?.adhan ??
+      monthlyAdhanValue(dhuhrSlot, apiTimings.Dhuhr),
+    dhuhrIqama:
+      jumuahDhuhr?.iqama ??
+      monthlyIqamaValue(dhuhrSlot, dhuhrAdhanFallback),
     asrAdhan: monthlyAdhanValue(resolved.prayers.asr, apiTimings.Asr),
     asrIqama: monthlyIqamaValue(
       resolved.prayers.asr,
@@ -190,6 +254,78 @@ export async function generateMonthlyTimetable(month: number, year: number) {
   return { month, year, rows };
 }
 
+function parsePublishedSetting(value: string | undefined) {
+  if (value === "true") return true;
+  if (value === "false") return false;
+  return null;
+}
+
+async function setSettingValue(key: string, value: string) {
+  await db.setting.upsert({
+    where: { key },
+    create: { key, value },
+    update: { value },
+  });
+}
+
+export async function getMonthlyTimetablePublishState() {
+  const settings = await getSettingsMap();
+  const month = Number(settings[SETTING_KEYS.monthlyTimetableMonth]);
+  const year = Number(settings[SETTING_KEYS.monthlyTimetableYear]);
+  const hasMonthYear = Boolean(month && year);
+  const rows =
+    hasMonthYear ? await listMonthlyTimetable(month, year) : [];
+  const hasData = rows.length > 0;
+  const explicit = parsePublishedSetting(
+    settings[SETTING_KEYS.monthlyTimetablePublished],
+  );
+  const published =
+    explicit === false
+      ? false
+      : explicit === true || (hasData && explicit === null);
+
+  return {
+    published: published && hasData,
+    month: hasMonthYear ? month : null,
+    year: hasMonthYear ? year : null,
+    hasData,
+  };
+}
+
+export async function setMonthlyTimetableHomePublished(published: boolean) {
+  await setSettingValue(
+    SETTING_KEYS.monthlyTimetablePublished,
+    String(published),
+  );
+}
+
+export async function publishMonthlyTimetableToHomepage(
+  month: number,
+  year: number,
+  rows: MonthlyDayRow[],
+) {
+  await saveMonthlyTimetable(month, year, rows);
+  await setMonthlyTimetableHomePublished(true);
+}
+
+export async function unpublishMonthlyTimetableFromHomepage() {
+  await setMonthlyTimetableHomePublished(false);
+}
+
+export async function getPublishedMonthlyTimetable() {
+  const state = await getMonthlyTimetablePublishState();
+  if (!state.published || !state.month || !state.year) {
+    return null;
+  }
+
+  const rows = await listMonthlyTimetable(state.month, state.year);
+  if (rows.length === 0) {
+    return null;
+  }
+
+  return { month: state.month, year: state.year, rows };
+}
+
 export async function saveMonthlyTimetable(month: number, year: number, rows: MonthlyDayRow[]) {
   await db.$transaction(
     rows.map((row) =>
@@ -248,20 +384,6 @@ export async function saveMonthlyTimetable(month: number, year: number, rows: Mo
   });
 
   return listMonthlyTimetable(month, year);
-}
-
-export async function getPublishedMonthlyTimetable() {
-  const settings = await getSettingsMap();
-  const month = Number(settings[SETTING_KEYS.monthlyTimetableMonth]);
-  const year = Number(settings[SETTING_KEYS.monthlyTimetableYear]);
-  if (!month || !year) {
-    return null;
-  }
-  const rows = await listMonthlyTimetable(month, year);
-  if (rows.length === 0) {
-    return null;
-  }
-  return { month, year, rows };
 }
 
 export { normalizeTime };

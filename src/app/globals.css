@@ -1642,37 +1642,11 @@
   }
 
   .display-portrait-stage {
-    @apply box-border flex min-h-0 w-full max-w-full flex-1 items-center justify-center overflow-hidden;
-    container-type: size;
+    @apply box-border flex min-h-0 w-full max-w-full flex-1 flex-col items-stretch justify-stretch overflow-hidden;
   }
 
   .display-portrait-countdown-center {
     @apply flex h-full w-full min-h-0 max-w-full items-center justify-center p-[clamp(0.25rem,1vh,0.75rem)];
-  }
-
-  .display-portrait-messages {
-    @apply relative box-border flex w-full max-w-full shrink-0 flex-col overflow-visible;
-  }
-
-  .display-portrait-weather-anchor {
-    @apply pointer-events-none absolute z-10;
-    right: clamp(0.75rem, 2vw, 1.5rem);
-    bottom: 100%;
-    margin-bottom: clamp(0.35rem, 0.6vw, 0.5rem);
-  }
-
-  .display-portrait-weather-anchor .display-landscape-weather-block {
-    @apply pointer-events-auto;
-    width: clamp(7.5rem, 20vw, 10rem);
-    padding: clamp(0.5rem, 1vw, 0.85rem);
-  }
-
-  .display-portrait-messages .display-rotating-panels-landscape {
-    @apply gap-[clamp(0.35rem,0.6vw,0.5rem)];
-  }
-
-  .display-portrait-messages .display-landscape-announcement-block {
-    @apply rounded-none border-x-0 border-b-0;
   }
 
   .display-portrait-info-section {
@@ -1726,6 +1700,7 @@
 
   .display-landscape-main {
     @apply box-border w-full max-w-full shrink-0 overflow-hidden;
+    min-height: clamp(11rem, 24vh, 17rem);
   }
 
   .display-landscape-main .display-seasonal-wrapper {
@@ -1738,8 +1713,7 @@
   }
 
   .display-landscape-stage {
-    @apply box-border flex min-h-0 w-full max-w-full flex-1 items-center justify-center overflow-hidden;
-    container-type: size;
+    @apply box-border flex min-h-0 w-full max-w-full flex-1 flex-col items-stretch justify-stretch overflow-hidden;
   }
 
   .display-landscape-countdown-center {
@@ -1752,26 +1726,140 @@
     height: min(100cqw, 100cqh, 720px);
   }
 
-  .display-landscape-messages {
-    @apply relative box-border flex w-full max-w-full shrink-0 flex-col overflow-visible;
+  .display-bottom-bar {
+    @apply relative z-20 isolate grid shrink-0 items-center overflow-hidden border-t border-gold/20 bg-black px-[clamp(1rem,2vw,2rem)] py-[clamp(0.75rem,1.5vh,1.15rem)];
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2.5fr) minmax(0, 1fr);
+    min-height: clamp(7.5rem, 18vh, 12.75rem);
+    max-height: clamp(8.25rem, 21vh, 14.25rem);
   }
 
-  .display-landscape-weather-anchor {
-    @apply pointer-events-none absolute right-[clamp(1rem,2vw,2rem)] z-10;
-    bottom: 100%;
-    margin-bottom: clamp(0.35rem, 0.6vw, 0.5rem);
+  .display-bottom-bar-no-weather {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 3fr) minmax(0, 0.75fr);
   }
 
-  .display-landscape-weather-anchor .display-landscape-weather-block {
-    @apply pointer-events-auto;
+  .display-bottom-bar-no-sunrise {
+    grid-template-columns: minmax(0, 0.75fr) minmax(0, 3fr) minmax(0, 1fr);
   }
 
-  .display-landscape-messages .display-rotating-panels-landscape {
-    @apply gap-[clamp(0.35rem,0.6vw,0.5rem)];
+  .display-bottom-bar-no-sunrise.display-bottom-bar-no-weather {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 4fr) minmax(0, 1fr);
   }
 
-  .display-landscape-messages .display-landscape-announcement-block {
-    @apply rounded-none border-x-0 border-b-0;
+  .display-bottom-bar-sunrise {
+    @apply col-start-1 row-start-1 min-w-0 justify-self-start self-center;
+  }
+
+  .display-bottom-bar-sunrise-block {
+    @apply text-left;
+  }
+
+  .display-bottom-bar-label {
+    @apply mb-[clamp(0.15rem,0.5vh,0.5rem)] max-w-full shrink-0 text-balance font-bold uppercase leading-snug tracking-wide text-white/70;
+    font-size: clamp(0.95rem, 2.1vh, 1.5rem);
+    line-height: 1.15;
+  }
+
+  .display-bottom-bar-label-normal {
+    @apply normal-case tracking-normal;
+  }
+
+  .display-bottom-bar-value {
+    @apply max-w-full shrink-0 font-heading font-bold tabular-nums leading-none text-gold;
+    font-size: clamp(1.65rem, 2.9vh, 2.75rem);
+  }
+
+  .display-bottom-bar-countdown {
+    @apply col-start-2 row-start-1 flex min-h-0 min-w-0 max-w-full flex-col items-center justify-center justify-self-center overflow-hidden text-center;
+  }
+
+  .display-bottom-bar-weather {
+    @apply col-start-3 row-start-1 min-w-0 justify-self-end self-center;
+  }
+
+  .display-bottom-bar-weather-block {
+    @apply text-right;
+  }
+
+  .display-countdown-footer-bar {
+    @apply m-0 flex min-h-0 w-full max-w-full flex-col items-center justify-center overflow-hidden border-0 p-0;
+  }
+
+  .display-emergency-alert-bar {
+    @apply max-w-[min(100%,42rem)] px-[clamp(0.5rem,1vw,1rem)] py-[clamp(0.35rem,0.75vw,0.75rem)];
+  }
+
+  .display-emergency-alert-bar .display-emergency-alert-label {
+    @apply text-[clamp(0.75rem,1.2vw,1rem)];
+  }
+
+  .display-emergency-alert-bar .display-emergency-alert-title {
+    @apply text-[clamp(0.95rem,1.5vw,1.35rem)];
+  }
+
+  .display-emergency-alert-bar .display-emergency-alert-message {
+    @apply text-[clamp(0.85rem,1.25vw,1.1rem)];
+  }
+
+  .display-rotating-panels-stage {
+    @apply flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden;
+  }
+
+  .display-rotating-panels-stage .display-rotating-panels-inner {
+    @apply flex min-h-0 flex-1 items-stretch justify-center overflow-hidden;
+  }
+
+  .display-rotating-panels-stage .display-rotating-panels-dots {
+    @apply mb-0 mt-0 shrink-0 justify-center px-[clamp(0.5rem,1vw,1rem)] pb-[clamp(0.35rem,0.75vh,0.65rem)] pt-[clamp(0.25rem,0.5vh,0.45rem)];
+  }
+
+  .display-landscape-stage .display-landscape-announcement-block,
+  .display-portrait-stage .display-landscape-announcement-block {
+    @apply flex h-full max-h-full min-h-0 w-full flex-col justify-center overflow-hidden rounded-xl border border-gold/20 bg-black/30 p-[clamp(1rem,2vw,2rem)] text-left leading-relaxed;
+  }
+
+  .display-landscape-stage
+    .display-landscape-announcement-block.display-landscape-announcement-priority,
+  .display-portrait-stage
+    .display-landscape-announcement-block.display-landscape-announcement-priority {
+    @apply border-red-500/70 bg-red-900/70;
+  }
+
+  .display-landscape-stage
+    .display-landscape-announcement-priority
+    .display-landscape-announcement-title,
+  .display-portrait-stage
+    .display-landscape-announcement-priority
+    .display-landscape-announcement-title {
+    @apply font-bold text-white;
+  }
+
+  .display-landscape-stage
+    .display-landscape-announcement-priority
+    .display-landscape-announcement-message,
+  .display-portrait-stage
+    .display-landscape-announcement-priority
+    .display-landscape-announcement-message {
+    @apply font-normal text-white/75;
+  }
+
+  .display-landscape-stage .display-landscape-announcement-title,
+  .display-portrait-stage .display-landscape-announcement-title {
+    @apply mb-[clamp(0.65rem,1.1vw,1rem)] font-heading text-[clamp(2.25rem,3.75vw,3.75rem)] font-bold leading-tight;
+  }
+
+  .display-landscape-stage .display-landscape-announcement-message,
+  .display-portrait-stage .display-landscape-announcement-message {
+    @apply text-[clamp(1.35rem,2.1vw,2rem)] font-normal leading-relaxed text-white/85;
+  }
+
+  .display-landscape-stage .display-landscape-announcement-kicker,
+  .display-portrait-stage .display-landscape-announcement-kicker {
+    @apply mb-[clamp(0.5rem,0.9vw,0.75rem)] text-[clamp(1.2rem,1.725vw,1.5rem)];
+  }
+
+  .display-landscape-stage .display-landscape-announcement-message-muted,
+  .display-portrait-stage .display-landscape-announcement-message-muted {
+    @apply text-[clamp(1.275rem,1.65vw,1.575rem)];
   }
 
   .display-landscape-weather-block .display-weather-widget-label {
@@ -2046,7 +2134,7 @@
   }
 
   .display-top-bar-clock-center {
-    @apply box-border min-w-0 max-w-full justify-self-center overflow-hidden text-center font-heading text-[clamp(3.5rem,7vw,9rem)] font-bold tabular-nums leading-none tracking-wide text-white;
+    @apply box-border min-w-0 max-w-full justify-self-center overflow-hidden text-center font-heading text-[clamp(3rem,5.8vw,7.5rem)] font-bold tabular-nums leading-none tracking-wide text-white;
   }
 
   .display-top-bar-dates-right {
@@ -2296,16 +2384,17 @@
   }
 
   .display-landscape-main .display-prayer-times-panel {
-    @apply w-full shrink-0;
+    @apply flex h-full w-full shrink-0 flex-col justify-center;
   }
 
   .display-prayer-times-grid-landscape {
-    @apply box-border grid w-full max-w-full grid-cols-6 gap-[clamp(0.5rem,1vw,1.25rem)] overflow-hidden text-center;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    @apply box-border grid h-full w-full max-w-full grid-cols-5 gap-[clamp(0.65rem,1.2vw,1.5rem)] overflow-hidden text-center;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 
   .display-prayer-times-grid-landscape .display-prayer-card {
-    @apply box-border w-full max-w-full p-[clamp(0.75rem,1.5vw,2rem)];
+    @apply box-border w-full max-w-full p-[clamp(1rem,1.75vw,2.25rem)];
+    min-height: clamp(9rem, 18vh, 14rem);
   }
 
   .display-prayer-times-grid-default {
@@ -2325,16 +2414,24 @@
     @apply border-gold/70 bg-gold/15 shadow-gold;
   }
 
+  .display-prayer-card-active {
+    @apply border-emerald/75 bg-emerald/15 shadow-[0_0_28px_rgba(16,185,129,0.28)];
+  }
+
+  .display-prayer-card-active.display-prayer-card-next {
+    @apply border-emerald/85 bg-emerald/20 shadow-[0_0_32px_rgba(16,185,129,0.35)];
+  }
+
   .display-prayer-card-name {
-    @apply font-heading text-[clamp(1.6rem,2.4vw,3.2rem)] font-bold uppercase tracking-wide text-gold;
+    @apply font-heading text-[clamp(1.75rem,2.7vw,3.5rem)] font-bold uppercase tracking-wide text-gold;
   }
 
   .display-jumuah-card-heading {
-    @apply font-heading text-[clamp(1.6rem,2.4vw,3.2rem)] font-bold uppercase tracking-wide text-gold;
+    @apply font-heading text-[clamp(1.75rem,2.7vw,3.5rem)] font-bold uppercase tracking-wide text-gold;
   }
 
   .display-jumuah-card-list {
-    @apply mt-[clamp(0.35rem,0.75vw,0.85rem)] flex flex-col gap-[clamp(0.15rem,0.35vw,0.35rem)] text-center text-[clamp(0.85rem,1.15vw,1.05rem)] font-semibold tabular-nums leading-snug;
+    @apply mt-[clamp(0.35rem,0.75vw,0.85rem)] flex flex-col gap-[clamp(0.2rem,0.45vw,0.5rem)] text-center font-heading text-[clamp(1.35rem,2vw,2.6rem)] font-bold tabular-nums leading-snug;
   }
 
   .display-jumuah-card-row {
@@ -2354,11 +2451,11 @@
   }
 
   .display-prayer-card-time-label {
-    @apply text-[clamp(0.875rem,1.2vw,1.125rem)] font-bold uppercase tracking-wide text-white/60;
+    @apply text-[clamp(0.95rem,1.35vw,1.25rem)] font-bold uppercase tracking-wide text-white/60;
   }
 
   .display-prayer-card-time-value {
-    @apply font-heading text-[clamp(1.2rem,1.8vw,2.4rem)] font-bold tabular-nums leading-none;
+    @apply font-heading text-[clamp(1.6rem,2.4vw,3rem)] font-bold tabular-nums leading-none;
   }
 
   .display-prayer-card-sunrise-time {
@@ -2512,11 +2609,11 @@
     @apply flex h-full w-full flex-col overflow-hidden;
   }
 
-  .display-rotating-panels.display-rotating-panels-landscape {
+  .display-rotating-panels.display-rotating-panels-landscape:not(.display-rotating-panels-stage) {
     @apply h-auto w-full shrink-0 flex-col overflow-visible;
   }
 
-  .display-rotating-panels.display-rotating-panels-landscape
+  .display-rotating-panels.display-rotating-panels-landscape:not(.display-rotating-panels-stage)
     .display-rotating-panels-inner {
     @apply shrink-0;
   }
@@ -2679,27 +2776,27 @@
   }
 
   .display-landscape-announcement-priority .display-landscape-announcement-message {
-    color: color-mix(in srgb, #ffffff 95%, transparent);
+    @apply font-normal text-white/75;
+  }
+
+  .display-portrait-info-panel-emergency .display-portrait-panel-title {
+    @apply font-heading font-bold text-white;
   }
 
   .display-portrait-info-panel-emergency .display-portrait-panel-body {
-    color: color-mix(in srgb, #ffffff 95%, transparent);
+    @apply font-normal text-white/75;
   }
 
   .admin-display-manager {
     @apply min-w-0 space-y-4;
   }
 
-  .admin-display-toolbar {
-    @apply flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between;
+  .admin-display-tab-bar {
+    @apply flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between;
   }
 
-  .admin-display-toolbar-summary {
-    @apply max-w-3xl text-sm text-muted-foreground;
-  }
-
-  .admin-display-inline-link {
-    @apply font-medium text-gold underline-offset-4 hover:underline;
+  .admin-display-content-tab {
+    @apply mt-4 space-y-6;
   }
 
   .admin-display-preview-link {
@@ -2749,6 +2846,72 @@
 
   .admin-display-checkbox-row {
     @apply flex items-center gap-2 text-sm;
+  }
+
+  .admin-display-ayat-section {
+    @apply mt-0;
+  }
+
+  .admin-ayat-preview-text {
+    @apply line-clamp-2;
+  }
+
+  .admin-ayat-arabic-cell {
+    @apply max-w-[14rem];
+  }
+
+  .admin-ayat-english-cell {
+    @apply max-w-[18rem] text-muted-foreground;
+  }
+
+  .admin-brightness-editor {
+    @apply rounded-lg border border-border p-4;
+    background-color: color-mix(in srgb, var(--secondary) 20%, transparent);
+  }
+
+  .admin-brightness-row {
+    @apply grid gap-4 rounded-lg border border-border bg-background p-4 md:grid-cols-[1fr_1fr_auto] md:items-end;
+  }
+
+  .admin-brightness-row-times {
+    @apply grid gap-3 sm:grid-cols-2;
+  }
+
+  .admin-brightness-row-slider {
+    @apply min-w-0;
+  }
+
+  .admin-brightness-slider {
+    @apply h-2 w-full cursor-pointer accent-gold;
+  }
+
+  .admin-display-preview-strip {
+    @apply mt-6 grid gap-4 border-t border-border pt-4 md:grid-cols-[1.4fr_0.8fr];
+  }
+
+  .admin-display-preview-strip-label {
+    @apply text-xs font-medium uppercase tracking-wide text-gold;
+  }
+
+  .admin-display-preview-strip-title {
+    @apply mt-1 font-heading text-lg font-semibold;
+  }
+
+  .admin-display-preview-strip-body {
+    @apply mt-2 line-clamp-2 text-sm text-muted-foreground;
+  }
+
+  .admin-display-preview-strip-empty {
+    @apply mt-1 text-sm text-muted-foreground;
+  }
+
+  .admin-display-preview-strip-meta {
+    @apply space-y-2 text-sm text-muted-foreground md:border-l md:border-border md:pl-4;
+  }
+
+  .admin-display-preview-strip-meta strong,
+  .admin-display-preview-strip-meta span {
+    @apply text-foreground;
   }
 
   .admin-table-wrap {
@@ -3073,6 +3236,68 @@
       var(--foreground) 75%,
       var(--background)
     );
+  }
+
+  .admin-homepage-publish-control {
+    @apply flex shrink-0 flex-col items-start gap-2 sm:items-end;
+  }
+
+  .admin-homepage-publish-control-label {
+    @apply text-sm font-medium text-foreground;
+  }
+
+  .admin-homepage-publish-state {
+    @apply min-w-[2rem] text-sm font-semibold text-muted-foreground;
+  }
+
+  .admin-homepage-publish-state-on {
+    @apply text-gold;
+  }
+
+  .admin-homepage-publish-switch {
+    width: 2.75rem;
+    min-width: 2.75rem;
+    height: 1.5rem;
+  }
+
+  .admin-homepage-publish-switch[data-checked] {
+    background-color: var(--gold);
+    border-color: var(--gold);
+  }
+
+  .admin-homepage-publish-switch[data-unchecked] {
+    background-color: color-mix(
+      in srgb,
+      var(--foreground) 18%,
+      var(--background)
+    );
+    border: 1px solid color-mix(in srgb, var(--foreground) 45%, transparent);
+  }
+
+  .admin-homepage-publish-switch [data-slot="switch-thumb"] {
+    width: 1.125rem;
+    height: 1.125rem;
+    transition:
+      transform 0.2s ease,
+      background-color 0.2s ease;
+  }
+
+  .admin-homepage-publish-switch[data-checked] [data-slot="switch-thumb"] {
+    transform: translateX(1.2rem);
+    background-color: var(--background);
+  }
+
+  .admin-homepage-publish-switch[data-unchecked] [data-slot="switch-thumb"] {
+    transform: translateX(0);
+    background-color: color-mix(
+      in srgb,
+      var(--foreground) 75%,
+      var(--background)
+    );
+  }
+
+  .admin-homepage-publish-switch::after {
+    display: none;
   }
 
   .admin-messages-table-action-group {

@@ -489,9 +489,10 @@ model DisplaySettings {
 }
 
 model AyahRotation {
-  id        String   @id @default(cuid())
-  arabic    String
-  english   String
-  source    String
-  createdAt DateTime @default(now())
+  id                String   @id @default(cuid())
+  arabic            String
+  english           String
+  source            String
+  includeInRotation Boolean  @default(true)
+  createdAt         DateTime @default(now())
 }

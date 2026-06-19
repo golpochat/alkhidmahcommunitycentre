@@ -32,6 +32,9 @@ export const SETTING_KEYS = {
   ramadanPdfPath: "ramadan_pdf_path",
   monthlyTimetableMonth: "monthly_timetable_month",
   monthlyTimetableYear: "monthly_timetable_year",
+  monthlyTimetablePublished: "monthly_timetable_published",
+  ramadanTimetableHomePublished: "ramadan_timetable_home_published",
+  prayerTimetablesHomeBannerVisible: "prayer_timetables_home_banner_visible",
 } as const;
 
 export const DEFAULT_SETTINGS: Record<string, string> = {
@@ -68,6 +71,9 @@ export const DEFAULT_SETTINGS: Record<string, string> = {
   [SETTING_KEYS.ramadanActiveYear]: "",
   [SETTING_KEYS.monthlyTimetableMonth]: "",
   [SETTING_KEYS.monthlyTimetableYear]: "",
+  [SETTING_KEYS.monthlyTimetablePublished]: "",
+  [SETTING_KEYS.ramadanTimetableHomePublished]: "",
+  [SETTING_KEYS.prayerTimetablesHomeBannerVisible]: "true",
 };
 
 export const ADMIN_SETTING_FIELDS = [

@@ -15,6 +15,7 @@ import {
 } from "@/lib/admin-dashboard-access";
 import { getPublishStatusOverview } from "@/lib/admin-publish-status";
 import { getDashboardAnalytics } from "@/lib/admin-analytics";
+import { DISPLAY_ADMIN_NAV_LABEL } from "@/lib/constants";
 import { getFreshSession } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { ensureDisplaySettings } from "@/lib/display-settings";
@@ -265,7 +266,7 @@ export default async function AdminDashboardPage() {
               <CardHeader>
                 <CardTitle className="font-heading flex items-center gap-2 text-lg">
                   <Monitor className="h-5 w-5 text-gold" />
-                  TV Display
+                  {DISPLAY_ADMIN_NAV_LABEL}
                 </CardTitle>
               </CardHeader>
               <CardContent>

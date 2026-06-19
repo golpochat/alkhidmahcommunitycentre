@@ -1,4 +1,5 @@
 import type { SessionUser } from "@/lib/auth";
+import { DISPLAY_ADMIN_NAV_LABEL } from "@/lib/constants";
 import {
   canManageAboutPage,
   canManageClasses,
@@ -128,7 +129,7 @@ export function getDashboardSubtitle(session: SessionUser): string {
   if (canManageGallery(session)) topics.push("gallery");
   if (canManageClasses(session)) topics.push("education");
   if (canManagePrayerTimes(session)) topics.push("prayer times");
-  if (canManageDisplay(session)) topics.push("TV display");
+  if (canManageDisplay(session)) topics.push(DISPLAY_ADMIN_NAV_LABEL.toLowerCase());
   if (canManageContactMessages(session)) topics.push("contact messages");
   if (canManageAboutPage(session)) topics.push("about page");
 

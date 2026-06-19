@@ -3,7 +3,6 @@
 import type { ReactNode } from "react";
 import { JumuahCard } from "@/components/display/jumuah-card";
 import { PrayerCard } from "@/components/display/prayer-card";
-import { SunriseCard } from "@/components/display/sunrise-card";
 import { getDisplayEffectiveNow } from "@/lib/display-time";
 import {
   filterValidJumuahSlots,
@@ -11,7 +10,10 @@ import {
 } from "@/lib/seasonal-client";
 import {
   findNextPrayer,
+  getActiveJumuahIndex,
   isCombinedMaghribIsha,
+  isFardPrayerActive,
+  type FardPrayerKey,
   type PrayerTimesResponse,
 } from "@/lib/prayer-times-client";
 import { FOLLOWS_MAGHRIB_LABEL } from "@/lib/prayer-iqama";
@@ -40,6 +42,18 @@ export function PrayerTimesPanel({
     nextPrayer?.type === "fard" &&
     nextPrayer.name.toLowerCase() === name.toLowerCase();
 
+  const isActiveFard = (name: FardPrayerKey) =>
+    isFardPrayerActive(schedule, name, effectiveNow);
+
+  const activeJumuahIndex =
+    showJumuah && effectiveNow
+      ? getActiveJumuahIndex(
+          validJumuah,
+          effectiveNow,
+          schedule.prayers.asr.adhan,
+        )
+      : null;
+
   let dhuhrColumn: ReactNode;
 
   if (showJumuah) {
@@ -51,6 +65,7 @@ export function PrayerTimesPanel({
           iqama: slot.iqama,
         }))}
         isNext={nextPrayer?.type === "jumuah"}
+        isActive={activeJumuahIndex !== null}
       />
     );
   } else if (schedule.isFriday) {
@@ -69,6 +84,7 @@ export function PrayerTimesPanel({
         iqama={schedule.prayers.dhuhr?.iqama ?? null}
         iqamaDisplay={schedule.prayers.dhuhr?.iqamaDisplay}
         isNext={isNextFard("dhuhr")}
+        isActive={isActiveFard("dhuhr")}
       />
     );
   }
@@ -89,11 +105,7 @@ export function PrayerTimesPanel({
             iqama={schedule.prayers.fajr.iqama}
             iqamaDisplay={schedule.prayers.fajr.iqamaDisplay}
             isNext={isNextFard("fajr")}
-          />
-
-          <SunriseCard
-            time={schedule.sunrise}
-            isNext={nextPrayer?.type === "sunrise"}
+            isActive={isActiveFard("fajr")}
           />
 
           {dhuhrColumn}
@@ -105,6 +117,7 @@ export function PrayerTimesPanel({
             iqama={schedule.prayers.asr.iqama}
             iqamaDisplay={schedule.prayers.asr.iqamaDisplay}
             isNext={isNextFard("asr")}
+            isActive={isActiveFard("asr")}
           />
 
           <PrayerCard
@@ -114,6 +127,7 @@ export function PrayerTimesPanel({
             iqama={schedule.prayers.maghrib.iqama}
             iqamaDisplay={schedule.prayers.maghrib.iqamaDisplay}
             isNext={isNextFard("maghrib")}
+            isActive={isActiveFard("maghrib")}
           />
 
           <PrayerCard
@@ -132,6 +146,7 @@ export function PrayerTimesPanel({
                   : null
             }
             isNext={isNextFard("isha")}
+            isActive={isActiveFard("isha")}
           />
         </div>
       </section>
@@ -148,6 +163,7 @@ export function PrayerTimesPanel({
           iqama={schedule.prayers.fajr.iqama}
           iqamaDisplay={schedule.prayers.fajr.iqamaDisplay}
           isNext={isNextFard("fajr")}
+          isActive={isActiveFard("fajr")}
         />
 
         {dhuhrColumn}
@@ -159,6 +175,7 @@ export function PrayerTimesPanel({
           iqama={schedule.prayers.asr.iqama}
           iqamaDisplay={schedule.prayers.asr.iqamaDisplay}
           isNext={isNextFard("asr")}
+          isActive={isActiveFard("asr")}
         />
 
         <PrayerCard
@@ -168,6 +185,7 @@ export function PrayerTimesPanel({
           iqama={schedule.prayers.maghrib.iqama}
           iqamaDisplay={schedule.prayers.maghrib.iqamaDisplay}
           isNext={isNextFard("maghrib")}
+          isActive={isActiveFard("maghrib")}
         />
 
         <PrayerCard
@@ -185,6 +203,7 @@ export function PrayerTimesPanel({
               : null
           }
           isNext={isNextFard("isha")}
+          isActive={isActiveFard("isha")}
         />
       </div>
     </section>

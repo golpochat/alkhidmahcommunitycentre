@@ -28,6 +28,9 @@ export const EDUCATION_PATH = "/education";
 export const EDUCATION_API_PATH = "/api/education";
 export const ADMIN_EDUCATION_PATH = "/admin/education";
 
+export const DISPLAY_ADMIN_NAV_LABEL = "Screen & Announcements";
+export const DISPLAY_ADMIN_PATH = "/admin/display";
+
 /** @deprecated Use About CMS settings — visibility controlled in admin */
 export const ABOUT_PAGE_VISIBILITY = {
   values: false,

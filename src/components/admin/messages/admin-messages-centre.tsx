@@ -1,11 +1,12 @@
 "use client";
 
+import { createPortal } from "react-dom";
 import { useCallback, useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { AdminMessageEnginePanel } from "@/components/admin/messages/admin-message-engine-panel";
 import { AdminMessageFormModal } from "@/components/admin/messages/admin-message-form-modal";
 import { AdminMessageListPanel } from "@/components/admin/messages/admin-message-list-panel";
+import { AdminMessagePreviewStrip } from "@/components/admin/messages/admin-message-preview-strip";
 import {
   createEmptyMessageForm,
   formToApiPayload,
@@ -18,17 +19,14 @@ import { parseJsonResponse } from "@/lib/parse-json-response";
 
 interface AdminMessagesCentreProps {
   ayat: CachedAyah[];
-  ayatEnabled: boolean;
-  announcementsEnabled: boolean;
   rotationSpeed: number;
 }
 
 export function AdminMessagesCentre({
   ayat,
-  ayatEnabled,
-  announcementsEnabled,
   rotationSpeed,
 }: AdminMessagesCentreProps) {
+  const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
@@ -36,6 +34,10 @@ export function AdminMessagesCentre({
   const [rotationQueue, setRotationQueue] = useState<SerializedMessage[]>([]);
   const [form, setForm] = useState(createEmptyMessageForm);
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const loadData = useCallback(async () => {
     try {
@@ -173,13 +175,16 @@ export function AdminMessagesCentre({
     }
   }
 
-  async function toggleRotation(
-    message: SerializedMessage,
-    includeInRotation: boolean,
-  ) {
+  async function togglePublished(message: SerializedMessage, published: boolean) {
     setMessages((current) =>
       current.map((item) =>
-        item.id === message.id ? { ...item, includeInRotation } : item,
+        item.id === message.id
+          ? {
+              ...item,
+              status: published ? "ACTIVE" : "INACTIVE",
+              includeInRotation: published,
+            }
+          : item,
       ),
     );
 
@@ -187,7 +192,10 @@ export function AdminMessagesCentre({
       const response = await fetch(`/api/messages/${message.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ includeInRotation }),
+        body: JSON.stringify({
+          status: published ? "ACTIVE" : "INACTIVE",
+          includeInRotation: published,
+        }),
       });
       if (!response.ok) {
         const error = await parseJsonResponse<{ error?: string }>(response);
@@ -196,16 +204,10 @@ export function AdminMessagesCentre({
       await loadData();
     } catch (error) {
       setMessages((current) =>
-        current.map((item) =>
-          item.id === message.id
-            ? { ...item, includeInRotation: message.includeInRotation }
-            : item,
-        ),
+        current.map((item) => (item.id === message.id ? message : item)),
       );
       toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to update rotation setting",
+        error instanceof Error ? error.message : "Failed to update message",
       );
     }
   }
@@ -238,6 +240,21 @@ export function AdminMessagesCentre({
     }
   }
 
+  const messageModal =
+    mounted &&
+    createPortal(
+      <AdminMessageFormModal
+        open={modalOpen}
+        form={form}
+        editingId={editingId}
+        saving={saving}
+        onOpenChange={handleModalOpenChange}
+        onChange={setForm}
+        onSave={() => void saveMessage()}
+      />,
+      document.body,
+    );
+
   if (loading) {
     return (
       <div className="admin-display-loading">
@@ -247,35 +264,27 @@ export function AdminMessagesCentre({
   }
 
   return (
-    <div className="admin-messages-centre">
+    <>
       <AdminMessageListPanel
         messages={messages}
         onCreate={openCreateModal}
         onEdit={openEditModal}
         onDuplicate={(message) => void duplicateMessage(message)}
         onDelete={(id) => void deleteMessage(id)}
-        onToggleRotation={(message, includeInRotation) =>
-          void toggleRotation(message, includeInRotation)
+        onTogglePublished={(message, published) =>
+          void togglePublished(message, published)
         }
         onReorder={reorderMessages}
+        footer={
+          <AdminMessagePreviewStrip
+            messages={messages}
+            rotationQueue={rotationQueue}
+            ayat={ayat}
+            rotationSpeed={rotationSpeed}
+          />
+        }
       />
-      <AdminMessageEnginePanel
-        messages={messages}
-        rotationQueue={rotationQueue}
-        ayat={ayat}
-        ayatEnabled={ayatEnabled}
-        announcementsEnabled={announcementsEnabled}
-        rotationSpeed={rotationSpeed}
-      />
-      <AdminMessageFormModal
-        open={modalOpen}
-        form={form}
-        editingId={editingId}
-        saving={saving}
-        onOpenChange={handleModalOpenChange}
-        onChange={setForm}
-        onSave={() => void saveMessage()}
-      />
-    </div>
+      {messageModal}
+    </>
   );
 }

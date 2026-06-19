@@ -1,36 +1,26 @@
 import "server-only";
 
 import { db } from "@/lib/db";
+import type {
+  DisplayTheme,
+  OrientationOverride,
+  SerializedDisplaySettings,
+} from "@/lib/display-settings-types";
 
-export const DEFAULT_ENABLED_PANELS = [
-  "announcements",
-  "events",
-  "ayat",
-  "weather",
-] as const;
+export type {
+  DisplayTheme,
+  OrientationOverride,
+  SerializedDisplaySettings,
+} from "@/lib/display-settings-types";
 
-export type DisplayPanelKey = (typeof DEFAULT_ENABLED_PANELS)[number];
-
-export type DisplayTheme = "hybrid" | "dark" | "light";
-
-export type OrientationOverride = "landscape" | "portrait" | null;
-
-export interface SerializedDisplaySettings {
-  id: string;
-  rotationSpeed: number;
-  enabledPanels: string[];
-  theme: DisplayTheme;
-  pinCode: string | null;
-  brightnessSchedule: unknown;
-  orientationOverride: OrientationOverride;
-  autoFullscreen: boolean;
-  lastSeenAt: string | null;
-  lastOrientation: string | null;
-}
+export {
+  isWeatherEnabled,
+  weatherEnabledPanels,
+} from "@/lib/display-settings-types";
 
 const DEFAULT_SETTINGS = {
   rotationSpeed: 10,
-  enabledPanels: [...DEFAULT_ENABLED_PANELS],
+  enabledPanels: ["weather"],
   theme: "hybrid" as DisplayTheme,
   pinCode: null as string | null,
   brightnessSchedule: null as unknown,
@@ -56,14 +46,12 @@ export async function ensureDisplaySettings() {
 }
 
 export function serializeDisplaySettings(
-  settings: Awaited<ReturnType<typeof ensureDisplaySettings>>
+  settings: Awaited<ReturnType<typeof ensureDisplaySettings>>,
 ): SerializedDisplaySettings {
   return {
     id: settings.id,
     rotationSpeed: settings.rotationSpeed,
-    enabledPanels: settings.enabledPanels.length
-      ? settings.enabledPanels
-      : [...DEFAULT_ENABLED_PANELS],
+    enabledPanels: settings.enabledPanels,
     theme: (settings.theme as DisplayTheme) || "hybrid",
     pinCode: settings.pinCode,
     brightnessSchedule: settings.brightnessSchedule,

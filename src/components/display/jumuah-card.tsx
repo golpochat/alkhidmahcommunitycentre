@@ -12,12 +12,13 @@ interface JumuahSlotDisplay {
 interface JumuahCardProps {
   slots: JumuahSlotDisplay[];
   isNext?: boolean;
+  isActive?: boolean;
 }
 
-export function JumuahCard({ slots, isNext }: JumuahCardProps) {
+export function JumuahCard({ slots, isNext, isActive }: JumuahCardProps) {
   return (
     <article
-      className={`display-prayer-card display-jumuah-card${isNext ? " display-prayer-card-next" : ""}`}
+      className={`display-prayer-card display-jumuah-card${isNext ? " display-prayer-card-next" : ""}${isActive ? " display-prayer-card-active" : ""}`}
     >
       <h3 className="display-jumuah-card-heading">Jumu&apos;ah Prayers</h3>
       <ul className="display-jumuah-card-list">

@@ -25,7 +25,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { EDUCATION_NAV_LABEL, ADMIN_EDUCATION_PATH } from "@/lib/constants";
+import { DISPLAY_ADMIN_NAV_LABEL, DISPLAY_ADMIN_PATH, EDUCATION_NAV_LABEL, ADMIN_EDUCATION_PATH } from "@/lib/constants";
 import {
   canManageClasses,
   canManageDonations,
@@ -103,8 +103,8 @@ const navLinks = [
     canAccess: canManagePrayerTimes,
   },
   {
-    href: "/admin/display",
-    label: "TV Display",
+    href: DISPLAY_ADMIN_PATH,
+    label: DISPLAY_ADMIN_NAV_LABEL,
     icon: Monitor,
     canAccess: canManageDisplay,
   },

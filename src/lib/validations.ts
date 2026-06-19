@@ -493,14 +493,17 @@ export type MessageCreateFormValues = z.infer<typeof messageCreateSchema>;
 export type MessageUpdateFormValues = z.infer<typeof messageUpdateSchema>;
 export type MessageOrderFormValues = z.infer<typeof messageOrderSchema>;
 
+const brightnessPeriodSchema = z.object({
+  from: z.string().regex(/^\d{2}:\d{2}$/),
+  to: z.string().regex(/^\d{2}:\d{2}$/),
+  brightness: z.number().min(0.2).max(1),
+});
+
 export const displaySettingsSchema = z.object({
   rotationSpeed: z.number().int().min(5).max(120),
-  enabledPanels: z.array(
-    z.enum(["announcements", "events", "ayat", "weather"])
-  ),
-  theme: z.enum(["hybrid", "dark", "light"]),
+  showWeather: z.boolean(),
   pinCode: z.string().max(8).optional().nullable(),
-  brightnessSchedule: z.unknown().optional().nullable(),
+  brightnessSchedule: z.array(brightnessPeriodSchema).optional().nullable(),
   orientationOverride: z.enum(["landscape", "portrait"]).nullable().optional(),
   autoFullscreen: z.boolean().optional(),
 });
@@ -509,7 +512,27 @@ export const ayahRotationSchema = z.object({
   arabic: z.string().min(2).max(500),
   english: z.string().min(2).max(500),
   source: z.string().min(2).max(120),
+  includeInRotation: z.boolean().optional(),
 });
+
+export const ayahRotationUpdateSchema = z
+  .object({
+    arabic: z.string().min(2).max(500).optional(),
+    english: z.string().min(2).max(500).optional(),
+    source: z.string().min(2).max(120).optional(),
+    includeInRotation: z.boolean().optional(),
+  })
+  .refine(
+    (value) =>
+      value.arabic !== undefined ||
+      value.english !== undefined ||
+      value.source !== undefined ||
+      value.includeInRotation !== undefined,
+    { message: "At least one field is required" },
+  );
 
 export type DisplaySettingsFormValues = z.infer<typeof displaySettingsSchema>;
 export type AyahRotationFormValues = z.infer<typeof ayahRotationSchema>;
+export type AyahRotationUpdateFormValues = z.infer<
+  typeof ayahRotationUpdateSchema
+>;

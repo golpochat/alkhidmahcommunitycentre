@@ -2,7 +2,8 @@ import "server-only";
 
 import { format } from "date-fns";
 import { db } from "@/lib/db";
-import { getPublishedMonthlyTimetable } from "@/lib/monthly-timetable";
+import { getMonthlyTimetablePublishState } from "@/lib/monthly-timetable";
+import { getRamadanTimetableHomePublishState } from "@/lib/ramadan-timetable";
 
 export interface PublishStatusRow {
   key: string;
@@ -31,6 +32,7 @@ export async function getPublishStatusOverview(): Promise<PublishStatusOverview>
     categoriesPublished,
     categoriesUnpublished,
     publishedMonthly,
+    publishedRamadan,
   ] = await Promise.all([
     db.event.count({ where: { published: true } }),
     db.event.count({ where: { published: false } }),
@@ -40,16 +42,25 @@ export async function getPublishStatusOverview(): Promise<PublishStatusOverview>
     db.galleryAlbum.count({ where: { published: false } }),
     db.donationCategory.count({ where: { isActive: true } }),
     db.donationCategory.count({ where: { isActive: false } }),
-    getPublishedMonthlyTimetable(),
+    getMonthlyTimetablePublishState(),
+    getRamadanTimetableHomePublishState(),
   ]);
 
-  const monthlyPublished = publishedMonthly ? 1 : 0;
-  const monthlyUnpublished = publishedMonthly ? 0 : 1;
-  const monthlyDetail = publishedMonthly
+  const monthlyPublished = publishedMonthly.published ? 1 : 0;
+  const monthlyUnpublished = publishedMonthly.published ? 0 : 1;
+  const monthlyDetail = publishedMonthly.published && publishedMonthly.month && publishedMonthly.year
     ? format(
         new Date(publishedMonthly.year, publishedMonthly.month - 1, 1),
         "MMMM yyyy",
       )
+    : "Not published on homepage";
+
+  const ramadanPublished = publishedRamadan.published ? 1 : 0;
+  const ramadanUnpublished = publishedRamadan.published ? 0 : 1;
+  const ramadanDetail = publishedRamadan.published
+    ? publishedRamadan.year
+      ? `Ramadan ${publishedRamadan.year}`
+      : "Active Ramadan timetable"
     : "Not published on homepage";
 
   const rows: PublishStatusRow[] = [
@@ -88,6 +99,14 @@ export async function getPublishStatusOverview(): Promise<PublishStatusOverview>
       unpublished: monthlyUnpublished,
       adminHref: "/admin/special-prayers",
       detail: monthlyDetail,
+    },
+    {
+      key: "ramadan-timetable",
+      label: "Ramadan timetable (homepage)",
+      published: ramadanPublished,
+      unpublished: ramadanUnpublished,
+      adminHref: "/admin/special-prayers",
+      detail: ramadanDetail,
     },
   ];
 

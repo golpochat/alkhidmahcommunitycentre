@@ -122,6 +122,34 @@ export function getMessageQueueExclusionReason(
   return "Not eligible";
 }
 
+export function getMessageShowsLabel(
+  message: SerializedMessage,
+  allMessages: SerializedMessage[],
+  now = new Date(),
+): string {
+  if (message.status === "INACTIVE" || !message.includeInRotation) {
+    return "Off";
+  }
+
+  const validity = getMessageValidity(message, now);
+  if (validity === "expired") return "Expired";
+  if (validity === "upcoming") return "Scheduled";
+
+  if (isMessageInRotationQueue(message, allMessages, now)) {
+    return "Live now";
+  }
+
+  if (message.state === "NON_PRIORITY") {
+    const priorityActive = allMessages.some(
+      (item) =>
+        item.state === "PRIORITY" && isMessageRotationEligible(item, now),
+    );
+    if (priorityActive) return "Waiting";
+  }
+
+  return "Off";
+}
+
 export function getMessageValidity(
   message: SerializedMessage,
   now = new Date(),

@@ -52,7 +52,6 @@ export function DisplayLandscapeAnnouncement({
   if (priorityNotice) {
     return (
       <article className="display-landscape-announcement-block display-landscape-announcement-priority">
-        <p className="display-landscape-announcement-kicker">Important Notice</p>
         <p className="display-landscape-announcement-title">
           {priorityNotice.title}
         </p>

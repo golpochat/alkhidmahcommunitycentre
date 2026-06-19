@@ -745,3 +745,45 @@ export async function getActiveRamadanYear() {
   const value = settings[SETTING_KEYS.ramadanActiveYear]?.trim();
   return value ? Number(value) : null;
 }
+
+function parseHomePublishedSetting(value: string | undefined) {
+  if (value === "true") return true;
+  if (value === "false") return false;
+  return null;
+}
+
+export async function getRamadanTimetableHomePublishState() {
+  const settings = await getSettingsMap();
+  const year = await getActiveRamadanYear();
+  const rows = year ? await listRamadanTimetable(year) : [];
+  const hasData = rows.length > 0;
+  const explicit = parseHomePublishedSetting(
+    settings[SETTING_KEYS.ramadanTimetableHomePublished],
+  );
+  const published =
+    explicit === false
+      ? false
+      : explicit === true || (hasData && explicit === null);
+
+  return {
+    published: published && hasData,
+    year,
+    hasData,
+  };
+}
+
+export async function setRamadanTimetableHomePublished(published: boolean) {
+  await db.setting.upsert({
+    where: { key: SETTING_KEYS.ramadanTimetableHomePublished },
+    create: {
+      key: SETTING_KEYS.ramadanTimetableHomePublished,
+      value: String(published),
+    },
+    update: { value: String(published) },
+  });
+}
+
+export async function isRamadanTimetableHomePublished() {
+  const state = await getRamadanTimetableHomePublishState();
+  return state.published;
+}

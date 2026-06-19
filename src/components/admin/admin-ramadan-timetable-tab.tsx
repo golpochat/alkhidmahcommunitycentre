@@ -3,6 +3,8 @@
 import { useCallback, useState } from "react";
 import { FileDown, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { AdminHomepagePublishPanel } from "@/components/admin/admin-homepage-publish-panel";
+import { useTimetableHomePublishOverview } from "@/hooks/use-timetable-home-publish-overview";
 import { RamadanUpcomingSeasonPanel } from "@/components/admin/ramadan-upcoming-season-panel";
 import { RamadanNotes } from "@/components/ramadan/RamadanNotes";
 import { RamadanPaymentQR } from "@/components/ramadan/RamadanPaymentQR";
@@ -14,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { openPdfInNewTabFromResponse } from "@/lib/download-pdf-blob";
 import { parseJsonResponse } from "@/lib/parse-json-response";
+import { notifyTimetableHomePublishChanged } from "@/lib/timetable-home-publish-events";
 import type { UpcomingRamadanSeasonInfo } from "@/lib/ramadan-season-types";
 import {
   EMPTY_RAMADAN_SETTINGS,
@@ -47,6 +50,8 @@ export function AdminRamadanTimetableTab() {
   const [savingNotes, setSavingNotes] = useState(false);
   const [savingQr, setSavingQr] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [publishSaving, setPublishSaving] = useState(false);
+  const { overview } = useTimetableHomePublishOverview();
 
   const loadData = useCallback(async (options?: { silent?: boolean }) => {
     setLoading(true);
@@ -248,8 +253,67 @@ export function AdminRamadanTimetableTab() {
 
   const configDisabled = loading || updatingConfig || generatingPdf;
 
+  async function handleHomePublishChange(published: boolean) {
+    setPublishSaving(true);
+    try {
+      const response = await fetch("/api/ramadan/home-publish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ published }),
+      });
+      const data = await parseJsonResponse<{ error?: string; published?: boolean }>(
+        response,
+      );
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to update homepage visibility");
+      }
+
+      notifyTimetableHomePublishChanged();
+      toast.success(
+        published
+          ? "Ramadan timetable published on the homepage"
+          : "Ramadan timetable hidden from the homepage",
+      );
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update homepage visibility",
+      );
+    } finally {
+      setPublishSaving(false);
+    }
+  }
+
+  const isRamadanPublished = overview.ramadan.published;
+  const isLiveOnHomepage =
+    isRamadanPublished && overview.sectionVisible;
+  const ramadanBadge = isLiveOnHomepage
+    ? "Live on homepage"
+    : isRamadanPublished
+      ? "Published — section hidden"
+      : "Hidden from homepage";
+
   return (
     <div className="admin-prayer-times-tab-section space-y-6">
+      <AdminHomepagePublishPanel
+        title="Ramadan timetable"
+        description="Controls the Ramadan PDF download button in the homepage prayer timetables section."
+        checked={isRamadanPublished}
+        badgeLabel={ramadanBadge}
+        badgeTone={isLiveOnHomepage ? "live" : isRamadanPublished ? "warning" : "muted"}
+        statusDetail={
+          isLiveOnHomepage
+            ? year
+              ? `Visitors can download the Ramadan ${year} timetable on the homepage.`
+              : "Visitors can download the active Ramadan timetable on the homepage."
+            : isRamadanPublished
+              ? "Ramadan is published, but the master section switch is currently off."
+              : "The Ramadan download link is hidden on the homepage."
+        }
+        saving={publishSaving}
+        publishDisabled={!hasLoaded || rows.length === 0}
+        onCheckedChange={(published) => void handleHomePublishChange(published)}
+      />
+
       <Tabs defaultValue="timetable" className="admin-prayer-times-tabs">
         <TabsList variant="line" className="admin-prayer-times-tabs-list">
           <TabsTrigger value="timetable">Timetable</TabsTrigger>

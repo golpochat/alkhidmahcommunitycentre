@@ -5,6 +5,7 @@ import { requireDisplayAdminSession } from "@/lib/display-admin-auth";
 import {
   ensureDisplaySettings,
   serializeDisplaySettings,
+  weatherEnabledPanels,
 } from "@/lib/display-settings";
 import { displaySettingsSchema } from "@/lib/validations";
 
@@ -37,8 +38,7 @@ export async function PUT(request: NextRequest) {
       where: { id: existing.id },
       data: {
         rotationSpeed: validated.rotationSpeed,
-        enabledPanels: validated.enabledPanels,
-        theme: validated.theme,
+        enabledPanels: weatherEnabledPanels(validated.showWeather),
         pinCode: validated.pinCode ?? null,
         brightnessSchedule,
         orientationOverride: validated.orientationOverride ?? null,

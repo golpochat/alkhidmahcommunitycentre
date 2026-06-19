@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { Download, FileDown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { AdminHomepagePublishPanel } from "@/components/admin/admin-homepage-publish-panel";
+import { useTimetableHomePublishOverview } from "@/hooks/use-timetable-home-publish-overview";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +26,7 @@ import {
 import { cn } from "@/lib/utils";
 import { openPdfInNewTabFromResponse } from "@/lib/download-pdf-blob";
 import { parseJsonResponse } from "@/lib/parse-json-response";
+import { notifyTimetableHomePublishChanged } from "@/lib/timetable-home-publish-events";
 import { parseDateKey } from "@/lib/prayer-times-pure";
 
 interface MonthlyRow {
@@ -91,6 +94,8 @@ export function AdminMonthlyTimetableTab() {
   const [loading, setLoading] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
+  const [publishSaving, setPublishSaving] = useState(false);
+  const { overview } = useTimetableHomePublishOverview();
 
   useEffect(() => {
     setRows([]);
@@ -146,8 +151,89 @@ export function AdminMonthlyTimetableTab() {
     }
   }
 
+  async function handleHomePublishChange(published: boolean) {
+    setPublishSaving(true);
+    try {
+      const response = await fetch("/api/monthly/home-publish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          month,
+          year,
+          published,
+          rows: published ? rows : undefined,
+        }),
+      });
+      const data = await parseJsonResponse<{
+        error?: string;
+        published?: boolean;
+        month?: number | null;
+        year?: number | null;
+      }>(response);
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to update homepage visibility");
+      }
+
+      notifyTimetableHomePublishChanged();
+      toast.success(
+        published
+          ? "Monthly timetable published on the homepage"
+          : "Monthly timetable hidden from the homepage",
+      );
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update homepage visibility",
+      );
+    } finally {
+      setPublishSaving(false);
+    }
+  }
+
+  const publishedMonth = overview.monthly.month;
+  const publishedYear = overview.monthly.year;
+  const isPublishedForSelection =
+    overview.monthly.published &&
+    publishedMonth === month &&
+    publishedYear === year;
+  const isLiveOnHomepage =
+    isPublishedForSelection && overview.sectionVisible;
+
+  const publishedLabel =
+    publishedMonth && publishedYear
+      ? format(new Date(publishedYear, publishedMonth - 1, 1), "MMMM yyyy")
+      : "No month selected";
+
+  const monthlyBadge = isLiveOnHomepage
+    ? "Live on homepage"
+    : isPublishedForSelection
+      ? "Published — section hidden"
+      : overview.monthly.published
+        ? `Published for ${publishedLabel}`
+        : "Hidden from homepage";
+
   return (
     <div className="admin-prayer-times-tab-section space-y-6">
+      <AdminHomepagePublishPanel
+        title="Monthly timetable"
+        description="Controls the monthly PDF download button in the homepage prayer timetables section."
+        checked={isPublishedForSelection}
+        badgeLabel={monthlyBadge}
+        badgeTone={
+          isLiveOnHomepage ? "live" : isPublishedForSelection ? "warning" : "muted"
+        }
+        statusDetail={
+          isLiveOnHomepage
+            ? `Visitors can download the ${format(new Date(year, month - 1, 1), "MMMM yyyy")} timetable.`
+            : isPublishedForSelection
+              ? "This month is published, but the master section switch is currently off."
+              : overview.monthly.published && publishedLabel !== "No month selected"
+                ? `${publishedLabel} is published. Load ${format(new Date(year, month - 1, 1), "MMMM yyyy")} and publish to replace it.`
+                : "The monthly download link is hidden on the homepage."
+        }
+        saving={publishSaving}
+        publishDisabled={!hasLoaded || rows.length === 0}
+        onCheckedChange={(published) => void handleHomePublishChange(published)}
+      />
       {/* <div className="admin-prayer-times-tab-header">
         <div>
           <h2 className="admin-prayer-times-tab-title">

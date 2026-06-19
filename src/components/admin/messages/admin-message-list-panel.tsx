@@ -1,6 +1,7 @@
 "use client";
 
 import { Plus } from "lucide-react";
+import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 import { AdminMessageRow } from "@/components/admin/messages/admin-message-row";
 import { Button } from "@/components/ui/button";
@@ -21,14 +22,12 @@ interface AdminMessageListPanelProps {
   onEdit: (message: SerializedMessage) => void;
   onDuplicate: (message: SerializedMessage) => void;
   onDelete: (id: string) => void;
-  onToggleRotation: (
-    message: SerializedMessage,
-    includeInRotation: boolean,
-  ) => void;
+  onTogglePublished: (message: SerializedMessage, published: boolean) => void;
   onReorder: (
     state: "PRIORITY" | "NON_PRIORITY",
     orderedIds: string[],
   ) => Promise<void>;
+  footer?: React.ReactNode;
 }
 
 function MessageTableSection({
@@ -40,7 +39,7 @@ function MessageTableSection({
   onEdit,
   onDuplicate,
   onDelete,
-  onToggleRotation,
+  onTogglePublished,
   onReorder,
 }: {
   title: string;
@@ -51,10 +50,7 @@ function MessageTableSection({
   onEdit: (message: SerializedMessage) => void;
   onDuplicate: (message: SerializedMessage) => void;
   onDelete: (id: string) => void;
-  onToggleRotation: (
-    message: SerializedMessage,
-    includeInRotation: boolean,
-  ) => void;
+  onTogglePublished: (message: SerializedMessage, published: boolean) => void;
   onReorder: (
     state: "PRIORITY" | "NON_PRIORITY",
     orderedIds: string[],
@@ -97,20 +93,13 @@ function MessageTableSection({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead
-                className="admin-table-col-drag"
-                aria-label="Reorder"
-              />
+              <TableHead className="admin-table-col-drag" aria-label="Reorder" />
               <TableHead>Title</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="admin-table-col-hide-md">Queue</TableHead>
-              <TableHead className="admin-table-col-hide-lg">
-                Validity
-              </TableHead>
-              <TableHead className="admin-table-col-hide-xl">
-                Schedule
-              </TableHead>
-              <TableHead>Rotation</TableHead>
+              <TableHead>Tier</TableHead>
+              <TableHead>Shows</TableHead>
+              <TableHead className="admin-table-col-hide-md">Duration</TableHead>
+              <TableHead className="admin-table-col-hide-lg">Schedule</TableHead>
+              <TableHead>On TV</TableHead>
               <TableHead className="admin-table-col-actions">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -146,8 +135,8 @@ function MessageTableSection({
                   onEdit={() => onEdit(message)}
                   onDuplicate={() => onDuplicate(message)}
                   onDelete={() => onDelete(message.id)}
-                  onToggleRotation={(includeInRotation) =>
-                    onToggleRotation(message, includeInRotation)
+                  onTogglePublished={(published) =>
+                    onTogglePublished(message, published)
                   }
                 />
               ))
@@ -165,8 +154,9 @@ export function AdminMessageListPanel({
   onEdit,
   onDuplicate,
   onDelete,
-  onToggleRotation,
+  onTogglePublished,
   onReorder,
+  footer,
 }: AdminMessageListPanelProps) {
   const priorityMessages = messages.filter(
     (message) => message.state === "PRIORITY",
@@ -179,12 +169,10 @@ export function AdminMessageListPanel({
     <section className="admin-messages-panel admin-messages-panel-list">
       <header className="admin-messages-panel-header admin-messages-panel-header-row">
         <div>
-          <h2 className="admin-messages-panel-title">Message lists</h2>
+          <h2 className="admin-messages-panel-title">Announcements</h2>
           <p className="admin-messages-panel-description">
-            Drag rows to reorder. The TV queue is built automatically from
-            eligible messages: rotation on, status active, and within schedule.
-            Priority messages replace non-priority rotation while any priority
-            message is valid.
+            Drag to reorder within each tier. Priority messages replace normal
+            rotation while active. Use On TV to show or hide a message.
           </p>
         </div>
         <Button className="btn-gold" onClick={onCreate}>
@@ -195,29 +183,31 @@ export function AdminMessageListPanel({
 
       <MessageTableSection
         title="Priority messages"
-        description="Shown on TV while valid. Replaces non-priority rotation."
+        description="Replace normal rotation while active and within schedule."
         messages={priorityMessages}
         allMessages={messages}
         isPriority
         onEdit={onEdit}
         onDuplicate={onDuplicate}
         onDelete={onDelete}
-        onToggleRotation={onToggleRotation}
+        onTogglePublished={onTogglePublished}
         onReorder={onReorder}
       />
 
       <MessageTableSection
-        title="Non-priority messages"
-        description="Rotate when no valid priority messages exist."
+        title="Normal messages"
+        description="Rotate when no valid priority messages are active."
         messages={nonPriorityMessages}
         allMessages={messages}
         isPriority={false}
         onEdit={onEdit}
         onDuplicate={onDuplicate}
         onDelete={onDelete}
-        onToggleRotation={onToggleRotation}
+        onTogglePublished={onTogglePublished}
         onReorder={onReorder}
       />
+
+      {footer}
     </section>
   );
 }

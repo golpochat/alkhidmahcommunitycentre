@@ -57,6 +57,7 @@ import {
 } from "@/components/admin/admin-adhan-offset-field";
 import { AdminIqamaField } from "@/components/admin/admin-iqama-field";
 import { AdminMonthlyTimetableTab } from "@/components/admin/admin-monthly-timetable-tab";
+import { AdminPrayerTimetablesHomeSectionPanel } from "@/components/admin/admin-prayer-timetables-home-section-panel";
 import { AdminRamadanTimetableTab } from "@/components/admin/admin-ramadan-timetable-tab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
@@ -524,7 +525,10 @@ export function AdminPrayerTimesManager() {
   }
 
   return (
-    <Tabs defaultValue="schedule" className="admin-prayer-times-tabs">
+    <div className="space-y-6">
+      <AdminPrayerTimetablesHomeSectionPanel />
+
+      <Tabs defaultValue="schedule" className="admin-prayer-times-tabs">
       <TabsList variant="line" className="admin-prayer-times-tabs-list">
         <TabsTrigger value="schedule">Daily Timetable</TabsTrigger>
         <TabsTrigger value="ramadan">Ramadan Timetable</TabsTrigger>
@@ -955,5 +959,6 @@ export function AdminPrayerTimesManager() {
         <AdminMonthlyTimetableTab />
       </TabsContent>
     </Tabs>
+    </div>
   );
 }

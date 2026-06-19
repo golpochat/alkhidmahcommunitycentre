@@ -12,12 +12,14 @@ let ayatCacheUpdatedAt = 0;
 let ayatRotationIndex = 0;
 
 export function setAyatCache(items: AyahRotation[]) {
-  ayatCache = items.map((item) => ({
-    id: item.id,
-    arabic: item.arabic,
-    english: item.english,
-    source: item.source,
-  }));
+  ayatCache = items
+    .filter((item) => item.includeInRotation)
+    .map((item) => ({
+      id: item.id,
+      arabic: item.arabic,
+      english: item.english,
+      source: item.source,
+    }));
   ayatCacheUpdatedAt = Date.now();
   ayatRotationIndex = 0;
 }

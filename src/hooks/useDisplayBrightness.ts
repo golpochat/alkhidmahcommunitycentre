@@ -1,6 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
+import {
+  brightnessPeriodsFromStorage,
+  brightnessPeriodsToStorage,
+} from "@/lib/display-brightness";
 
 interface BrightnessEntry {
   from: string;
@@ -9,19 +13,7 @@ interface BrightnessEntry {
 }
 
 function parseSchedule(value: unknown): BrightnessEntry[] {
-  if (!Array.isArray(value)) return [];
-
-  return value
-    .map((entry) => {
-      if (!entry || typeof entry !== "object") return null;
-      const item = entry as Record<string, unknown>;
-      const from = String(item.from ?? "");
-      const to = String(item.to ?? "");
-      const brightness = Number(item.brightness);
-      if (!from || !to || !Number.isFinite(brightness)) return null;
-      return { from, to, brightness: Math.min(1, Math.max(0.2, brightness)) };
-    })
-    .filter(Boolean) as BrightnessEntry[];
+  return brightnessPeriodsToStorage(brightnessPeriodsFromStorage(value));
 }
 
 function timeToMinutes(value: string) {

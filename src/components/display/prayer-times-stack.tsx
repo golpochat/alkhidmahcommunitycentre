@@ -2,14 +2,20 @@
 
 import { getDisplayEffectiveNow } from "@/lib/display-time";
 import { PrayerTimesDisplay } from "@/components/prayer-times/prayer-times-display";
-import { findNextPrayer, type PrayerTimesResponse } from "@/lib/prayer-times-client";
+import {
+  findNextPrayer,
+  type PrayerTimesResponse,
+} from "@/lib/prayer-times-client";
 
 interface PrayerTimesStackProps {
   schedule: PrayerTimesResponse;
   now?: Date | null;
 }
 
-export function PrayerTimesStack({ schedule, now = null }: PrayerTimesStackProps) {
+export function PrayerTimesStack({
+  schedule,
+  now = null,
+}: PrayerTimesStackProps) {
   const effectiveNow = getDisplayEffectiveNow(schedule, now);
   const nextPrayer = findNextPrayer(schedule, effectiveNow);
 
@@ -19,6 +25,7 @@ export function PrayerTimesStack({ schedule, now = null }: PrayerTimesStackProps
         schedule={schedule}
         showEidBanner={false}
         showBadges={false}
+        hideSunrise
         nextPrayer={nextPrayer}
         now={effectiveNow}
       />

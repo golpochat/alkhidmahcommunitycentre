@@ -40,14 +40,14 @@ export function AdminMessageFormModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="admin-messages-form-dialog">
+      <DialogContent className="admin-messages-form-dialog admin-display-dialog">
         <DialogHeader>
           <DialogTitle>
             {editingId ? "Edit message" : "Create message"}
           </DialogTitle>
           <DialogDescription>
             Priority messages take over the TV rotation while they are valid.
-            Non-priority messages rotate when no priority messages are active.
+            Normal messages rotate when no priority messages are active.
           </DialogDescription>
         </DialogHeader>
 
@@ -94,7 +94,7 @@ export function AdminMessageFormModal({
                 className={`admin-messages-segment${!isPriority ? " admin-messages-segment-active" : ""}`}
                 onClick={() => onChange({ ...form, state: "NON_PRIORITY" })}
               >
-                Non-priority
+                Normal
               </button>
             </div>
           </div>

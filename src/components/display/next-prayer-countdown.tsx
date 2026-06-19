@@ -1,6 +1,5 @@
 "use client";
 
-import { CountdownRing } from "@/components/display/countdown-ring";
 import type { SerializedDisplayNotice } from "@/lib/display-types";
 import {
   resolveDisplayCountdown,
@@ -40,7 +39,7 @@ export function NextPrayerCountdown({
 
     if (active.type === "emergency") {
       return (
-        <section className="display-emergency-alert">
+        <section className="display-emergency-alert display-emergency-alert-bar">
           <p className="display-emergency-alert-label">Important Notice</p>
           <p className="display-emergency-alert-title">{active.title}</p>
           <p className="display-emergency-alert-message">{active.message}</p>
@@ -52,16 +51,12 @@ export function NextPrayerCountdown({
       active.type === "prayer" ? active.seconds : active.countdown.seconds;
     const label =
       active.type === "prayer" ? active.label : active.countdown.label;
-    const totalSeconds =
-      active.type === "prayer" ? 3600 : active.totalSeconds;
 
     return (
-      <CountdownRing
-        seconds={seconds}
-        totalSeconds={totalSeconds}
-        label={label}
-        variant={variant}
-      />
+      <section className="display-countdown-footer display-countdown-footer-landscape display-countdown-footer-bar">
+        <p className="display-bottom-bar-label">{label}</p>
+        <p className="display-bottom-bar-value">{formatCountdown(seconds)}</p>
+      </section>
     );
   }
 

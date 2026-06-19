@@ -157,13 +157,13 @@ export function AdminMessageEnginePanel({
         <h2 className="admin-messages-panel-title">Live engine view</h2>
         <p className="admin-messages-panel-description">
           Simulated bottom-panel playback using the same message queue, ayat
-          entries, and durations as the TV display.
+          entries, and durations as the public screen.
         </p>
       </header>
 
       <div className="admin-messages-engine-layout">
         <article className="admin-messages-engine-block admin-messages-engine-block-now">
-          <h3 className="admin-messages-engine-block-title">What&apos;s on TV now?</h3>
+          <h3 className="admin-messages-engine-block-title">What&apos;s on screen now?</h3>
           {currentSlide ? (
             <>
               <p className="admin-messages-engine-now-title">

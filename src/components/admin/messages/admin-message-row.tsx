@@ -1,6 +1,5 @@
 "use client";
 
-import type { DragEvent, MouseEvent, PointerEvent } from "react";
 import { Copy, GripVertical, Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,12 +10,10 @@ import {
 } from "@/components/ui/table";
 import {
   formatMessageSchedule,
-  getMessageQueueExclusionReason,
-  getMessageValidity,
-  isMessageInRotationQueue,
-  type MessageValidity,
+  getMessageShowsLabel,
 } from "@/lib/message-client";
 import type { SerializedMessage } from "@/lib/message-types";
+import type { DragEvent, MouseEvent, PointerEvent } from "react";
 
 interface AdminMessageRowProps {
   message: SerializedMessage;
@@ -30,7 +27,7 @@ interface AdminMessageRowProps {
   onEdit: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
-  onToggleRotation: (includeInRotation: boolean) => void;
+  onTogglePublished: (published: boolean) => void;
 }
 
 function stopRowDrag(event: DragEvent<HTMLElement>) {
@@ -41,34 +38,18 @@ function stopRowInteraction(event: MouseEvent | PointerEvent) {
   event.stopPropagation();
 }
 
-function queueStatusBadge(
-  message: SerializedMessage,
-  allMessages: SerializedMessage[],
-) {
-  if (isMessageInRotationQueue(message, allMessages)) {
-    return <Badge>In queue</Badge>;
-  }
-
-  const reason = getMessageQueueExclusionReason(message, allMessages);
-  return (
-    <Badge variant="outline" title={reason ?? undefined}>
-      {reason ?? "Excluded"}
-    </Badge>
-  );
-}
-
-function validityBadge(validity: MessageValidity) {
-  switch (validity) {
-    case "active_now":
-      return <Badge>Active now</Badge>;
-    case "upcoming":
-      return <Badge variant="secondary">Upcoming</Badge>;
-    case "expired":
+function showsBadge(label: string) {
+  switch (label) {
+    case "Live now":
+      return <Badge>Live now</Badge>;
+    case "Scheduled":
+      return <Badge variant="secondary">Scheduled</Badge>;
+    case "Waiting":
+      return <Badge variant="outline">Waiting</Badge>;
+    case "Expired":
       return <Badge variant="outline">Expired</Badge>;
-    case "inactive":
-      return <Badge variant="outline">Inactive</Badge>;
     default:
-      return <Badge variant="secondary">Out of rotation</Badge>;
+      return <Badge variant="outline">Off</Badge>;
   }
 }
 
@@ -84,9 +65,11 @@ export function AdminMessageRow({
   onEdit,
   onDuplicate,
   onDelete,
-  onToggleRotation,
+  onTogglePublished,
 }: AdminMessageRowProps) {
-  const validity = getMessageValidity(message);
+  const showsLabel = getMessageShowsLabel(message, allMessages);
+  const published =
+    message.status === "ACTIVE" && message.includeInRotation;
 
   return (
     <TableRow
@@ -110,20 +93,18 @@ export function AdminMessageRow({
       <TableCell className="admin-messages-table-title">{message.title}</TableCell>
 
       <TableCell>
-        <Badge variant="outline">
-          {message.status === "ACTIVE" ? "Active" : "Inactive"}
+        <Badge variant={message.state === "PRIORITY" ? "default" : "outline"}>
+          {message.state === "PRIORITY" ? "Priority" : "Normal"}
         </Badge>
       </TableCell>
 
+      <TableCell>{showsBadge(showsLabel)}</TableCell>
+
       <TableCell className="admin-table-col-hide-md">
-        {queueStatusBadge(message, allMessages)}
+        {message.durationSeconds}s
       </TableCell>
 
-      <TableCell className="admin-table-col-hide-lg">
-        {validityBadge(validity)}
-      </TableCell>
-
-      <TableCell className="admin-messages-table-schedule admin-table-col-hide-xl">
+      <TableCell className="admin-messages-table-schedule admin-table-col-hide-lg">
         {formatMessageSchedule(message)}
       </TableCell>
 
@@ -136,18 +117,18 @@ export function AdminMessageRow({
         <div className="admin-messages-rotation-control">
           <Switch
             className="admin-messages-rotation-switch"
-            checked={message.includeInRotation}
-            onCheckedChange={(checked) => onToggleRotation(Boolean(checked))}
-            aria-label={`Include ${message.title} in rotation`}
+            checked={published}
+            onCheckedChange={(checked) => onTogglePublished(Boolean(checked))}
+            aria-label={`Show ${message.title} on TV`}
           />
           <span
             className={
-              message.includeInRotation
+              published
                 ? "admin-messages-rotation-label admin-messages-rotation-label-on"
                 : "admin-messages-rotation-label"
             }
           >
-            {message.includeInRotation ? "On" : "Off"}
+            {published ? "On" : "Off"}
           </span>
         </div>
       </TableCell>

@@ -80,6 +80,7 @@ interface PrayerTimesDisplayProps {
   schedule: PrayerTimesResponse;
   showEidBanner?: boolean;
   showBadges?: boolean;
+  hideSunrise?: boolean;
   nextPrayer?: NextPrayer | null;
   now?: Date | null;
 }
@@ -88,6 +89,7 @@ export function PrayerTimesDisplay({
   schedule,
   showEidBanner = true,
   showBadges = true,
+  hideSunrise = false,
   nextPrayer: nextPrayerOverride,
   now = null,
 }: PrayerTimesDisplayProps) {
@@ -163,9 +165,9 @@ export function PrayerTimesDisplay({
           </TableHeader>
           <TableBody>
             <PrayerTableRow row={fajrRow} nextPrayer={nextPrayer} />
-            {sunriseRow && (
+            {sunriseRow && !hideSunrise ? (
               <PrayerTableRow row={sunriseRow} nextPrayer={nextPrayer} />
-            )}
+            ) : null}
 
             {fridayJumuah ? (
               <JumuahFridayRow

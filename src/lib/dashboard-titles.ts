@@ -1,4 +1,4 @@
-import { EDUCATION_NAV_LABEL } from "@/lib/constants";
+import { DISPLAY_ADMIN_NAV_LABEL, EDUCATION_NAV_LABEL } from "@/lib/constants";
 
 export const SUPER_ADMIN_PAGE_TITLES: Record<string, string> = {
   "/super-admin": "Dashboard",
@@ -19,7 +19,7 @@ export const ADMIN_PAGE_TITLES: Record<string, string> = {
   "/admin/registrations": "Registrations",
   "/admin/special-prayers": "Prayer Timetable",
   "/admin/prayer-times": "Prayer Timetable",
-  "/admin/display": "TV Display",
+  "/admin/display": DISPLAY_ADMIN_NAV_LABEL,
   "/admin/profile": "My Profile",
 };
 

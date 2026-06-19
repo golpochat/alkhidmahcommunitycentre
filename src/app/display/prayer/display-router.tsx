@@ -10,7 +10,7 @@ import { DisplayPinGate } from "@/components/display/display-pin-gate";
 import type { DisplayTodayResponse } from "@/components/display/display-layout-props";
 import type { CachedAyah } from "@/lib/display-cache";
 import type { WeatherPayload } from "@/lib/display-types";
-import type { SerializedDisplaySettings } from "@/lib/display-settings";
+import type { SerializedDisplaySettings } from "@/lib/display-settings-types";
 import type { SerializedEvent } from "@/lib/events";
 import { rotationClient, type RotationMessage } from "@/lib/rotation-client";
 import { rotationMessagesKey } from "@/lib/display-bottom-slides";
@@ -58,11 +58,10 @@ export function DisplayRouter({
 
   const refreshData = useCallback(async () => {
     try {
-      const [todayRes, eventsRes, ayatRes, settingsRes] = await Promise.all([
+      const [todayRes, eventsRes, ayatRes] = await Promise.all([
         fetch("/api/display/today", { cache: "no-store" }),
         fetch("/api/display/events", { cache: "no-store" }),
         fetch("/api/display/ayat", { cache: "no-store" }),
-        fetch("/api/display/settings", { cache: "no-store" }),
       ]);
 
       if (todayRes.ok) {
@@ -74,7 +73,6 @@ export function DisplayRouter({
 
       if (eventsRes.ok) setEvents(await eventsRes.json());
       if (ayatRes.ok) setAyat(await ayatRes.json());
-      if (settingsRes.ok) setSettings(await settingsRes.json());
     } catch {
       // Keep showing last good data on TV screens
     }
@@ -98,6 +96,25 @@ export function DisplayRouter({
     }, 2000);
 
     return () => clearInterval(rotationInterval);
+  }, []);
+
+  useEffect(() => {
+    const refreshSettings = async () => {
+      try {
+        const settingsRes = await fetch("/api/display/settings", {
+          cache: "no-store",
+        });
+        if (settingsRes.ok) {
+          setSettings(await settingsRes.json());
+        }
+      } catch {
+        // Keep last good settings on TV screens
+      }
+    };
+
+    void refreshSettings();
+    const settingsInterval = setInterval(refreshSettings, 5000);
+    return () => clearInterval(settingsInterval);
   }, []);
 
   useEffect(() => {

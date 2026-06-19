@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireDisplayAdminSession } from "@/lib/display-admin-auth";
 import { refreshAyatCache } from "@/lib/display-api";
-import { ayahRotationSchema } from "@/lib/validations";
+import { ayahRotationUpdateSchema } from "@/lib/validations";
 
 function serializeAyah(item: {
   id: string;
   arabic: string;
   english: string;
   source: string;
+  includeInRotation: boolean;
   createdAt: Date;
 }) {
   return {
@@ -16,25 +17,42 @@ function serializeAyah(item: {
     arabic: item.arabic,
     english: item.english,
     source: item.source,
+    includeInRotation: item.includeInRotation,
     createdAt: item.createdAt.toISOString(),
   };
 }
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
 ) {
   try {
     await requireDisplayAdminSession();
     const body = await request.json();
-    const validated = ayahRotationSchema.parse(body);
+    const validated = ayahRotationUpdateSchema.parse(body);
+
+    const existing = await db.ayahRotation.findUnique({
+      where: { id: params.id },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: "Entry not found" }, { status: 404 });
+    }
 
     const item = await db.ayahRotation.update({
       where: { id: params.id },
       data: {
-        arabic: validated.arabic.trim(),
-        english: validated.english.trim(),
-        source: validated.source.trim(),
+        ...(validated.arabic !== undefined
+          ? { arabic: validated.arabic.trim() }
+          : {}),
+        ...(validated.english !== undefined
+          ? { english: validated.english.trim() }
+          : {}),
+        ...(validated.source !== undefined
+          ? { source: validated.source.trim() }
+          : {}),
+        ...(validated.includeInRotation !== undefined
+          ? { includeInRotation: validated.includeInRotation }
+          : {}),
       },
     });
 
@@ -47,14 +65,16 @@ export async function PUT(
         ? 401
         : message === "Forbidden"
           ? 403
-          : 400;
+          : message === "Entry not found"
+            ? 404
+            : 400;
     return NextResponse.json({ error: message }, { status });
   }
 }
 
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
 ) {
   try {
     await requireDisplayAdminSession();

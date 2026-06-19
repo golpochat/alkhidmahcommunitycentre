@@ -1,3 +1,5 @@
+import { DISPLAY_ADMIN_NAV_LABEL } from "@/lib/constants";
+
 export const PERMISSIONS = {
   users: {
     manage: "users.manage",
@@ -86,7 +88,7 @@ export const PERMISSION_GROUP_LABELS: Record<string, string> = {
   education: "Education",
   donations: "Donations",
   prayer_times: "Prayer times",
-  display: "TV Display",
+  display: DISPLAY_ADMIN_NAV_LABEL,
   about: "About page",
   registrations: "Registrations",
   contact: "Contact",

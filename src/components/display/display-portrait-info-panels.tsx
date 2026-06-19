@@ -115,9 +115,6 @@ export function DisplayPortraitInfoPanels({
     return (
       <section className="display-portrait-info-section" aria-label="Notices and events">
         <article className="display-portrait-info-panel display-portrait-info-panel-emergency">
-          <p className="display-portrait-panel-kicker display-portrait-panel-kicker-emergency">
-            Important Notice
-          </p>
           <p className="display-portrait-panel-title">{priorityNotice.title}</p>
           <p className="display-portrait-panel-body">{priorityNotice.message}</p>
         </article>
