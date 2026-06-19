@@ -13,7 +13,8 @@ export function SunriseCard({ time, isNext }: SunriseCardProps) {
       <h3 className="display-prayer-card-name">Sunrise</h3>
       <div className="display-prayer-card-times">
         <div className="display-prayer-card-time-block">
-          <span className="display-prayer-card-time-value display-prayer-card-sunrise-time">
+          <span className="display-prayer-card-time-label">Time</span>
+          <span className="display-prayer-card-time-value">
             {formatPrayerTime24h(time)}
           </span>
         </div>

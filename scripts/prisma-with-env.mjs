@@ -3,7 +3,10 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { spawnSync } from "child_process";
 
-const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const projectRoot = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "..",
+);
 const isWindows = process.platform === "win32";
 
 function loadEnvFile(filePath) {
@@ -74,7 +77,7 @@ function resolveCliDatabaseUrl() {
 
   if (!databaseUrl) {
     console.error(
-      "DATABASE_URL is missing. Copy .env.example to .env.local and set your PostgreSQL connection string."
+      "DATABASE_URL is missing. Copy .env.example to .env.local and set your PostgreSQL connection string.",
     );
     process.exit(1);
   }
@@ -94,7 +97,11 @@ function releasePrismaEngineLock() {
   if (!isWindows) return 0;
 
   const marker = path.basename(projectRoot);
-  const scriptPath = path.join(projectRoot, "scripts", "release-prisma-engine-lock.ps1");
+  const scriptPath = path.join(
+    projectRoot,
+    "scripts",
+    "release-prisma-engine-lock.ps1",
+  );
 
   const result = spawnSync(
     "powershell.exe",
@@ -158,11 +165,7 @@ function runPrismaGenerate(env, { forceUnlock = false } = {}) {
 
     const output = `${result.stdout ?? ""}${result.stderr ?? ""}`;
 
-    if (
-      isWindows &&
-      isPrismaEngineLockError(output) &&
-      attempt < maxAttempts
-    ) {
+    if (isWindows && isPrismaEngineLockError(output) && attempt < maxAttempts) {
       console.warn(
         `Prisma generate failed with a Windows file lock (attempt ${attempt}/${maxAttempts}).`,
       );
@@ -178,7 +181,9 @@ function runPrismaGenerate(env, { forceUnlock = false } = {}) {
       );
       console.error("Use: npm run db:generate");
       console.error("Or:  npm run db:generate:unlock");
-      console.error("Avoid: npx prisma generate (bypasses the Windows lock handler)");
+      console.error(
+        "Avoid: npx prisma generate (bypasses the Windows lock handler)",
+      );
     }
     return result.status ?? 1;
   }

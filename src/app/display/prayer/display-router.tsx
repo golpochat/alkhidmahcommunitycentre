@@ -9,25 +9,31 @@ import { BackgroundPattern } from "@/components/display/background-pattern";
 import { DisplayPinGate } from "@/components/display/display-pin-gate";
 import type { DisplayTodayResponse } from "@/components/display/display-layout-props";
 import type { CachedAyah } from "@/lib/display-cache";
-import type { SerializedDisplayNotice, WeatherPayload } from "@/lib/display-types";
+import type { WeatherPayload } from "@/lib/display-types";
 import type { SerializedDisplaySettings } from "@/lib/display-settings";
 import type { SerializedEvent } from "@/lib/events";
+import { rotationClient, type RotationMessage } from "@/lib/rotation-client";
+import { rotationMessagesKey } from "@/lib/display-bottom-slides";
 import { resolveDisplayOrientation } from "@/lib/display-orientation";
 import { useOrientation } from "@/hooks/useOrientation";
 import { isAfterIsha } from "@/lib/seasonal-client";
 
 interface DisplayRouterProps {
   initialToday: DisplayTodayResponse;
-  initialNotices: SerializedDisplayNotice[];
+  initialRotationMessages: RotationMessage[];
   initialEvents: SerializedEvent[];
   initialAyat: CachedAyah[];
   initialWeather: WeatherPayload;
   initialSettings: SerializedDisplaySettings;
 }
 
+function rotationQueueKey(messages: RotationMessage[]) {
+  return rotationMessagesKey(messages);
+}
+
 export function DisplayRouter({
   initialToday,
-  initialNotices,
+  initialRotationMessages,
   initialEvents,
   initialAyat,
   initialWeather,
@@ -36,7 +42,9 @@ export function DisplayRouter({
   const detectedOrientation = useOrientation();
   const [schedule, setSchedule] = useState(initialToday.schedule);
   const [seasonal, setSeasonal] = useState(initialToday.seasonal);
-  const [notices, setNotices] = useState(initialNotices);
+  const [rotationMessages, setRotationMessages] = useState(
+    initialRotationMessages,
+  );
   const [events, setEvents] = useState(initialEvents);
   const [ayat, setAyat] = useState(initialAyat);
   const [weather, setWeather] = useState(initialWeather);
@@ -50,14 +58,12 @@ export function DisplayRouter({
 
   const refreshData = useCallback(async () => {
     try {
-      const [todayRes, noticesRes, eventsRes, ayatRes, settingsRes] =
-        await Promise.all([
-          fetch("/api/display/today", { cache: "no-store" }),
-          fetch("/api/display/notices", { cache: "no-store" }),
-          fetch("/api/display/events", { cache: "no-store" }),
-          fetch("/api/display/ayat", { cache: "no-store" }),
-          fetch("/api/display/settings", { cache: "no-store" }),
-        ]);
+      const [todayRes, eventsRes, ayatRes, settingsRes] = await Promise.all([
+        fetch("/api/display/today", { cache: "no-store" }),
+        fetch("/api/display/events", { cache: "no-store" }),
+        fetch("/api/display/ayat", { cache: "no-store" }),
+        fetch("/api/display/settings", { cache: "no-store" }),
+      ]);
 
       if (todayRes.ok) {
         const data: DisplayTodayResponse = await todayRes.json();
@@ -66,13 +72,32 @@ export function DisplayRouter({
         setWeather(data.weather);
       }
 
-      if (noticesRes.ok) setNotices(await noticesRes.json());
       if (eventsRes.ok) setEvents(await eventsRes.json());
       if (ayatRes.ok) setAyat(await ayatRes.json());
       if (settingsRes.ok) setSettings(await settingsRes.json());
     } catch {
       // Keep showing last good data on TV screens
     }
+  }, []);
+
+  useEffect(() => {
+    const fetchRotation = async () => {
+      try {
+        const data = await rotationClient.fetchRotationQueue();
+        setRotationMessages((current) =>
+          rotationQueueKey(current) === rotationQueueKey(data) ? current : data,
+        );
+      } catch {
+        // Keep showing last good rotation queue on TV screens
+      }
+    };
+
+    void fetchRotation();
+    const rotationInterval = setInterval(() => {
+      void fetchRotation();
+    }, 2000);
+
+    return () => clearInterval(rotationInterval);
   }, []);
 
   useEffect(() => {
@@ -117,7 +142,7 @@ export function DisplayRouter({
   const layoutProps = {
     schedule,
     seasonal,
-    notices,
+    rotationMessages,
     events,
     ayat,
     weather,

@@ -18,6 +18,8 @@ import { getSeasonalFlags } from "@/lib/seasonal";
 import { CLONDLAKIN_COORDS } from "@/lib/constants";
 
 import type { SerializedDisplayNotice, WeatherPayload } from "@/lib/display-types";
+import { getRotationQueue } from "@/lib/message-rotation";
+import { messageToDisplayNotice, expireInactiveMessages } from "@/lib/messages";
 
 export type { SerializedDisplayNotice, WeatherPayload } from "@/lib/display-types";
 
@@ -57,45 +59,13 @@ export async function getDisplayTodayPayload() {
   };
 }
 
-function isNoticeActive(
-  notice: {
-    startDate: Date | null;
-    endDate: Date | null;
-  },
-  now: Date,
-) {
-  if (notice.startDate && notice.startDate > now) return false;
-  if (notice.endDate) {
-    const end = new Date(notice.endDate);
-    end.setHours(23, 59, 59, 999);
-    if (end < now) return false;
-  }
-  return true;
-}
-
-export function serializeDisplayNotice(
-  notice: Awaited<ReturnType<typeof db.displayNotice.findMany>>[number]
-): SerializedDisplayNotice {
-  return {
-    id: notice.id,
-    title: notice.title,
-    message: notice.message,
-    priority: notice.priority,
-    startDate: notice.startDate ? notice.startDate.toISOString() : null,
-    endDate: notice.endDate ? notice.endDate.toISOString() : null,
-    createdAt: notice.createdAt.toISOString(),
-  };
-}
-
 export async function getActiveDisplayNotices() {
-  const notices = await db.displayNotice.findMany({
-    orderBy: [{ priority: "asc" }, { createdAt: "desc" }],
-  });
+  const queue = await getRotationQueue();
+  return queue.map(messageToDisplayNotice);
+}
 
-  const now = new Date();
-  return notices
-    .filter((notice) => isNoticeActive(notice, now))
-    .map(serializeDisplayNotice);
+export async function expireDisplayNotices() {
+  return expireInactiveMessages();
 }
 
 export async function getUpcomingDisplayEvents(limit = 3) {
@@ -206,17 +176,3 @@ export const getCachedWeather = unstable_cache(
   ["display-weather"],
   { revalidate: 600 }
 );
-
-export async function expireDisplayNotices() {
-  const now = new Date();
-  const expired = await db.displayNotice.findMany({
-    where: {
-      endDate: { lt: now },
-    },
-  });
-
-  return {
-    expiredCount: expired.length,
-    checkedAt: format(now, "yyyy-MM-dd'T'HH:mm:ss"),
-  };
-}

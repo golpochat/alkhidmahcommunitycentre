@@ -885,11 +885,12 @@
   }
 
   .admin-prayer-times-tabs-list {
-    @apply flex h-auto w-full max-w-none items-end gap-0 rounded-none border-0 border-b border-border bg-transparent p-0;
+    @apply flex h-auto w-full max-w-none items-end gap-0 overflow-x-auto rounded-none border-0 border-b border-border bg-transparent p-0;
+    scrollbar-width: thin;
   }
 
   .admin-prayer-times-tabs-list [data-slot="tabs-trigger"] {
-    @apply -mb-px flex min-h-[3rem] flex-1 basis-0 items-center justify-center rounded-none rounded-t-md border border-transparent px-3 py-2.5 text-center text-sm font-medium leading-snug text-muted-foreground shadow-none transition-colors;
+    @apply -mb-px flex min-h-[3rem] min-w-[7.5rem] flex-1 basis-0 items-center justify-center rounded-none rounded-t-md border border-transparent px-3 py-2.5 text-center text-sm font-medium leading-snug text-muted-foreground shadow-none transition-colors sm:min-w-0;
     white-space: normal;
   }
 
@@ -908,7 +909,7 @@
   }
 
   .admin-prayer-times-tab-content {
-    @apply mt-0 w-full space-y-4 rounded-b-lg border border-border border-t-0 bg-card p-4 sm:p-6;
+    @apply mt-0 w-full min-w-0 space-y-4 rounded-b-lg border border-border border-t-0 bg-card p-4 sm:p-6;
   }
 
   .admin-prayer-times-tab-content--schedule {
@@ -947,11 +948,11 @@
   }
 
   .admin-prayer-times-tab-section {
-    @apply space-y-6;
+    @apply min-w-0 space-y-4 sm:space-y-6;
   }
 
   .admin-prayer-times-tab-header {
-    @apply flex flex-row items-center justify-between gap-4;
+    @apply flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between;
   }
 
   .admin-prayer-times-tab-header-daily {
@@ -1765,7 +1766,11 @@
   }
 
   .display-landscape-root {
-    @apply relative z-10 box-border grid h-full w-full max-w-full grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden bg-black p-[clamp(1rem,2vw,2rem)] text-white;
+    @apply relative z-10 box-border grid h-full w-full max-w-full grid-rows-[minmax(0,1fr)_auto] overflow-hidden bg-black text-white;
+  }
+
+  .display-landscape-padded {
+    @apply box-border flex min-h-0 w-full max-w-full flex-col overflow-hidden p-[clamp(1rem,2vw,2rem)];
     gap: clamp(0.75rem, 1.5vw, 1.25rem);
   }
 
@@ -1774,40 +1779,52 @@
   }
 
   .display-landscape-main {
-    @apply box-border min-h-0 w-full max-w-full overflow-hidden;
+    @apply box-border w-full max-w-full shrink-0 overflow-hidden;
   }
 
   .display-landscape-main .display-seasonal-wrapper {
-    @apply flex h-full min-h-0 flex-col items-stretch;
-    gap: clamp(0.75rem, 1.5vw, 1.25rem);
+    @apply flex flex-col items-stretch;
+    gap: clamp(0.65rem, 1.1vw, 1rem);
   }
 
   .display-landscape-eid-banner {
-    @apply mx-auto w-full max-w-4xl shrink-0;
+    @apply mx-auto w-full max-w-3xl shrink-0;
   }
 
-  .display-landscape-countdown-stage {
-    @apply flex min-h-0 flex-1 items-center overflow-hidden;
+  .display-landscape-stage {
+    @apply box-border flex min-h-0 w-full max-w-full flex-1 flex-col justify-start overflow-hidden;
   }
 
-  .display-landscape-countdown-row {
-    @apply box-border grid h-full w-full max-w-full min-h-0 items-center overflow-hidden;
+  .display-landscape-messages {
+    @apply box-border w-full max-w-full shrink-0 overflow-visible;
+  }
+
+  .display-landscape-messages .display-rotating-panels-landscape {
+    @apply gap-[clamp(0.35rem,0.6vw,0.5rem)];
+  }
+
+  .display-landscape-messages .display-landscape-announcement-block {
+    @apply rounded-none border-x-0 border-b-0;
+  }
+
+  .display-landscape-support-row {
+    @apply box-border grid w-full max-w-full shrink-0 items-center;
+    gap: clamp(0.65rem, 1.1vw, 1rem);
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   }
 
-  .display-landscape-countdown-row .display-countdown-ring {
+  .display-landscape-support-row .display-countdown-ring {
     grid-column: 2;
     justify-self: center;
   }
 
-  .display-landscape-countdown-row .display-landscape-weather-block {
+  .display-landscape-support-row .display-landscape-weather-block {
     grid-column: 3;
-    align-self: center;
     justify-self: end;
   }
 
-  .display-landscape-bottom-panel {
-    @apply flex w-full max-w-full shrink-0 flex-col overflow-hidden;
+  .display-landscape-weather-block .display-weather-widget-label {
+    @apply text-gold/60;
   }
 
   .display-landscape-weather-block {
@@ -1819,19 +1836,19 @@
   }
 
   .display-landscape-weather-body .display-weather-widget-temp {
-    @apply text-[clamp(1.5rem,2.2vw,2.25rem)];
+    @apply text-[clamp(1.5rem,2.2vw,2.25rem)] text-gold;
   }
 
   .display-landscape-weather-body .display-weather-widget-desc {
-    @apply mt-[clamp(0.25rem,0.4vw,0.35rem)] text-[clamp(0.95rem,1.25vw,1.1rem)] text-white;
+    @apply mt-[clamp(0.25rem,0.4vw,0.35rem)] text-[clamp(0.95rem,1.25vw,1.1rem)] text-white/70;
   }
 
   .display-landscape-weather-body .display-weather-widget-wind {
-    @apply mt-[clamp(0.15rem,0.3vw,0.25rem)] text-[clamp(0.8rem,1.05vw,0.9rem)] text-white/85;
+    @apply mt-[clamp(0.15rem,0.3vw,0.25rem)] text-[clamp(0.8rem,1.05vw,0.9rem)] text-white/60;
   }
 
   .display-landscape-announcement-block {
-    @apply box-border w-full max-w-full rounded-xl border border-gold/20 bg-black/30 p-[clamp(0.75rem,1.5vw,1.75rem)] text-left leading-relaxed;
+    @apply box-border w-full max-w-full rounded-lg border border-gold/20 bg-black/30 p-[clamp(0.85rem,1.4vw,1.35rem)] text-left leading-relaxed;
   }
 
   .display-landscape-announcement-priority {
@@ -1839,11 +1856,15 @@
   }
 
   .display-landscape-announcement-kicker {
-    @apply mb-[clamp(0.35rem,0.75vw,0.75rem)] text-[clamp(0.75rem,1.2vw,1rem)] font-semibold uppercase tracking-wide text-red-100;
+    @apply mb-[clamp(0.35rem,0.6vw,0.5rem)] text-[clamp(0.75rem,1.1vw,1rem)] font-semibold uppercase tracking-wide text-red-100;
+  }
+
+  .display-landscape-announcement-kicker-gold {
+    @apply text-gold/80;
   }
 
   .display-landscape-announcement-title {
-    @apply mb-[clamp(0.35rem,0.75vw,0.75rem)] text-[clamp(1rem,1.4vw,1.5rem)] font-semibold text-gold;
+    @apply mb-[clamp(0.35rem,0.6vw,0.5rem)] text-[clamp(1.15rem,1.6vw,1.5rem)] font-semibold text-gold;
   }
 
   .display-landscape-announcement-priority .display-landscape-announcement-title {
@@ -1851,7 +1872,7 @@
   }
 
   .display-landscape-announcement-message {
-    @apply text-[clamp(0.875rem,1.2vw,1.25rem)] text-white/90;
+    @apply text-[clamp(1rem,1.35vw,1.35rem)] leading-relaxed text-white/90;
   }
 
   .display-landscape-announcement-message-multiline {
@@ -1859,7 +1880,7 @@
   }
 
   .display-landscape-announcement-message-muted {
-    @apply text-[clamp(0.8rem,1.05vw,1rem)] text-white/70;
+    @apply text-[clamp(0.85rem,1.1vw,1.05rem)] text-white/70;
   }
 
   .display-portrait-panel-body-muted {
@@ -1867,7 +1888,15 @@
   }
 
   .display-rotating-panels-landscape .display-rotating-panels-dots {
-    @apply mt-[clamp(0.35rem,0.75vw,0.75rem)] justify-start;
+    @apply mb-0 mt-0 justify-center px-[clamp(0.85rem,1.4vw,1.35rem)] pt-[clamp(0.35rem,0.6vw,0.5rem)];
+  }
+
+  .display-rotating-panels-landscape .display-rotating-panels-dot {
+    @apply h-2.5 w-2.5 bg-white/40;
+  }
+
+  .display-rotating-panels-landscape .display-rotating-panels-dot-active {
+    @apply bg-gold;
   }
 
   .display-prayer-times-stack {
@@ -2244,15 +2273,15 @@
   }
 
   .display-jumuah-card-heading {
-    @apply font-heading text-[clamp(1rem,1.5vw,1.75rem)] font-bold uppercase tracking-wide text-gold;
+    @apply font-heading text-[clamp(1.6rem,2.4vw,3.2rem)] font-bold uppercase tracking-wide text-gold;
   }
 
   .display-jumuah-card-list {
-    @apply mt-[clamp(0.5rem,1vw,1rem)] flex flex-col gap-2 text-center text-[clamp(1.2rem,1.8vw,2.4rem)] font-bold tabular-nums leading-snug;
+    @apply mt-[clamp(0.35rem,0.75vw,0.85rem)] flex flex-col gap-[clamp(0.15rem,0.35vw,0.35rem)] text-center text-[clamp(0.85rem,1.15vw,1.05rem)] font-semibold tabular-nums leading-snug;
   }
 
   .display-jumuah-card-row {
-    @apply text-white/90;
+    @apply text-white/85;
   }
 
   .display-prayer-card-combined-note {
@@ -2284,7 +2313,7 @@
   }
 
   .display-prayer-card-iqama-label {
-    @apply text-[clamp(0.95rem,1.4vw,1.35rem)] leading-tight;
+    @apply leading-tight;
   }
 
   .display-countdown-ring {
@@ -2427,6 +2456,15 @@
     @apply flex h-full w-full flex-col overflow-hidden;
   }
 
+  .display-rotating-panels.display-rotating-panels-landscape {
+    @apply h-auto w-full shrink-0 flex-col overflow-visible;
+  }
+
+  .display-rotating-panels.display-rotating-panels-landscape
+    .display-rotating-panels-inner {
+    @apply shrink-0;
+  }
+
   .display-rotating-panels-inner {
     @apply flex-1 overflow-hidden transition-opacity duration-500 ease-in-out;
   }
@@ -2559,7 +2597,7 @@
   }
 
   .display-scrolling-ticker {
-    @apply mt-auto shrink-0 overflow-hidden border-t border-gold pt-[clamp(0.25rem,0.5vw,0.5rem)];
+    @apply w-full shrink-0 overflow-hidden border-t border-gold/30 pt-[clamp(0.35rem,0.55vw,0.5rem)];
   }
 
   .display-scrolling-ticker-line {
@@ -2568,16 +2606,32 @@
 
   .display-scrolling-ticker-track {
     @apply flex overflow-hidden whitespace-nowrap;
-    min-height: clamp(1.5rem, 2.5vh, 2.25rem);
+    min-height: clamp(1.35rem, 2vh, 1.85rem);
   }
 
   .display-scrolling-ticker-text {
-    @apply inline-block min-w-full shrink-0 animate-display-ticker px-[clamp(0.5rem,1vw,2rem)] font-medium text-gold;
-    font-size: clamp(1rem, 2vw, 3rem);
+    @apply inline-block min-w-full shrink-0 animate-display-ticker px-[clamp(0.65rem,1.1vw,1rem)] font-medium text-gold/90;
+    font-size: clamp(0.8rem, 1.15vw, 1.05rem);
+  }
+
+  .display-scrolling-ticker-priority {
+    border-top-color: color-mix(in srgb, #ef4444 55%, transparent);
+  }
+
+  .display-scrolling-ticker-priority .display-scrolling-ticker-text {
+    color: #fecaca;
+  }
+
+  .display-landscape-announcement-priority .display-landscape-announcement-message {
+    color: color-mix(in srgb, #ffffff 95%, transparent);
+  }
+
+  .display-portrait-info-panel-emergency .display-portrait-panel-body {
+    color: color-mix(in srgb, #ffffff 95%, transparent);
   }
 
   .admin-display-manager {
-    @apply space-y-4;
+    @apply min-w-0 space-y-4;
   }
 
   .admin-display-toolbar {
@@ -2593,7 +2647,7 @@
   }
 
   .admin-display-preview-link {
-    @apply inline-flex shrink-0 items-center rounded-lg border border-border px-4 py-2 text-sm font-medium transition-colors hover:border-gold/40 hover:text-gold;
+    @apply inline-flex w-full shrink-0 items-center justify-center rounded-lg border border-border px-4 py-2 text-sm font-medium transition-colors hover:border-gold/40 hover:text-gold sm:w-auto;
   }
 
   .admin-display-loading {
@@ -2601,7 +2655,27 @@
   }
 
   .admin-display-grid {
-    @apply grid gap-6 lg:grid-cols-2;
+    @apply grid min-w-0 gap-4 md:gap-6 lg:grid-cols-2;
+  }
+
+  .admin-display-card {
+    @apply min-w-0 rounded-xl border border-border bg-card;
+  }
+
+  .admin-display-card-header {
+    @apply border-b border-border px-4 py-4 md:px-5;
+  }
+
+  .admin-display-card-body {
+    @apply space-y-6 p-4 md:p-5;
+  }
+
+  .admin-display-settings-grid {
+    @apply grid gap-6 md:grid-cols-2;
+  }
+
+  .admin-display-settings-span-full {
+    @apply md:col-span-2;
   }
 
   .admin-display-date-grid {
@@ -2609,7 +2683,7 @@
   }
 
   .admin-display-list-item {
-    @apply flex flex-wrap items-start justify-between gap-3 rounded-lg border border-border p-4;
+    @apply flex flex-col gap-3 rounded-lg border border-border p-4 sm:flex-row sm:items-start sm:justify-between;
   }
 
   .admin-display-rotation-list {
@@ -2619,6 +2693,439 @@
 
   .admin-display-checkbox-row {
     @apply flex items-center gap-2 text-sm;
+  }
+
+  .admin-table-wrap {
+    @apply min-w-0 overflow-x-auto rounded-lg border border-border;
+  }
+
+  .admin-table-wrap [data-slot="table-container"] {
+    @apply min-w-0;
+  }
+
+  .admin-table-wrap [data-slot="table"] {
+    min-width: 36rem;
+  }
+
+  .admin-table-wrap [data-slot="table-head"] {
+    @apply text-xs uppercase tracking-wide text-muted-foreground;
+    background-color: color-mix(in srgb, var(--muted) 30%, transparent);
+  }
+
+  .admin-table-wrap [data-slot="table-cell"] {
+    @apply align-middle;
+  }
+
+  .admin-table-empty {
+    @apply py-10 text-center text-muted-foreground;
+  }
+
+  .admin-table-col-hide-md {
+    @apply hidden md:table-cell;
+  }
+
+  .admin-table-col-hide-lg {
+    @apply hidden lg:table-cell;
+  }
+
+  .admin-table-col-hide-xl {
+    @apply hidden xl:table-cell;
+  }
+
+  .admin-table-col-actions {
+    @apply w-28 text-right;
+  }
+
+  .admin-table-col-drag {
+    @apply w-10;
+  }
+
+  .admin-table-col-order {
+    @apply w-10;
+  }
+
+  .admin-table-title-cell {
+    @apply max-w-[10rem] font-medium whitespace-normal sm:max-w-[14rem];
+  }
+
+  .admin-table-schedule-cell {
+    @apply max-w-[12rem] whitespace-normal text-xs text-muted-foreground;
+  }
+
+  .admin-table-action-group {
+    @apply flex items-center justify-end gap-0.5 sm:gap-1;
+  }
+
+  .admin-messages-centre {
+    @apply flex min-w-0 flex-col gap-4 sm:gap-6;
+  }
+
+  .admin-messages-panel {
+    @apply min-w-0 rounded-xl border border-border bg-card p-4 md:p-5;
+  }
+
+  .admin-display-card {
+    @apply min-w-0 overflow-hidden rounded-xl border border-border bg-card;
+  }
+
+  .admin-messages-panel-list {
+    @apply w-full;
+  }
+
+  .admin-messages-panel-engine {
+    @apply w-full;
+  }
+
+  .admin-messages-panel-header {
+    @apply mb-4 space-y-1;
+  }
+
+  .admin-messages-panel-header-row {
+    @apply flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between;
+  }
+
+  .admin-messages-panel-header-row .btn-gold {
+    @apply w-full shrink-0 sm:w-auto;
+  }
+
+  .admin-messages-form-dialog {
+    @apply max-h-[min(90vh,100dvh)] w-[calc(100%-1rem)] overflow-y-auto p-4 sm:max-w-2xl sm:p-6;
+  }
+
+  .admin-messages-form-dialog-footer {
+    @apply mt-2;
+  }
+
+  .admin-messages-panel-title {
+    @apply font-heading text-lg font-semibold text-foreground;
+  }
+
+  .admin-messages-panel-description {
+    @apply text-sm text-muted-foreground;
+  }
+
+  .admin-messages-form-fields {
+    @apply space-y-4;
+  }
+
+  .admin-messages-field {
+    @apply space-y-2;
+  }
+
+  .admin-messages-fieldset {
+    @apply space-y-3 rounded-lg border border-border p-3;
+  }
+
+  .admin-messages-legend {
+    @apply px-1 text-sm font-medium text-foreground;
+  }
+
+  .admin-messages-segmented {
+    @apply grid grid-cols-2 gap-2 rounded-lg border border-border p-1;
+  }
+
+  .admin-messages-segment {
+    @apply rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground;
+  }
+
+  .admin-messages-segment-active {
+    @apply bg-gold/15 text-foreground;
+  }
+
+  .admin-messages-segment-priority.admin-messages-segment-active {
+    @apply bg-red-500/15 text-red-100;
+  }
+
+  .admin-messages-toggle-row {
+    @apply flex flex-col gap-3 rounded-lg border border-border p-3 sm:flex-row sm:items-center sm:justify-between;
+  }
+
+  .admin-messages-toggle-hint {
+    @apply text-xs text-muted-foreground;
+  }
+
+  .admin-messages-date-grid {
+    @apply grid gap-3 sm:grid-cols-2;
+  }
+
+  .admin-messages-schedule-options {
+    @apply space-y-3;
+  }
+
+  .admin-messages-radio-row {
+    @apply flex items-center gap-2 text-sm;
+  }
+
+  .admin-messages-form-actions {
+    @apply mt-4 flex flex-wrap gap-2 border-t border-border pt-4;
+  }
+
+  .admin-message-preview-card {
+    @apply rounded-lg border border-border p-4;
+    background-color: color-mix(in srgb, var(--muted) 30%, transparent);
+  }
+
+  .admin-message-preview-card-priority {
+    @apply border-red-400/40 bg-red-500/10;
+  }
+
+  .admin-message-preview-kicker {
+    @apply text-xs font-semibold uppercase tracking-wide text-muted-foreground;
+  }
+
+  .admin-message-preview-card-priority .admin-message-preview-kicker {
+    @apply text-red-200;
+  }
+
+  .admin-message-preview-title {
+    @apply mt-2 font-heading text-base font-semibold;
+  }
+
+  .admin-message-preview-body {
+    @apply mt-2 text-sm text-muted-foreground;
+  }
+
+  .admin-message-preview-meta {
+    @apply mt-4 grid gap-2 text-xs text-muted-foreground;
+  }
+
+  .admin-message-preview-meta div {
+    @apply flex items-center justify-between gap-3 border-t pt-2;
+    border-top-color: color-mix(in srgb, var(--border) 60%, transparent);
+  }
+
+  .admin-message-preview-meta dt {
+    @apply font-medium;
+    color: color-mix(in srgb, var(--foreground) 80%, transparent);
+  }
+
+  .admin-messages-list-section + .admin-messages-list-section {
+    @apply mt-4 border-t border-border pt-4 sm:mt-6 sm:pt-6;
+  }
+
+  .admin-messages-list-section-header {
+    @apply mb-3 space-y-1;
+  }
+
+  .admin-messages-list-section-title {
+    @apply text-sm font-semibold text-foreground sm:text-base;
+  }
+
+  .admin-messages-list-section-description {
+    @apply text-xs text-muted-foreground;
+  }
+
+  .admin-messages-table-wrap {
+    @apply min-w-0 overflow-x-auto rounded-lg border border-border;
+  }
+
+  .admin-messages-table-wrap [data-slot="table-container"] {
+    @apply min-w-0;
+  }
+
+  .admin-messages-table-wrap [data-slot="table"] {
+    min-width: 40rem;
+  }
+
+  .admin-messages-table-wrap [data-slot="table-head"] {
+    @apply text-xs uppercase tracking-wide text-muted-foreground;
+    background-color: color-mix(in srgb, var(--muted) 30%, transparent);
+  }
+
+  .admin-messages-table-wrap [data-slot="table-cell"] {
+    @apply align-middle;
+  }
+
+  .admin-messages-table-row-dragging {
+    @apply opacity-60;
+  }
+
+  .admin-messages-table-row-drop-target {
+    @apply ring-1;
+    background-color: color-mix(in srgb, var(--gold) 10%, transparent);
+    --tw-ring-color: color-mix(in srgb, var(--gold) 30%, transparent);
+  }
+
+  .admin-message-row-handle {
+    @apply flex shrink-0 cursor-grab items-center justify-center rounded-md border border-border p-1.5 text-muted-foreground active:cursor-grabbing;
+  }
+
+  .admin-messages-empty {
+    @apply text-sm text-muted-foreground;
+  }
+
+  .admin-messages-table-drag {
+    @apply w-10;
+  }
+
+  .admin-messages-table-title {
+    @apply max-w-[10rem] font-medium whitespace-normal sm:max-w-[14rem];
+  }
+
+  .admin-messages-table-schedule {
+    @apply max-w-[12rem] whitespace-normal text-xs text-muted-foreground;
+  }
+
+  .admin-messages-table-actions {
+    @apply text-right;
+  }
+
+  .admin-messages-table-rotation {
+    @apply min-w-[5.5rem];
+  }
+
+  .admin-messages-rotation-control {
+    @apply flex items-center gap-2;
+  }
+
+  .admin-messages-rotation-label {
+    @apply text-xs text-muted-foreground;
+  }
+
+  .admin-messages-rotation-label-on {
+    @apply text-gold;
+  }
+
+  .admin-messages-rotation-switch {
+    width: 2rem;
+    min-width: 2rem;
+  }
+
+  .admin-messages-rotation-switch[data-checked] {
+    background-color: var(--gold);
+    border-color: var(--gold);
+  }
+
+  .admin-messages-rotation-switch[data-unchecked] {
+    background-color: color-mix(
+      in srgb,
+      var(--foreground) 18%,
+      var(--background)
+    );
+    border: 1px solid color-mix(in srgb, var(--foreground) 45%, transparent);
+  }
+
+  .admin-messages-rotation-switch[data-checked] [data-slot="switch-thumb"] {
+    transform: translateX(0.875rem);
+    background-color: var(--background);
+  }
+
+  .admin-messages-rotation-switch[data-unchecked] [data-slot="switch-thumb"] {
+    transform: translateX(0);
+    background-color: color-mix(
+      in srgb,
+      var(--foreground) 75%,
+      var(--background)
+    );
+  }
+
+  .admin-messages-table-action-group {
+    @apply flex items-center justify-end gap-0.5 sm:gap-1;
+  }
+
+  .admin-messages-table-empty {
+    @apply py-10 text-center text-muted-foreground;
+  }
+
+  .admin-messages-engine-layout {
+    @apply grid min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-3;
+  }
+
+  .admin-messages-engine-block-now {
+    @apply md:col-span-2 xl:col-span-1;
+  }
+
+  .admin-messages-engine-block-table {
+    @apply p-0;
+  }
+
+  .admin-messages-engine-block-table .admin-messages-engine-block-title {
+    @apply px-4 pt-4;
+  }
+
+  .admin-messages-engine-block-table .admin-messages-table-wrap {
+    @apply mt-3 border-0 border-t border-border rounded-none;
+  }
+
+  .admin-messages-engine-queue-row-active {
+    background-color: color-mix(in srgb, var(--gold) 10%, transparent);
+  }
+
+  .admin-messages-engine-stat-label {
+    @apply text-muted-foreground;
+  }
+
+  .admin-messages-engine-stat-value {
+    @apply text-right font-semibold;
+  }
+
+  .admin-messages-engine-block {
+    @apply space-y-3 rounded-lg border border-border p-4;
+    background-color: color-mix(in srgb, var(--muted) 20%, transparent);
+  }
+
+  .admin-messages-engine-block + .admin-messages-engine-block {
+    @apply mt-4;
+  }
+
+  .admin-messages-engine-block-title {
+    @apply text-sm font-semibold uppercase tracking-wide text-muted-foreground;
+  }
+
+  .admin-messages-engine-now-title {
+    @apply font-heading text-lg font-semibold text-gold;
+  }
+
+  .admin-messages-engine-now-snippet {
+    @apply text-sm text-muted-foreground;
+  }
+
+  .admin-messages-engine-source,
+  .admin-messages-engine-timer {
+    @apply text-sm;
+    color: color-mix(in srgb, var(--foreground) 80%, transparent);
+  }
+
+  .admin-messages-engine-queue {
+    @apply space-y-2;
+  }
+
+  .admin-messages-engine-queue li {
+    @apply flex items-start gap-3 rounded-md border px-3 py-2;
+    border-color: color-mix(in srgb, var(--border) 70%, transparent);
+  }
+
+  .admin-messages-engine-queue-item-active {
+    @apply border-gold/50 bg-gold/10;
+  }
+
+  .admin-messages-engine-queue-index {
+    @apply flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold;
+  }
+
+  .admin-messages-engine-queue-title {
+    @apply text-sm font-medium;
+  }
+
+  .admin-messages-engine-queue-meta {
+    @apply text-xs text-muted-foreground;
+  }
+
+  .admin-messages-engine-stats {
+    @apply space-y-3 text-sm;
+  }
+
+  .admin-messages-engine-stats div {
+    @apply flex items-center justify-between gap-3 border-b pb-2;
+    border-bottom-color: color-mix(in srgb, var(--border) 60%, transparent);
+  }
+
+  .admin-messages-engine-stats dt {
+    @apply text-muted-foreground;
+  }
+
+  .admin-messages-engine-stats dd {
+    @apply font-semibold text-foreground;
   }
 
   .user-portal-empty {

@@ -68,10 +68,7 @@ export function AdminAdhanField({
               value === "fixed"
                 ? config.fixed || resolvedAdhan || ""
                 : config.fixed,
-            text:
-              value === "text"
-                ? config.text || ""
-                : config.text,
+            text: value === "text" ? config.text || "" : config.text,
           })
         }
       >

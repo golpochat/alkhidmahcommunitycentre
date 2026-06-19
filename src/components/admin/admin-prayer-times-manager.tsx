@@ -549,326 +549,44 @@ export function AdminPrayerTimesManager() {
             value="daily"
             className="admin-prayer-times-inner-tab-content"
           >
-        <div className="admin-prayer-times-tab-section">
-          <div className="admin-prayer-times-tab-header admin-prayer-times-tab-header-daily">
-            <div>
-              <h2 className="admin-prayer-times-tab-title">
-                Daily Prayer Times
-              </h2>
-              {formLoading && (
-                <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin text-gold" />
-                  Loading…
-                </p>
-              )}
-            </div>
-            <div className="space-y-2 sm:w-56">
-              <Label htmlFor="daily-preview-date">Preview date</Label>
-              <Input
-                id="daily-preview-date"
-                type="date"
-                value={previewDate}
-                onChange={(event) => setPreviewDate(event.target.value)}
-                required
-              />
-            </div>
-          </div>
-          <div className="admin-prayer-times-tab-body">
-            <div
-              className={cn(
-                "admin-prayer-times-table-wrap",
-                formLoading && "pointer-events-none opacity-60",
-              )}
-            >
-              <Table className="prayer-times-table admin-prayer-times-table admin-prayer-times-table--daily">
-                <colgroup>
-                  <col className="admin-prayer-times-col-prayer" />
-                  <col className="admin-prayer-times-col-adhan-api" />
-                  <col className="admin-prayer-times-col-adhan-adjust" />
-                  <col className="admin-prayer-times-col-iqama" />
-                  <col className="admin-prayer-times-col-iqama-actual" />
-                </colgroup>
-                <TableHeader>
-                  <TableRow className="prayer-times-table-head hover:bg-transparent">
-                    <TableHead className="prayer-times-table-head-cell">
-                      Prayer
-                    </TableHead>
-                    <TableHead className="prayer-times-table-head-cell">
-                      Adhan (API)
-                    </TableHead>
-                    <TableHead className="prayer-times-table-head-cell">
-                      Adhan
-                    </TableHead>
-                    <TableHead className="prayer-times-table-head-cell">
-                      Iqama
-                    </TableHead>
-                    <TableHead className="prayer-times-table-head-cell">
-                      Actual Iqama Time
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {DAILY_PRAYERS.map((prayer) => {
-                    const disabled = selectedFriday && prayer.key === "dhuhr";
-
-                    return (
-                      <TableRow
-                        key={prayer.key}
-                        className={cn(
-                          "prayer-times-table-row",
-                          disabled && "prayer-times-table-row-muted",
-                        )}
-                      >
-                        <TableCell className="prayer-times-table-cell font-medium">
-                          {prayer.label}
-                          {disabled && (
-                            <span className="mt-1 block text-xs text-muted-foreground">
-                              Replaced by Jumu&apos;ah on Fridays
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell className="prayer-times-table-cell admin-prayer-times-adhan-api-cell">
-                          <AdminAdhanApiTime
-                            apiAdhan={form.apiAdhan[prayer.key]}
-                          />
-                        </TableCell>
-                        <TableCell className="prayer-times-table-cell admin-prayer-times-adhan-adjust-cell">
-                          <AdminAdhanField
-                            apiAdhan={form.apiAdhan[prayer.key]}
-                            disabled={disabled}
-                            config={
-                              form.adhanConfig[prayer.key] ??
-                              defaultAdhanConfigEntry()
-                            }
-                            onChange={(config) =>
-                              updateAdhanConfig(prayer.key, config)
-                            }
-                          />
-                        </TableCell>
-                        <TableCell className="prayer-times-table-cell admin-prayer-times-iqama-cell">
-                          <AdminIqamaField
-                            prayer={prayer.key}
-                            disabled={disabled}
-                            config={
-                              form.iqamaConfig[prayer.key] ??
-                              defaultIqamaConfigEntry(prayer.key)
-                            }
-                            legacyIqama={
-                              form[
-                                `${prayer.key}Iqama` as keyof AdminFormState
-                              ] as string
-                            }
-                            onChange={(config) =>
-                              updateIqamaConfig(prayer.key, config)
-                            }
-                          />
-                        </TableCell>
-                        <TableCell className="prayer-times-table-cell admin-prayer-times-iqama-actual-cell">
-                          <span
-                            className={cn(
-                              "admin-iqama-actual-time",
-                              /^\d{2}:\d{2}$/.test(
-                                actualIqamaByPrayer[prayer.key],
-                              ) && "admin-iqama-actual-time--time",
-                            )}
-                          >
-                            {disabled
-                              ? "Jumu'ah"
-                              : actualIqamaByPrayer[prayer.key]}
-                          </span>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
-        </div>
-
-        <TabActions
-          saving={savingSection === "daily"}
-          loading={formLoading}
-          disabled={formLoading}
-          onLoad={handleDailyLoad}
-          onSave={() => saveSection("daily")}
-          onReset={() => resetSection("daily")}
-        />
-          </TabsContent>
-
-          <TabsContent
-            value="jumuah"
-            className="admin-prayer-times-inner-tab-content"
-          >
-        <div className="admin-prayer-times-tab-section">
-          <div className="admin-prayer-times-tab-header">
-            <div>
-              <h2 className="admin-prayer-times-tab-title">
-                Jumu&apos;ah Prayers
-              </h2>
-            </div>
-            <Button type="button" variant="outline" onClick={addJumuah}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Jumu&apos;ah Prayer
-            </Button>
-          </div>
-          <div className="admin-prayer-times-tab-body">
-            {jumuahSlots.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                Default Jumu&apos;ah prayer times load automatically. Add
-                entries to override.
-              </p>
-            ) : (
-              <div className="admin-prayer-times-table-wrap">
-                <Table className="prayer-times-table admin-prayer-times-table admin-prayer-times-table--slots">
-                  <colgroup>
-                    <col className="admin-prayer-times-col-label" />
-                    <col className="admin-prayer-times-col-value" />
-                    <col className="admin-prayer-times-col-actions" />
-                  </colgroup>
-                  <TableHeader>
-                    <TableRow className="prayer-times-table-head hover:bg-transparent">
-                      <TableHead className="prayer-times-table-head-cell">
-                        Prayer
-                      </TableHead>
-                      <TableHead className="prayer-times-table-head-cell">
-                        Adhan
-                      </TableHead>
-                      <TableHead
-                        className="prayer-times-table-head-cell admin-prayer-times-actions-head"
-                        aria-label="Actions"
-                      />
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {jumuahSlots.map((jumuah) => (
-                      <TableRow
-                        key={jumuah.index}
-                        className="prayer-times-table-row"
-                      >
-                        <TableCell className="prayer-times-table-cell admin-prayer-times-slot-label-cell font-medium">
-                          {getJumuahPrayerLabel(jumuah.index)}
-                        </TableCell>
-                        <TableCell className="prayer-times-table-cell admin-prayer-times-value-cell">
-                          <Input
-                            type="time"
-                            value={jumuah.adhan}
-                            onChange={(event) =>
-                              setJumuahSlots((current) =>
-                                current.map((item) =>
-                                  item.index === jumuah.index
-                                    ? { ...item, adhan: event.target.value }
-                                    : item,
-                                ),
-                              )
-                            }
-                          />
-                        </TableCell>
-                        <TableCell className="prayer-times-table-cell admin-prayer-times-actions-cell">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => removeJumuah(jumuah.index)}
-                            aria-label={`Delete ${getJumuahPrayerLabel(jumuah.index)}`}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <TabActions
-          saving={savingSection === "jumuah"}
-          onSave={() => saveSection("jumuah")}
-        />
-          </TabsContent>
-
-          <TabsContent
-            value="eid"
-            className="admin-prayer-times-inner-tab-content"
-          >
-        <div className="admin-prayer-times-tab-section">
-          <div className="admin-prayer-times-tab-header">
-            <div className="space-y-1">
-              <h2 className="admin-prayer-times-tab-title">Eid Prayer Times</h2>
-              {formLoading && (
-                <p className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin text-gold" />
-                  Loading…
-                </p>
-              )}
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={addEidPrayer}
-              disabled={formLoading}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Add Eid Prayer
-            </Button>
-          </div>
-          <div className="admin-prayer-times-tab-body admin-prayer-times-tab-body-eid">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="eid-date">Select EID date</Label>
-                <Input
-                  id="eid-date"
-                  type="date"
-                  value={eidDate}
-                  onChange={(event) => setEidDate(event.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Eid celebration</Label>
-                <div className="flex flex-wrap gap-4 pt-2">
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="radio"
-                      name="eid-type"
-                      checked={eidType === "FITR"}
-                      disabled={formLoading}
-                      onChange={() => selectEidType("FITR")}
-                    />
-                    Eid-ul-Fitr
-                  </label>
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="radio"
-                      name="eid-type"
-                      checked={eidType === "ADHA"}
-                      disabled={formLoading}
-                      onChange={() => selectEidType("ADHA")}
-                    />
-                    Eid-ul-Adha
-                  </label>
+            <div className="admin-prayer-times-tab-section">
+              <div className="admin-prayer-times-tab-header admin-prayer-times-tab-header-daily">
+                <div>
+                  <h2 className="admin-prayer-times-tab-title">
+                    Daily Prayer Times
+                  </h2>
+                  {formLoading && (
+                    <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin text-gold" />
+                      Loading…
+                    </p>
+                  )}
+                </div>
+                <div className="space-y-2 sm:w-56">
+                  <Label htmlFor="daily-preview-date">Preview date</Label>
+                  <Input
+                    id="daily-preview-date"
+                    type="date"
+                    value={previewDate}
+                    onChange={(event) => setPreviewDate(event.target.value)}
+                    required
+                  />
                 </div>
               </div>
-            </div>
-
-            <div
-              className={cn(formLoading && "pointer-events-none opacity-60")}
-            >
-              {eidPrayers.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  No Eid prayers yet. Add at least one congregation time.
-                </p>
-              ) : (
-                <div className="admin-prayer-times-table-wrap">
-                  <Table className="prayer-times-table admin-prayer-times-table admin-prayer-times-table--slots">
+              <div className="admin-prayer-times-tab-body">
+                <div
+                  className={cn(
+                    "admin-prayer-times-table-wrap",
+                    formLoading && "pointer-events-none opacity-60",
+                  )}
+                >
+                  <Table className="prayer-times-table admin-prayer-times-table admin-prayer-times-table--daily">
                     <colgroup>
-                      <col className="admin-prayer-times-col-label" />
-                      <col className="admin-prayer-times-col-value" />
-                      <col className="admin-prayer-times-col-actions" />
+                      <col className="admin-prayer-times-col-prayer" />
+                      <col className="admin-prayer-times-col-adhan-api" />
+                      <col className="admin-prayer-times-col-adhan-adjust" />
+                      <col className="admin-prayer-times-col-iqama" />
+                      <col className="admin-prayer-times-col-iqama-actual" />
                     </colgroup>
                     <TableHeader>
                       <TableRow className="prayer-times-table-head hover:bg-transparent">
@@ -876,65 +594,355 @@ export function AdminPrayerTimesManager() {
                           Prayer
                         </TableHead>
                         <TableHead className="prayer-times-table-head-cell">
-                          Time
+                          Adhan (API)
                         </TableHead>
-                        <TableHead
-                          className="prayer-times-table-head-cell admin-prayer-times-actions-head"
-                          aria-label="Actions"
-                        />
+                        <TableHead className="prayer-times-table-head-cell">
+                          Adhan
+                        </TableHead>
+                        <TableHead className="prayer-times-table-head-cell">
+                          Iqama
+                        </TableHead>
+                        <TableHead className="prayer-times-table-head-cell">
+                          Actual Iqama Time
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {eidPrayers.map((prayer) => (
-                        <TableRow
-                          key={prayer.index}
-                          className="prayer-times-table-row"
-                        >
-                          <TableCell className="prayer-times-table-cell font-medium">
-                            {getEidPrayerLabel(prayer.index)}
-                          </TableCell>
-                          <TableCell className="prayer-times-table-cell admin-prayer-times-value-cell">
-                            <Input
-                              id={`eid-time-${prayer.index}`}
-                              type="time"
-                              value={prayer.time}
-                              onChange={(event) =>
-                                setEidPrayers((current) =>
-                                  current.map((item) =>
-                                    item.index === prayer.index
-                                      ? { ...item, time: event.target.value }
-                                      : item,
-                                  ),
-                                )
-                              }
-                            />
-                          </TableCell>
-                          <TableCell className="prayer-times-table-cell admin-prayer-times-actions-cell">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => removeEidPrayer(prayer.index)}
-                              aria-label={`Delete ${getEidPrayerLabel(prayer.index)}`}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      {DAILY_PRAYERS.map((prayer) => {
+                        const disabled =
+                          selectedFriday && prayer.key === "dhuhr";
+
+                        return (
+                          <TableRow
+                            key={prayer.key}
+                            className={cn(
+                              "prayer-times-table-row",
+                              disabled && "prayer-times-table-row-muted",
+                            )}
+                          >
+                            <TableCell className="prayer-times-table-cell font-medium">
+                              {prayer.label}
+                              {disabled && (
+                                <span className="mt-1 block text-xs text-muted-foreground">
+                                  Replaced by Jumu&apos;ah on Fridays
+                                </span>
+                              )}
+                            </TableCell>
+                            <TableCell className="prayer-times-table-cell admin-prayer-times-adhan-api-cell">
+                              <AdminAdhanApiTime
+                                apiAdhan={form.apiAdhan[prayer.key]}
+                              />
+                            </TableCell>
+                            <TableCell className="prayer-times-table-cell admin-prayer-times-adhan-adjust-cell">
+                              <AdminAdhanField
+                                apiAdhan={form.apiAdhan[prayer.key]}
+                                disabled={disabled}
+                                config={
+                                  form.adhanConfig[prayer.key] ??
+                                  defaultAdhanConfigEntry()
+                                }
+                                onChange={(config) =>
+                                  updateAdhanConfig(prayer.key, config)
+                                }
+                              />
+                            </TableCell>
+                            <TableCell className="prayer-times-table-cell admin-prayer-times-iqama-cell">
+                              <AdminIqamaField
+                                prayer={prayer.key}
+                                disabled={disabled}
+                                config={
+                                  form.iqamaConfig[prayer.key] ??
+                                  defaultIqamaConfigEntry(prayer.key)
+                                }
+                                legacyIqama={
+                                  form[
+                                    `${prayer.key}Iqama` as keyof AdminFormState
+                                  ] as string
+                                }
+                                onChange={(config) =>
+                                  updateIqamaConfig(prayer.key, config)
+                                }
+                              />
+                            </TableCell>
+                            <TableCell className="prayer-times-table-cell admin-prayer-times-iqama-actual-cell">
+                              <span
+                                className={cn(
+                                  "admin-iqama-actual-time",
+                                  /^\d{2}:\d{2}$/.test(
+                                    actualIqamaByPrayer[prayer.key],
+                                  ) && "admin-iqama-actual-time--time",
+                                )}
+                              >
+                                {disabled
+                                  ? "Jumu'ah"
+                                  : actualIqamaByPrayer[prayer.key]}
+                              </span>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 </div>
-              )}
+              </div>
             </div>
-          </div>
-        </div>
 
-        <TabActions
-          saving={savingSection === "eid"}
-          disabled={formLoading}
-          onSave={() => saveSection("eid")}
-        />
+            <TabActions
+              saving={savingSection === "daily"}
+              loading={formLoading}
+              disabled={formLoading}
+              onLoad={handleDailyLoad}
+              onSave={() => saveSection("daily")}
+              onReset={() => resetSection("daily")}
+            />
+          </TabsContent>
+
+          <TabsContent
+            value="jumuah"
+            className="admin-prayer-times-inner-tab-content"
+          >
+            <div className="admin-prayer-times-tab-section">
+              <div className="admin-prayer-times-tab-header">
+                <div>
+                  <h2 className="admin-prayer-times-tab-title">
+                    Jumu&apos;ah Prayers
+                  </h2>
+                </div>
+                <Button type="button" variant="outline" onClick={addJumuah}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Jumu&apos;ah Prayer
+                </Button>
+              </div>
+              <div className="admin-prayer-times-tab-body">
+                {jumuahSlots.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Default Jumu&apos;ah prayer times load automatically. Add
+                    entries to override.
+                  </p>
+                ) : (
+                  <div className="admin-prayer-times-table-wrap">
+                    <Table className="prayer-times-table admin-prayer-times-table admin-prayer-times-table--slots">
+                      <colgroup>
+                        <col className="admin-prayer-times-col-label" />
+                        <col className="admin-prayer-times-col-value" />
+                        <col className="admin-prayer-times-col-actions" />
+                      </colgroup>
+                      <TableHeader>
+                        <TableRow className="prayer-times-table-head hover:bg-transparent">
+                          <TableHead className="prayer-times-table-head-cell">
+                            Prayer
+                          </TableHead>
+                          <TableHead className="prayer-times-table-head-cell">
+                            Adhan
+                          </TableHead>
+                          <TableHead
+                            className="prayer-times-table-head-cell admin-prayer-times-actions-head"
+                            aria-label="Actions"
+                          />
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {jumuahSlots.map((jumuah) => (
+                          <TableRow
+                            key={jumuah.index}
+                            className="prayer-times-table-row"
+                          >
+                            <TableCell className="prayer-times-table-cell admin-prayer-times-slot-label-cell font-medium">
+                              {getJumuahPrayerLabel(jumuah.index)}
+                            </TableCell>
+                            <TableCell className="prayer-times-table-cell admin-prayer-times-value-cell">
+                              <Input
+                                type="time"
+                                value={jumuah.adhan}
+                                onChange={(event) =>
+                                  setJumuahSlots((current) =>
+                                    current.map((item) =>
+                                      item.index === jumuah.index
+                                        ? { ...item, adhan: event.target.value }
+                                        : item,
+                                    ),
+                                  )
+                                }
+                              />
+                            </TableCell>
+                            <TableCell className="prayer-times-table-cell admin-prayer-times-actions-cell">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => removeJumuah(jumuah.index)}
+                                aria-label={`Delete ${getJumuahPrayerLabel(jumuah.index)}`}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <TabActions
+              saving={savingSection === "jumuah"}
+              onSave={() => saveSection("jumuah")}
+            />
+          </TabsContent>
+
+          <TabsContent
+            value="eid"
+            className="admin-prayer-times-inner-tab-content"
+          >
+            <div className="admin-prayer-times-tab-section">
+              <div className="admin-prayer-times-tab-header">
+                <div className="space-y-1">
+                  <h2 className="admin-prayer-times-tab-title">
+                    Eid Prayer Times
+                  </h2>
+                  {formLoading && (
+                    <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin text-gold" />
+                      Loading…
+                    </p>
+                  )}
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={addEidPrayer}
+                  disabled={formLoading}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Eid Prayer
+                </Button>
+              </div>
+              <div className="admin-prayer-times-tab-body admin-prayer-times-tab-body-eid">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="eid-date">Select EID date</Label>
+                    <Input
+                      id="eid-date"
+                      type="date"
+                      value={eidDate}
+                      onChange={(event) => setEidDate(event.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Eid celebration</Label>
+                    <div className="flex flex-wrap gap-4 pt-2">
+                      <label className="flex items-center gap-2 text-sm">
+                        <input
+                          type="radio"
+                          name="eid-type"
+                          checked={eidType === "FITR"}
+                          disabled={formLoading}
+                          onChange={() => selectEidType("FITR")}
+                        />
+                        Eid-ul-Fitr
+                      </label>
+                      <label className="flex items-center gap-2 text-sm">
+                        <input
+                          type="radio"
+                          name="eid-type"
+                          checked={eidType === "ADHA"}
+                          disabled={formLoading}
+                          onChange={() => selectEidType("ADHA")}
+                        />
+                        Eid-ul-Adha
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  className={cn(
+                    formLoading && "pointer-events-none opacity-60",
+                  )}
+                >
+                  {eidPrayers.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      No Eid prayers yet. Add at least one congregation time.
+                    </p>
+                  ) : (
+                    <div className="admin-prayer-times-table-wrap">
+                      <Table className="prayer-times-table admin-prayer-times-table admin-prayer-times-table--slots">
+                        <colgroup>
+                          <col className="admin-prayer-times-col-label" />
+                          <col className="admin-prayer-times-col-value" />
+                          <col className="admin-prayer-times-col-actions" />
+                        </colgroup>
+                        <TableHeader>
+                          <TableRow className="prayer-times-table-head hover:bg-transparent">
+                            <TableHead className="prayer-times-table-head-cell">
+                              Prayer
+                            </TableHead>
+                            <TableHead className="prayer-times-table-head-cell">
+                              Time
+                            </TableHead>
+                            <TableHead
+                              className="prayer-times-table-head-cell admin-prayer-times-actions-head"
+                              aria-label="Actions"
+                            />
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {eidPrayers.map((prayer) => (
+                            <TableRow
+                              key={prayer.index}
+                              className="prayer-times-table-row"
+                            >
+                              <TableCell className="prayer-times-table-cell font-medium">
+                                {getEidPrayerLabel(prayer.index)}
+                              </TableCell>
+                              <TableCell className="prayer-times-table-cell admin-prayer-times-value-cell">
+                                <Input
+                                  id={`eid-time-${prayer.index}`}
+                                  type="time"
+                                  value={prayer.time}
+                                  onChange={(event) =>
+                                    setEidPrayers((current) =>
+                                      current.map((item) =>
+                                        item.index === prayer.index
+                                          ? {
+                                              ...item,
+                                              time: event.target.value,
+                                            }
+                                          : item,
+                                      ),
+                                    )
+                                  }
+                                />
+                              </TableCell>
+                              <TableCell className="prayer-times-table-cell admin-prayer-times-actions-cell">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => removeEidPrayer(prayer.index)}
+                                  aria-label={`Delete ${getEidPrayerLabel(prayer.index)}`}
+                                >
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <TabActions
+              saving={savingSection === "eid"}
+              disabled={formLoading}
+              onSave={() => saveSection("eid")}
+            />
           </TabsContent>
         </Tabs>
       </TabsContent>

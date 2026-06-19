@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ADMIN_EVENT_CATEGORIES } from "@/lib/events";
+import { validateMessageScheduleValues } from "@/lib/message-validation";
 
 /** Uploaded files stored under /public or absolute CDN URLs */
 export const storedImageUrlSchema = z
@@ -402,13 +403,95 @@ export const emailTestSchema = z.object({
 export type SmtpEmailSettingFormValues = z.infer<typeof smtpEmailSettingSchema>;
 export type EmailTestFormValues = z.infer<typeof emailTestSchema>;
 
-export const displayNoticeSchema = z.object({
-  title: z.string().min(2, "Title is required").max(120),
-  message: z.string().min(2, "Message is required").max(500),
-  priority: z.enum(["high", "medium", "low"]),
-  startDate: z.string().datetime().optional().nullable(),
-  endDate: z.string().datetime().optional().nullable(),
+export const messageStateSchema = z.enum(["PRIORITY", "NON_PRIORITY"]);
+export const messageStatusSchema = z.enum(["ACTIVE", "INACTIVE"]);
+
+const messageDateFields = {
+  startsAt: z.string().datetime().optional().nullable(),
+  endsAt: z.string().datetime().optional().nullable(),
+};
+
+function validateMessageSchedule(
+  data: {
+    state: z.infer<typeof messageStateSchema>;
+    startsAt?: string | null;
+    endsAt?: string | null;
+  },
+  ctx: z.RefinementCtx,
+) {
+  try {
+    validateMessageScheduleValues({
+      state: data.state,
+      startsAt: data.startsAt ? new Date(data.startsAt) : null,
+      endsAt: data.endsAt ? new Date(data.endsAt) : null,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Invalid message schedule";
+    if (message.includes("startsAt is required")) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message,
+        path: ["startsAt"],
+      });
+      return;
+    }
+    if (message.includes("endsAt is required")) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message,
+        path: ["endsAt"],
+      });
+      return;
+    }
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message,
+      path: ["endsAt"],
+    });
+  }
+}
+
+export const messageCreateSchema = z
+  .object({
+    title: z.string().min(2, "Title is required").max(120),
+    body: z.string().min(2, "Body is required").max(2000),
+    state: messageStateSchema,
+    status: messageStatusSchema.default("ACTIVE"),
+    includeInRotation: z.boolean().default(true),
+    durationSeconds: z.number().int().min(5).max(300).default(15),
+    priorityOrder: z.number().int().nullable().optional(),
+    normalOrder: z.number().int().nullable().optional(),
+    ...messageDateFields,
+  })
+  .superRefine(validateMessageSchedule);
+
+export const messageUpdateSchema = z.object({
+  title: z.string().min(2).max(120).optional(),
+  body: z.string().min(2).max(2000).optional(),
+  state: messageStateSchema.optional(),
+  status: messageStatusSchema.optional(),
+  includeInRotation: z.boolean().optional(),
+  durationSeconds: z.number().int().min(5).max(300).optional(),
+  priorityOrder: z.number().int().nullable().optional(),
+  normalOrder: z.number().int().nullable().optional(),
+  ...messageDateFields,
 });
+
+export const messageOrderSchema = z
+  .object({
+    priorityOrder: z.number().int().nullable().optional(),
+    normalOrder: z.number().int().nullable().optional(),
+  })
+  .refine(
+    (data) =>
+      data.priorityOrder !== undefined || data.normalOrder !== undefined,
+    { message: "priorityOrder or normalOrder is required" },
+  );
+
+export type MessageCreateFormValues = z.infer<typeof messageCreateSchema>;
+export type MessageUpdateFormValues = z.infer<typeof messageUpdateSchema>;
+export type MessageOrderFormValues = z.infer<typeof messageOrderSchema>;
 
 export const displaySettingsSchema = z.object({
   rotationSpeed: z.number().int().min(5).max(120),
@@ -428,6 +511,5 @@ export const ayahRotationSchema = z.object({
   source: z.string().min(2).max(120),
 });
 
-export type DisplayNoticeFormValues = z.infer<typeof displayNoticeSchema>;
 export type DisplaySettingsFormValues = z.infer<typeof displaySettingsSchema>;
 export type AyahRotationFormValues = z.infer<typeof ayahRotationSchema>;

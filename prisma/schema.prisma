@@ -88,7 +88,6 @@ model User {
   updatedAt      DateTime        @updatedAt
   authTokens     AuthToken[]
   adminLogs      UserAdminLog[]
-  displayNotices DisplayNotice[]
   donations      Donation[]
 
   @@index([roleId])
@@ -442,20 +441,36 @@ model MonthlyTimetable {
   @@index([month, year])
 }
 
-model DisplayNotice {
-  id          String    @id @default(cuid())
-  title       String
-  message     String
-  priority    String
-  startDate   DateTime?
-  endDate     DateTime?
-  createdById String?
-  createdBy   User?     @relation(fields: [createdById], references: [id])
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+enum MessageState {
+  PRIORITY
+  NON_PRIORITY
+}
 
-  @@index([priority])
-  @@index([startDate, endDate])
+enum MessageStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model Message {
+  id                String        @id @default(uuid())
+  title             String
+  body              String
+  state             MessageState
+  status            MessageStatus @default(ACTIVE)
+  includeInRotation Boolean       @default(true)
+  startsAt          DateTime?
+  endsAt            DateTime?
+  durationSeconds   Int           @default(15)
+  priorityOrder     Int?
+  normalOrder       Int?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([state, status])
+  @@index([startsAt, endsAt])
+  @@index([priorityOrder])
+  @@index([normalOrder])
+  @@map("messages")
 }
 
 model DisplaySettings {

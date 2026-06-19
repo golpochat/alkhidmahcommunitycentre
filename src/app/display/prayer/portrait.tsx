@@ -3,22 +3,23 @@
 import type { DisplayLayoutProps } from "@/components/display/display-layout-props";
 import { DisplayFullscreenButton } from "@/components/display/display-fullscreen-button";
 import { DisplayPortraitHeader } from "@/components/display/display-portrait-header";
-import { DisplayRotatingContent } from "@/components/display/rotating-panels/display-rotating-content";
+import { RotationContainer } from "@/components/display/rotation-container";
 import { DisplayPortraitMiddle } from "@/components/display/display-portrait-middle";
 import { DisplayPortraitPrayerTable } from "@/components/display/display-portrait-prayer-table";
-import { ScrollingTicker } from "@/components/display/scrolling-ticker";
 
 export function PortraitDisplayLayout({
   schedule,
   seasonal,
-  notices,
-  events,
+  rotationMessages,
   ayat,
   weather,
   settings,
   now,
 }: DisplayLayoutProps) {
   const showWeather = settings.enabledPanels.includes("weather");
+  const announcementsEnabled = settings.enabledPanels.includes("announcements");
+  const ayatEnabled = settings.enabledPanels.includes("ayat");
+  const announcementMessages = announcementsEnabled ? rotationMessages : [];
 
   return (
     <div className="display-portrait-root">
@@ -34,20 +35,14 @@ export function PortraitDisplayLayout({
         now={now}
       />
 
-      <DisplayRotatingContent
-        enabledPanels={settings.enabledPanels}
-        excludePanels={["weather"]}
-        rotationSpeed={settings.rotationSpeed}
-        notices={notices}
-        events={events}
+      <RotationContainer
+        messages={announcementMessages}
         ayat={ayat}
-        weather={weather}
-        now={now}
-        variant="default"
+        ayatEnabled={ayatEnabled}
+        ayatRotationSpeed={settings.rotationSpeed}
       />
 
       <DisplayFullscreenButton />
-      <ScrollingTicker notices={notices} now={now} />
     </div>
   );
 }

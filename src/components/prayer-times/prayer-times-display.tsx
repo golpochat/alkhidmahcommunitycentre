@@ -47,12 +47,14 @@ function PrayerTableRow({
       className={cn(
         "prayer-times-table-row",
         isNext && "prayer-times-table-row-next",
-        row.muted && "prayer-times-table-row-muted"
+        row.muted && "prayer-times-table-row-muted",
       )}
     >
       <TableCell className="prayer-times-table-cell prayer-times-table-cell-name">
         <span>{row.name}</span>
-        {notice && <span className="jumuah-prayer-notice-inline">{notice}</span>}
+        {notice && (
+          <span className="jumuah-prayer-notice-inline">{notice}</span>
+        )}
       </TableCell>
       <TableCell className="prayer-times-table-cell prayer-times-table-cell-time text-right">
         {formatAdhanDisplay(row.slot)}
@@ -82,7 +84,11 @@ export function PrayerTimesDisplay({
       ? schedule.configuredJumuah
       : [];
 
-  const fajrRow: PrayerRow = { key: "fajr", name: "Fajr", slot: schedule.prayers.fajr };
+  const fajrRow: PrayerRow = {
+    key: "fajr",
+    name: "Fajr",
+    slot: schedule.prayers.fajr,
+  };
   const sunriseRow: PrayerRow | null = schedule.sunrise
     ? {
         key: "sunrise",
@@ -125,7 +131,9 @@ export function PrayerTimesDisplay({
         <Table className="prayer-times-table">
           <TableHeader>
             <TableRow className="prayer-times-table-head hover:bg-transparent">
-              <TableHead className="prayer-times-table-head-cell">Prayer</TableHead>
+              <TableHead className="prayer-times-table-head-cell">
+                Prayer
+              </TableHead>
               <TableHead className="prayer-times-table-head-cell text-right">
                 Adhan
               </TableHead>
@@ -136,7 +144,9 @@ export function PrayerTimesDisplay({
           </TableHeader>
           <TableBody>
             <PrayerTableRow row={fajrRow} nextPrayer={nextPrayer} />
-            {sunriseRow && <PrayerTableRow row={sunriseRow} nextPrayer={nextPrayer} />}
+            {sunriseRow && (
+              <PrayerTableRow row={sunriseRow} nextPrayer={nextPrayer} />
+            )}
 
             {fridayJumuah ? (
               <JumuahFridayRow

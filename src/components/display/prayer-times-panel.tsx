@@ -55,7 +55,10 @@ export function PrayerTimesPanel({
     );
   } else if (schedule.isFriday) {
     dhuhrColumn = (
-      <div className="display-prayer-card display-prayer-card-empty" aria-hidden="true" />
+      <div
+        className="display-prayer-card display-prayer-card-empty"
+        aria-hidden="true"
+      />
     );
   } else {
     dhuhrColumn = (
@@ -121,9 +124,9 @@ export function PrayerTimesPanel({
             iqamaDisplay={schedule.prayers.isha.iqamaDisplay}
             iqamaLabel={
               combinedMaghribIsha
-                ? schedule.prayers.isha.iqamaDisplay ??
+                ? (schedule.prayers.isha.iqamaDisplay ??
                   schedule.prayers.isha.adhanDisplay ??
-                  FOLLOWS_MAGHRIB_LABEL
+                  FOLLOWS_MAGHRIB_LABEL)
                 : schedule.prayers.isha.iqamaDisplay === FOLLOWS_MAGHRIB_LABEL
                   ? FOLLOWS_MAGHRIB_LABEL
                   : null
@@ -173,14 +176,12 @@ export function PrayerTimesPanel({
           adhanDisplay={schedule.prayers.isha.adhanDisplay}
           iqama={schedule.prayers.isha.iqama}
           iqamaDisplay={schedule.prayers.isha.iqamaDisplay}
-          combinedNote={
-            combinedMaghribIsha ? "(Combined with Maghrib)" : null
-          }
+          combinedNote={combinedMaghribIsha ? "(Combined with Maghrib)" : null}
           iqamaLabel={
             combinedMaghribIsha
-              ? schedule.prayers.isha.iqamaDisplay ??
+              ? (schedule.prayers.isha.iqamaDisplay ??
                 schedule.prayers.isha.adhanDisplay ??
-                FOLLOWS_MAGHRIB_LABEL
+                FOLLOWS_MAGHRIB_LABEL)
               : null
           }
           isNext={isNextFard("isha")}

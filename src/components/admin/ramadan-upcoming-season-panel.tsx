@@ -78,7 +78,7 @@ function RamadanLengthSlider({
       <span
         className={cn(
           "admin-ramadan-length-slider-option",
-          !isThirtyDayMonth && "admin-ramadan-length-slider-option--active"
+          !isThirtyDayMonth && "admin-ramadan-length-slider-option--active",
         )}
       >
         29 days
@@ -86,7 +86,7 @@ function RamadanLengthSlider({
       <span
         className={cn(
           "admin-ramadan-length-slider-option",
-          isThirtyDayMonth && "admin-ramadan-length-slider-option--active"
+          isThirtyDayMonth && "admin-ramadan-length-slider-option--active",
         )}
       >
         30 days
@@ -164,7 +164,9 @@ export function RamadanUpcomingSeasonPanel({
       </div>
 
       <div className="admin-ramadan-upcoming-item admin-ramadan-upcoming-item--length">
-        <Label className="admin-ramadan-upcoming-item-label">Ramadan length</Label>
+        <Label className="admin-ramadan-upcoming-item-label">
+          Ramadan length
+        </Label>
         <div className="admin-ramadan-upcoming-control-shell admin-ramadan-upcoming-length-control">
           <RamadanLengthSlider
             isThirtyDayMonth={season.isThirtyDayMonth}

@@ -1,12 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { format, parseISO } from "date-fns";
 import { Loader2, Monitor, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
+import { AdminMessagesCentre } from "@/components/admin/messages/admin-messages-centre";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,10 +25,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import type { SerializedDisplayNotice } from "@/lib/display-types";
-import { isDisplayNoticeActive } from "@/lib/display-notices";
 import type { SerializedDisplaySettings } from "@/lib/display-settings";
-import { nowIso, toDatetimeLocalValue } from "@/lib/events";
 import { parseJsonResponse } from "@/lib/parse-json-response";
 
 interface AyahItem {
@@ -40,17 +43,6 @@ const PANEL_OPTIONS = [
   { value: "weather", label: "Weather" },
 ] as const;
 
-function createEmptyNoticeForm() {
-  const now = toDatetimeLocalValue(nowIso());
-  return {
-    title: "",
-    message: "",
-    priority: "medium" as "high" | "medium" | "low",
-    startDate: now,
-    endDate: now,
-  };
-}
-
 const emptyAyahForm = {
   arabic: "",
   english: "",
@@ -60,11 +52,8 @@ const emptyAyahForm = {
 export function AdminDisplayManager() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [notices, setNotices] = useState<SerializedDisplayNotice[]>([]);
   const [settings, setSettings] = useState<SerializedDisplaySettings | null>(null);
   const [ayat, setAyat] = useState<AyahItem[]>([]);
-  const [noticeForm, setNoticeForm] = useState(createEmptyNoticeForm);
-  const [editingNoticeId, setEditingNoticeId] = useState<string | null>(null);
   const [ayahForm, setAyahForm] = useState(emptyAyahForm);
   const [editingAyahId, setEditingAyahId] = useState<string | null>(null);
   const [brightnessJson, setBrightnessJson] = useState("");
@@ -72,16 +61,11 @@ export function AdminDisplayManager() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [noticesRes, settingsRes, ayatRes] = await Promise.all([
-        fetch("/api/admin/display/notices"),
+      const [settingsRes, ayatRes] = await Promise.all([
         fetch("/api/admin/display/settings"),
         fetch("/api/admin/display/ayat"),
       ]);
 
-      if (noticesRes.ok) {
-        const data = (await noticesRes.json()) as { all: SerializedDisplayNotice[] };
-        setNotices(data.all);
-      }
       if (settingsRes.ok) {
         const data = (await settingsRes.json()) as SerializedDisplaySettings;
         setSettings(data);
@@ -105,62 +89,6 @@ export function AdminDisplayManager() {
   useEffect(() => {
     loadData();
   }, [loadData]);
-
-  async function saveNotice() {
-    setSaving(true);
-    try {
-      const payload = {
-        title: noticeForm.title,
-        message: noticeForm.message,
-        priority: noticeForm.priority,
-        startDate: noticeForm.startDate
-          ? new Date(noticeForm.startDate).toISOString()
-          : null,
-        endDate: noticeForm.endDate
-          ? new Date(noticeForm.endDate).toISOString()
-          : null,
-      };
-
-      const response = editingNoticeId
-        ? await fetch(`/api/admin/display/notices/${editingNoticeId}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          })
-        : await fetch("/api/admin/display/notices", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          });
-
-      if (!response.ok) {
-        const error = await parseJsonResponse<{ error?: string }>(response);
-        throw new Error(error.error ?? "Save failed");
-      }
-
-      toast.success(editingNoticeId ? "Notice updated" : "Notice created");
-      setNoticeForm(createEmptyNoticeForm());
-      setEditingNoticeId(null);
-      await loadData();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Save failed");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function deleteNotice(id: string) {
-    try {
-      const response = await fetch(`/api/admin/display/notices/${id}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) throw new Error("Delete failed");
-      toast.success("Notice deleted");
-      await loadData();
-    } catch {
-      toast.error("Failed to delete notice");
-    }
-  }
 
   async function saveSettings() {
     if (!settings) return;
@@ -254,14 +182,6 @@ export function AdminDisplayManager() {
     });
   }
 
-  if (loading) {
-    return (
-      <div className="admin-display-loading">
-        <Loader2 className="h-6 w-6 animate-spin text-gold" />
-      </div>
-    );
-  }
-
   return (
     <div className="admin-display-manager">
       <div className="admin-display-toolbar">
@@ -293,188 +213,14 @@ export function AdminDisplayManager() {
 
         <TabsContent value="notices" className="admin-prayer-times-tab-content">
           <div className="admin-prayer-times-tab-section">
-            <div className="admin-prayer-times-tab-header">
-              <div>
-                <h2 className="admin-prayer-times-tab-title">Announcements</h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Scheduled messages on the TV (for example Jumu&apos;ah parking,
-                  Eid reminders). These are notices only — not prayer times.
-                  High priority also shows in the scrolling ticker and replaces
-                  the prayer countdown; medium and low rotate in the bottom panel.
-                </p>
-              </div>
-            </div>
-
-            <div className="admin-display-grid">
-            <Card>
-              <CardHeader>
-                <CardTitle>
-                  {editingNoticeId ? "Edit Notice" : "Create Notice"}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="notice-title">Title</Label>
-                  <Input
-                    id="notice-title"
-                    value={noticeForm.title}
-                    onChange={(event) =>
-                      setNoticeForm({ ...noticeForm, title: event.target.value })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="notice-message">Message</Label>
-                  <Textarea
-                    id="notice-message"
-                    value={noticeForm.message}
-                    onChange={(event) =>
-                      setNoticeForm({ ...noticeForm, message: event.target.value })
-                    }
-                    rows={4}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Priority</Label>
-                  <Select
-                    value={noticeForm.priority}
-                    onValueChange={(value) => {
-                      if (value) {
-                        setNoticeForm({
-                          ...noticeForm,
-                          priority: value as "high" | "medium" | "low",
-                        });
-                      }
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="high">
-                        High — ticker + countdown alert
-                      </SelectItem>
-                      <SelectItem value="medium">
-                        Medium — rotates in bottom panel
-                      </SelectItem>
-                      <SelectItem value="low">
-                        Low — rotates in bottom panel
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="admin-display-date-grid">
-                  <div className="space-y-2">
-                    <Label htmlFor="notice-start">Start date</Label>
-                    <Input
-                      id="notice-start"
-                      type="datetime-local"
-                      value={noticeForm.startDate}
-                      onChange={(event) =>
-                        setNoticeForm({ ...noticeForm, startDate: event.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="notice-end">End date</Label>
-                    <Input
-                      id="notice-end"
-                      type="datetime-local"
-                      value={noticeForm.endDate}
-                      onChange={(event) =>
-                        setNoticeForm({ ...noticeForm, endDate: event.target.value })
-                      }
-                    />
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button onClick={saveNotice} disabled={saving}>
-                    {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {editingNoticeId ? "Update" : "Create"}
-                  </Button>
-                  {editingNoticeId && (
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setEditingNoticeId(null);
-                        setNoticeForm(createEmptyNoticeForm());
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>All Notices</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {notices.length === 0 && (
-                  <p className="text-sm text-muted-foreground">No notices yet</p>
-                )}
-                {notices.map((notice) => {
-                  const activeOnTv = isDisplayNoticeActive(notice);
-                  return (
-                  <div key={notice.id} className="admin-display-list-item">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium">{notice.title}</p>
-                        <Badge variant="outline">{notice.priority}</Badge>
-                        <Badge variant={activeOnTv ? "default" : "secondary"}>
-                          {activeOnTv ? "On TV now" : "Not on TV"}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">{notice.message}</p>
-                      {(notice.startDate || notice.endDate) && (
-                        <p className="text-xs text-muted-foreground">
-                          {notice.startDate
-                            ? format(parseISO(notice.startDate), "d MMM yyyy HH:mm")
-                            : "—"}
-                          {" → "}
-                          {notice.endDate
-                            ? format(parseISO(notice.endDate), "d MMM yyyy HH:mm")
-                            : "—"}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setEditingNoticeId(notice.id);
-                          setNoticeForm({
-                            title: notice.title,
-                            message: notice.message,
-                            priority: notice.priority as "high" | "medium" | "low",
-                            startDate: notice.startDate
-                              ? format(parseISO(notice.startDate), "yyyy-MM-dd'T'HH:mm")
-                              : "",
-                            endDate: notice.endDate
-                              ? format(parseISO(notice.endDate), "yyyy-MM-dd'T'HH:mm")
-                              : "",
-                          });
-                        }}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => deleteNotice(notice.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  );
-                })}
-              </CardContent>
-            </Card>
-          </div>
+            <AdminMessagesCentre
+              ayat={ayat}
+              ayatEnabled={settings?.enabledPanels.includes("ayat") ?? false}
+              announcementsEnabled={
+                settings?.enabledPanels.includes("announcements") ?? false
+              }
+              rotationSpeed={settings?.rotationSpeed ?? 10}
+            />
           </div>
         </TabsContent>
 
@@ -491,12 +237,17 @@ export function AdminDisplayManager() {
               </div>
             </div>
 
-          {settings && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Display options</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
+          {loading ? (
+            <div className="admin-display-loading">
+              <Loader2 className="h-6 w-6 animate-spin text-gold" />
+            </div>
+          ) : settings ? (
+            <div className="admin-display-card">
+              <div className="admin-display-card-header">
+                <h3 className="admin-prayer-times-tab-title">Display options</h3>
+              </div>
+              <div className="admin-display-card-body">
+                <div className="admin-display-settings-grid">
                 <div className="space-y-2">
                   <Label htmlFor="rotation-speed">
                     Panel rotation speed (seconds)
@@ -514,29 +265,6 @@ export function AdminDisplayManager() {
                       })
                     }
                   />
-                </div>
-
-                <div className="space-y-3">
-                  <Label>Rotating side panels</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Choose which panels cycle on the TV. Announcements use the
-                    Announcements tab; Ayat &amp; Hadith use the Ayat &amp;
-                    Hadith tab. Events show published upcoming items from Admin
-                    → Events (sample events may exist from initial setup).
-                    Weather appears beside the countdown when enabled.
-                  </p>
-                  {PANEL_OPTIONS.map((panel) => (
-                    <label
-                      key={panel.value}
-                      className="admin-display-checkbox-row"
-                    >
-                      <Checkbox
-                        checked={settings.enabledPanels.includes(panel.value)}
-                        onCheckedChange={() => togglePanel(panel.value)}
-                      />
-                      <span>{panel.label}</span>
-                    </label>
-                  ))}
                 </div>
 
                 <div className="space-y-2">
@@ -564,19 +292,6 @@ export function AdminDisplayManager() {
                     </SelectContent>
                   </Select>
                 </div>
-
-                <label className="admin-display-checkbox-row">
-                  <Checkbox
-                    checked={settings.autoFullscreen}
-                    onCheckedChange={(checked) =>
-                      setSettings({
-                        ...settings,
-                        autoFullscreen: checked === true,
-                      })
-                    }
-                  />
-                  <span>Auto full screen on load</span>
-                </label>
 
                 <div className="space-y-2">
                   <Label>Theme</Label>
@@ -614,7 +329,45 @@ export function AdminDisplayManager() {
                   />
                 </div>
 
-                <div className="space-y-2">
+                <div className="admin-display-settings-span-full space-y-3">
+                  <Label>Rotating side panels</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Choose which panels cycle on the TV. Announcements use the
+                    Announcements tab; Ayat &amp; Hadith use the Ayat &amp;
+                    Hadith tab. Events show published upcoming items from Admin
+                    → Events (sample events may exist from initial setup).
+                    Weather appears beside the countdown when enabled.
+                  </p>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                  {PANEL_OPTIONS.map((panel) => (
+                    <label
+                      key={panel.value}
+                      className="admin-display-checkbox-row"
+                    >
+                      <Checkbox
+                        checked={settings.enabledPanels.includes(panel.value)}
+                        onCheckedChange={() => togglePanel(panel.value)}
+                      />
+                      <span>{panel.label}</span>
+                    </label>
+                  ))}
+                  </div>
+                </div>
+
+                <label className="admin-display-checkbox-row admin-display-settings-span-full">
+                  <Checkbox
+                    checked={settings.autoFullscreen}
+                    onCheckedChange={(checked) =>
+                      setSettings({
+                        ...settings,
+                        autoFullscreen: checked === true,
+                      })
+                    }
+                  />
+                  <span>Auto full screen on load</span>
+                </label>
+
+                <div className="admin-display-settings-span-full space-y-2">
                   <Label htmlFor="brightness-schedule">
                     Brightness schedule (JSON)
                   </Label>
@@ -626,14 +379,15 @@ export function AdminDisplayManager() {
                     placeholder='{"22:00": 40, "06:00": 100}'
                   />
                 </div>
+                </div>
 
                 <Button onClick={saveSettings} disabled={saving}>
                   {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Save
                 </Button>
-              </CardContent>
-            </Card>
-          )}
+              </div>
+            </div>
+          ) : null}
           </div>
         </TabsContent>
 
@@ -651,13 +405,13 @@ export function AdminDisplayManager() {
             </div>
 
             <div className="admin-display-grid">
-            <Card>
-              <CardHeader>
-                <CardTitle>
-                  {editingAyahId ? "Edit Entry" : "Add Ayat / Hadith"}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+            <div className="admin-display-card">
+              <div className="admin-display-card-header">
+                <h3 className="admin-prayer-times-tab-title">
+                  {editingAyahId ? "Edit entry" : "Add Ayat / Hadith"}
+                </h3>
+              </div>
+              <div className="admin-display-card-body space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="ayah-arabic">Arabic</Label>
                   <Textarea
@@ -691,14 +445,15 @@ export function AdminDisplayManager() {
                     }
                   />
                 </div>
-                <div className="flex gap-2">
-                  <Button onClick={saveAyah} disabled={saving}>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button className="sm:w-auto" onClick={saveAyah} disabled={saving}>
                     {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     {editingAyahId ? "Update" : "Add"}
                   </Button>
                   {editingAyahId && (
                     <Button
                       variant="outline"
+                      className="sm:w-auto"
                       onClick={() => {
                         setEditingAyahId(null);
                         setAyahForm(emptyAyahForm);
@@ -708,55 +463,77 @@ export function AdminDisplayManager() {
                     </Button>
                   )}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Rotation List</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="admin-display-rotation-list">
-                  {ayat.length === 0 && (
-                    <p className="text-sm text-muted-foreground">No entries yet</p>
-                  )}
-                  {ayat.map((item) => (
-                    <div key={item.id} className="admin-display-list-item">
-                      <div>
-                        <p className="font-medium" dir="rtl">
-                          {item.arabic}
-                        </p>
-                        <p className="text-sm">{item.english}</p>
-                        <p className="text-xs text-muted-foreground">{item.source}</p>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setEditingAyahId(item.id);
-                            setAyahForm({
-                              arabic: item.arabic,
-                              english: item.english,
-                              source: item.source,
-                            });
-                          }}
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => deleteAyah(item.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+            <div className="admin-display-card">
+              <div className="admin-display-card-header">
+                <h3 className="admin-prayer-times-tab-title">Rotation list</h3>
+              </div>
+              <div className="admin-display-card-body">
+                <div className="admin-table-wrap">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Arabic</TableHead>
+                        <TableHead className="admin-table-col-hide-md">English</TableHead>
+                        <TableHead className="admin-table-col-hide-lg">Source</TableHead>
+                        <TableHead className="admin-table-col-actions">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {ayat.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={4} className="admin-table-empty">
+                            No entries yet.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        ayat.map((item) => (
+                          <TableRow key={item.id}>
+                            <TableCell className="admin-table-title-cell" dir="rtl">
+                              {item.arabic}
+                            </TableCell>
+                            <TableCell className="admin-table-col-hide-md">
+                              {item.english}
+                            </TableCell>
+                            <TableCell className="admin-table-col-hide-lg text-muted-foreground">
+                              {item.source}
+                            </TableCell>
+                            <TableCell className="admin-table-col-actions">
+                              <div className="admin-table-action-group">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setEditingAyahId(item.id);
+                                    setAyahForm({
+                                      arabic: item.arabic,
+                                      english: item.english,
+                                      source: item.source,
+                                    });
+                                  }}
+                                >
+                                  Edit
+                                </Button>
+                                <Button
+                                  size="icon-sm"
+                                  variant="outline"
+                                  onClick={() => deleteAyah(item.id)}
+                                  aria-label="Delete entry"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
           </div>
         </TabsContent>

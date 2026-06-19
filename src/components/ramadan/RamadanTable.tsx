@@ -107,9 +107,11 @@ export function RamadanTable({ rows, onUpdateRow }: RamadanTableProps) {
                 className={cn(
                   row.isFriday && "bg-gold/10",
                   row.isLastTen && "admin-ramadan-row--last-ten",
-                  row.isOddNight && row.isLastTen && "admin-ramadan-row--odd-night",
+                  row.isOddNight &&
+                    row.isLastTen &&
+                    "admin-ramadan-row--odd-night",
                   isRamadanEvenNightHighlight(row.hijriDay) &&
-                    "admin-ramadan-row--even-night"
+                    "admin-ramadan-row--even-night",
                 )}
               >
                 <TableCell className="whitespace-nowrap text-xs">
