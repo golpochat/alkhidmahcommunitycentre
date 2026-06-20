@@ -3,16 +3,18 @@ import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { requireDisplayAdminSession } from "@/lib/display-admin-auth";
 import {
+  buildEnabledPanels,
   ensureDisplaySettings,
+  parseDisplaySectionPanels,
   serializeDisplaySettings,
-  weatherEnabledPanels,
 } from "@/lib/display-settings";
+import { syncAllDisplaySectionPanels } from "@/lib/display-section-sync";
 import { displaySettingsSchema } from "@/lib/validations";
 
 export async function GET() {
   try {
     await requireDisplayAdminSession();
-    const settings = await ensureDisplaySettings();
+    const settings = await syncAllDisplaySectionPanels();
     return NextResponse.json(serializeDisplaySettings(settings));
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed";
@@ -29,6 +31,8 @@ export async function PUT(request: NextRequest) {
     const validated = displaySettingsSchema.parse(body);
     const existing = await ensureDisplaySettings();
 
+    const currentPanels = parseDisplaySectionPanels(existing.enabledPanels);
+
     const brightnessSchedule =
       validated.brightnessSchedule != null
         ? (validated.brightnessSchedule as Prisma.InputJsonValue)
@@ -38,7 +42,12 @@ export async function PUT(request: NextRequest) {
       where: { id: existing.id },
       data: {
         rotationSpeed: validated.rotationSpeed,
-        enabledPanels: weatherEnabledPanels(validated.showWeather),
+        enabledPanels: buildEnabledPanels({
+          showWeather: validated.showWeather,
+          priorityMessages: currentPanels.priorityMessages,
+          normalMessages: currentPanels.normalMessages,
+          ayatHadith: currentPanels.ayatHadith,
+        }),
         pinCode: validated.pinCode ?? null,
         brightnessSchedule,
         orientationOverride: validated.orientationOverride ?? null,

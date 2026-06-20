@@ -8,7 +8,7 @@ import {
   displayBottomSlidesKey,
   displayBottomSlideTitle,
 } from "@/lib/display-bottom-slides";
-import { sortMessagesByOrder } from "@/lib/message-client";
+import { sortMessagesByOrder, type MessageSectionFlags } from "@/lib/message-client";
 import type { SerializedMessage } from "@/lib/message-types";
 
 interface AdminMessagePreviewStripProps {
@@ -16,6 +16,8 @@ interface AdminMessagePreviewStripProps {
   rotationQueue: SerializedMessage[];
   ayat: CachedAyah[];
   rotationSpeed: number;
+  ayatSectionEnabled: boolean;
+  sectionFlags: MessageSectionFlags;
 }
 
 interface PlaybackState {
@@ -28,6 +30,7 @@ export function AdminMessagePreviewStrip({
   rotationQueue,
   ayat,
   rotationSpeed,
+  ayatSectionEnabled,
 }: AdminMessagePreviewStripProps) {
   const orderedQueue = useMemo(
     () => sortMessagesByOrder(rotationQueue),
@@ -36,10 +39,10 @@ export function AdminMessagePreviewStrip({
   const slides = useMemo(
     () =>
       buildDisplayBottomSlides(orderedQueue, ayat, {
-        ayatEnabled: true,
+        ayatEnabled: ayatSectionEnabled,
         ayatRotationSpeed: rotationSpeed,
       }),
-    [orderedQueue, ayat, rotationSpeed],
+    [orderedQueue, ayat, ayatSectionEnabled, rotationSpeed],
   );
   const slidesKey = displayBottomSlidesKey(slides);
   const slidesRef = useRef(slides);

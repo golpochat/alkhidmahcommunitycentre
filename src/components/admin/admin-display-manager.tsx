@@ -22,6 +22,15 @@ import {
 import { AdminMessagesCentre } from "@/components/admin/messages/admin-messages-centre";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { SerializedDisplaySettings } from "@/lib/display-settings-types";
+import {
+  DISPLAY_PANEL_AYAT_HADITH,
+  DISPLAY_PANEL_NORMAL_MESSAGES,
+  DISPLAY_PANEL_PRIORITY_MESSAGES,
+  isAyatHadithEnabled,
+  isNormalMessagesEnabled,
+  isPriorityMessagesEnabled,
+  parseDisplaySectionPanels,
+} from "@/lib/display-settings-types";
 import { parseJsonResponse } from "@/lib/parse-json-response";
 
 export function AdminDisplayManager() {
@@ -31,13 +40,36 @@ export function AdminDisplayManager() {
   const [settingsForm, setSettingsForm] = useState<DisplaySettingsFormState | null>(
     null,
   );
+  const [enabledPanels, setEnabledPanels] = useState<string[]>([]);
+  const [savingSection, setSavingSection] = useState(false);
   const [ayat, setAyat] = useState<AyahItem[]>([]);
   const [ayahModalOpen, setAyahModalOpen] = useState(false);
   const [ayahForm, setAyahForm] = useState<AyahFormState>(emptyAyahForm);
   const [editingAyahId, setEditingAyahId] = useState<string | null>(null);
 
-  useEffect(() => {
-    setMounted(true);
+  const refreshSectionState = useCallback(async () => {
+    try {
+      const [settingsRes, ayatRes] = await Promise.all([
+        fetch("/api/admin/display/settings"),
+        fetch("/api/admin/display/ayat"),
+      ]);
+
+      if (settingsRes.ok) {
+        const data = (await settingsRes.json()) as SerializedDisplaySettings;
+        setSettingsForm(settingsToForm(data));
+        setEnabledPanels(data.enabledPanels);
+      }
+      if (ayatRes.ok) {
+        setAyat((await ayatRes.json()) as AyahItem[]);
+      }
+    } catch {
+      // Keep last good state on transient failures
+    }
+  }, []);
+
+  const [contentRefreshToken, setContentRefreshToken] = useState(0);
+  const bumpContentRefresh = useCallback(() => {
+    setContentRefreshToken((current) => current + 1);
   }, []);
 
   const loadData = useCallback(async () => {
@@ -51,6 +83,7 @@ export function AdminDisplayManager() {
       if (settingsRes.ok) {
         const data = (await settingsRes.json()) as SerializedDisplaySettings;
         setSettingsForm(settingsToForm(data));
+        setEnabledPanels(data.enabledPanels);
       }
       if (ayatRes.ok) {
         setAyat((await ayatRes.json()) as AyahItem[]);
@@ -60,6 +93,10 @@ export function AdminDisplayManager() {
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    setMounted(true);
   }, []);
 
   useEffect(() => {
@@ -176,6 +213,7 @@ export function AdminDisplayManager() {
         const error = await parseJsonResponse<{ error?: string }>(response);
         throw new Error(error.error ?? "Update failed");
       }
+      await refreshSectionState();
     } catch (error) {
       setAyat((current) =>
         current.map((entry) => (entry.id === item.id ? item : entry)),
@@ -185,6 +223,58 @@ export function AdminDisplayManager() {
       );
     }
   }
+
+  async function toggleDisplayPanel(panel: string, enabled: boolean) {
+    if (savingSection) return;
+
+    setSavingSection(true);
+
+    try {
+      const response = await fetch("/api/admin/display/settings/panels", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ panel, enabled }),
+      });
+
+      if (!response.ok) {
+        const error = await parseJsonResponse<{ error?: string }>(response);
+        throw new Error(error.error ?? "Update failed");
+      }
+
+      const data = (await response.json()) as SerializedDisplaySettings & {
+        enabledItemCount?: number;
+      };
+      setEnabledPanels(data.enabledPanels);
+      setSettingsForm(settingsToForm(data));
+      await refreshSectionState();
+      bumpContentRefresh();
+
+      if (enabled) {
+        const count = data.enabledItemCount ?? 0;
+        if (count === 0) {
+          toast.message("No eligible items to turn on in this section");
+        } else {
+          toast.success(
+            `Section enabled — ${count} item${count === 1 ? "" : "s"} on TV`,
+          );
+        }
+      } else {
+        toast.success("Section hidden from TV");
+      }
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update section",
+      );
+    } finally {
+      setSavingSection(false);
+    }
+  }
+
+  const sectionPanels = parseDisplaySectionPanels(enabledPanels);
+  const sectionFlags = {
+    priorityMessagesEnabled: sectionPanels.priorityMessages,
+    normalMessagesEnabled: sectionPanels.normalMessages,
+  };
 
   const enabledAyat = ayat.filter((item) => item.includeInRotation);
 
@@ -226,10 +316,29 @@ export function AdminDisplayManager() {
           <AdminMessagesCentre
             ayat={enabledAyat}
             rotationSpeed={settingsForm?.rotationSpeed ?? 10}
+            sectionFlags={sectionFlags}
+            prioritySectionEnabled={isPriorityMessagesEnabled(enabledPanels)}
+            normalSectionEnabled={isNormalMessagesEnabled(enabledPanels)}
+            ayatSectionEnabled={isAyatHadithEnabled(enabledPanels)}
+            savingSection={savingSection}
+            contentRefreshToken={contentRefreshToken}
+            onTogglePrioritySection={(enabled) =>
+              void toggleDisplayPanel(DISPLAY_PANEL_PRIORITY_MESSAGES, enabled)
+            }
+            onToggleNormalSection={(enabled) =>
+              void toggleDisplayPanel(DISPLAY_PANEL_NORMAL_MESSAGES, enabled)
+            }
+            onSectionStateChange={() => void refreshSectionState()}
+            onEnabledPanelsChange={setEnabledPanels}
           />
 
           <AdminAyatSection
             ayat={ayat}
+            sectionEnabled={isAyatHadithEnabled(enabledPanels)}
+            savingSection={savingSection}
+            onToggleSection={(enabled) =>
+              void toggleDisplayPanel(DISPLAY_PANEL_AYAT_HADITH, enabled)
+            }
             onCreate={openCreateAyahModal}
             onEdit={openEditAyahModal}
             onDelete={(id) => void deleteAyah(id)}

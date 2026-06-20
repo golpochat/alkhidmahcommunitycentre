@@ -40,29 +40,17 @@ function formatEventsBody(events: SerializedEvent[]) {
     .join("\n");
 }
 
-function PortraitSlide({
-  kicker,
+function PortraitNoticeSlide({
+  title,
   body,
-  multiline = false,
 }: {
-  kicker: string;
+  title: string;
   body: string;
-  multiline?: boolean;
 }) {
   return (
     <article className="display-portrait-info-panel">
-      <p className="display-portrait-panel-kicker display-portrait-panel-kicker-gold">
-        {kicker}
-      </p>
-      <p
-        className={
-          multiline
-            ? "display-portrait-panel-body display-portrait-panel-body-multiline"
-            : "display-portrait-panel-body"
-        }
-      >
-        {body}
-      </p>
+      <p className="display-portrait-panel-title">{title}</p>
+      <p className="display-portrait-panel-body">{body}</p>
     </article>
   );
 }
@@ -102,10 +90,7 @@ function buildDisplaySlides({
           variant === "landscape" ? (
             <LandscapeNoticeSlide notice={notice} />
           ) : (
-            <PortraitSlide
-              kicker="Announcements"
-              body={`${notice.title}: ${notice.message}`}
-            />
+            <PortraitNoticeSlide title={notice.title} body={notice.message} />
           ),
       });
     }
@@ -141,9 +126,6 @@ function buildDisplaySlides({
         node:
           variant === "landscape" ? (
             <article className="display-landscape-announcement-block">
-              <p className="display-landscape-announcement-title">
-                Ayat &amp; Hadith
-              </p>
               <p
                 className="display-landscape-announcement-message"
                 dir="rtl"
@@ -159,9 +141,6 @@ function buildDisplaySlides({
             </article>
           ) : (
             <article className="display-portrait-info-panel">
-              <p className="display-portrait-panel-kicker display-portrait-panel-kicker-gold">
-                Ayat &amp; Hadith
-              </p>
               <p className="display-portrait-panel-body" dir="rtl">
                 {ayah.arabic}
               </p>

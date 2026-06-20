@@ -17,7 +17,7 @@ import {
 import { getSeasonalFlags } from "@/lib/seasonal";
 import { CLONDLAKIN_COORDS } from "@/lib/constants";
 
-import type { SerializedDisplayNotice, WeatherPayload } from "@/lib/display-types";
+import type { WeatherPayload } from "@/lib/display-types";
 import { getRotationQueue } from "@/lib/message-rotation";
 import { messageToDisplayNotice, expireInactiveMessages } from "@/lib/messages";
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireDisplayAdminSession } from "@/lib/display-admin-auth";
 import { refreshAyatCache } from "@/lib/display-api";
+import { syncDisplayPanelForAyat } from "@/lib/display-section-sync";
 import { ayahRotationSchema } from "@/lib/validations";
 
 function serializeAyah(item: {
@@ -53,6 +54,7 @@ export async function POST(request: NextRequest) {
     });
 
     await refreshAyatCache();
+    await syncDisplayPanelForAyat();
     return NextResponse.json(serializeAyah(item), { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Invalid data";

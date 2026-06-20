@@ -2,6 +2,7 @@
 
 import { ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { AdminDisplaySectionSwitch } from "@/components/admin/display/admin-display-section-switch";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -40,6 +41,9 @@ const AYAT_PAGE_SIZES = [10, 25, 50] as const;
 
 interface AdminAyatSectionProps {
   ayat: AyahItem[];
+  sectionEnabled: boolean;
+  savingSection?: boolean;
+  onToggleSection: (enabled: boolean) => void;
   onCreate: () => void;
   onEdit: (item: AyahItem) => void;
   onDelete: (id: string) => void;
@@ -48,6 +52,9 @@ interface AdminAyatSectionProps {
 
 export function AdminAyatSection({
   ayat,
+  sectionEnabled,
+  savingSection,
+  onToggleSection,
   onCreate,
   onEdit,
   onDelete,
@@ -71,7 +78,10 @@ export function AdminAyatSection({
   const rangeStart = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const rangeEnd = total === 0 ? 0 : Math.min(page * pageSize, total);
 
-  function handlePageSizeChange(value: string) {
+  function handlePageSizeChange(value: string | null) {
+    if (!value) {
+      return;
+    }
     setPageSize(Number(value));
     setPage(1);
   }
@@ -82,13 +92,22 @@ export function AdminAyatSection({
         <div>
           <h2 className="admin-messages-panel-title">Ayat &amp; Hadith</h2>
           <p className="admin-messages-panel-description">
-            Rotate with normal announcements when no priority messages are active.
+            General rotation content. Shown with announcements when no priority
+            messages are active.
           </p>
         </div>
-        <Button className="btn-gold" onClick={onCreate}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Ayat / Hadith
-        </Button>
+        <div className="admin-display-ayat-section-actions">
+          <AdminDisplaySectionSwitch
+            label="Ayat section"
+            checked={sectionEnabled}
+            disabled={savingSection}
+            onCheckedChange={onToggleSection}
+          />
+          <Button className="btn-gold" onClick={onCreate}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Ayat / Hadith
+          </Button>
+        </div>
       </header>
 
       <div className="admin-messages-table-wrap">

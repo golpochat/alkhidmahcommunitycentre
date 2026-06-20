@@ -1,11 +1,11 @@
 "use client";
 
 import { Plus } from "lucide-react";
-import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
+import { AdminDisplaySectionSwitch } from "@/components/admin/display/admin-display-section-switch";
 import { AdminMessageRow } from "@/components/admin/messages/admin-message-row";
 import { Button } from "@/components/ui/button";
-import { sortMessagesByOrder } from "@/lib/message-client";
+import { sortMessagesByOrder, type MessageSectionFlags } from "@/lib/message-client";
 import type { SerializedMessage } from "@/lib/message-types";
 import {
   Table,
@@ -18,6 +18,12 @@ import {
 
 interface AdminMessageListPanelProps {
   messages: SerializedMessage[];
+  sectionFlags: MessageSectionFlags;
+  prioritySectionEnabled: boolean;
+  normalSectionEnabled: boolean;
+  savingSection?: boolean;
+  onTogglePrioritySection: (enabled: boolean) => void;
+  onToggleNormalSection: (enabled: boolean) => void;
   onCreate: () => void;
   onEdit: (message: SerializedMessage) => void;
   onDuplicate: (message: SerializedMessage) => void;
@@ -33,8 +39,13 @@ interface AdminMessageListPanelProps {
 function MessageTableSection({
   title,
   description,
+  sectionLabel,
+  sectionEnabled,
+  savingSection,
+  onToggleSection,
   messages,
   allMessages,
+  sectionFlags,
   isPriority,
   onEdit,
   onDuplicate,
@@ -44,8 +55,13 @@ function MessageTableSection({
 }: {
   title: string;
   description: string;
+  sectionLabel: string;
+  sectionEnabled: boolean;
+  savingSection?: boolean;
+  onToggleSection: (enabled: boolean) => void;
   messages: SerializedMessage[];
   allMessages: SerializedMessage[];
+  sectionFlags: MessageSectionFlags;
   isPriority: boolean;
   onEdit: (message: SerializedMessage) => void;
   onDuplicate: (message: SerializedMessage) => void;
@@ -84,9 +100,17 @@ function MessageTableSection({
 
   return (
     <section className="admin-messages-list-section">
-      <header className="admin-messages-list-section-header">
-        <h3 className="admin-messages-list-section-title">{title}</h3>
-        <p className="admin-messages-list-section-description">{description}</p>
+      <header className="admin-messages-list-section-header admin-messages-list-section-header-row">
+        <div>
+          <h3 className="admin-messages-list-section-title">{title}</h3>
+          <p className="admin-messages-list-section-description">{description}</p>
+        </div>
+        <AdminDisplaySectionSwitch
+          label={sectionLabel}
+          checked={sectionEnabled}
+          disabled={savingSection}
+          onCheckedChange={onToggleSection}
+        />
       </header>
 
       <div className="admin-messages-table-wrap">
@@ -98,7 +122,7 @@ function MessageTableSection({
               <TableHead>Tier</TableHead>
               <TableHead>Shows</TableHead>
               <TableHead className="admin-table-col-hide-md">Duration</TableHead>
-              <TableHead className="admin-table-col-hide-lg">Schedule</TableHead>
+              <TableHead className="admin-table-col-hide-lg">Ends</TableHead>
               <TableHead>On TV</TableHead>
               <TableHead className="admin-table-col-actions">Actions</TableHead>
             </TableRow>
@@ -116,6 +140,7 @@ function MessageTableSection({
                   key={message.id}
                   message={message}
                   allMessages={allMessages}
+                  sectionFlags={sectionFlags}
                   dragging={draggingId === message.id}
                   dropTarget={dropTargetId === message.id}
                   onDragStart={(event) => {
@@ -150,6 +175,12 @@ function MessageTableSection({
 
 export function AdminMessageListPanel({
   messages,
+  sectionFlags,
+  prioritySectionEnabled,
+  normalSectionEnabled,
+  savingSection,
+  onTogglePrioritySection,
+  onToggleNormalSection,
   onCreate,
   onEdit,
   onDuplicate,
@@ -171,8 +202,9 @@ export function AdminMessageListPanel({
         <div>
           <h2 className="admin-messages-panel-title">Announcements</h2>
           <p className="admin-messages-panel-description">
-            Drag to reorder within each tier. Priority messages replace normal
-            rotation while active. Use On TV to show or hide a message.
+            Drag to reorder within each tier. Priority messages replace general
+            rotation while active. Use section switches or per-message On TV to
+            control what appears on screen.
           </p>
         </div>
         <Button className="btn-gold" onClick={onCreate}>
@@ -183,9 +215,14 @@ export function AdminMessageListPanel({
 
       <MessageTableSection
         title="Priority messages"
-        description="Replace normal rotation while active and within schedule."
+        description="Replace general rotation while active and within schedule."
+        sectionLabel="Priority section"
+        sectionEnabled={prioritySectionEnabled}
+        savingSection={savingSection}
+        onToggleSection={onTogglePrioritySection}
         messages={priorityMessages}
         allMessages={messages}
+        sectionFlags={sectionFlags}
         isPriority
         onEdit={onEdit}
         onDuplicate={onDuplicate}
@@ -195,10 +232,15 @@ export function AdminMessageListPanel({
       />
 
       <MessageTableSection
-        title="Normal messages"
-        description="Rotate when no valid priority messages are active."
+        title="General announcements"
+        description="Rotate with Ayat & Hadith when no valid priority messages are active."
+        sectionLabel="Announcements section"
+        sectionEnabled={normalSectionEnabled}
+        savingSection={savingSection}
+        onToggleSection={onToggleNormalSection}
         messages={nonPriorityMessages}
         allMessages={messages}
+        sectionFlags={sectionFlags}
         isPriority={false}
         onEdit={onEdit}
         onDuplicate={onDuplicate}

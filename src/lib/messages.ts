@@ -4,6 +4,7 @@ import type { Message, Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import type { SerializedMessage } from "@/lib/message-types";
 import type { SerializedDisplayNotice } from "@/lib/display-types";
+import { isMessageWithinSchedule } from "@/lib/message-schedule";
 
 export function serializeMessage(message: Message): SerializedMessage {
   return {
@@ -23,20 +24,6 @@ export function serializeMessage(message: Message): SerializedMessage {
   };
 }
 
-function messageEndInclusive(endAt: Date) {
-  const end = new Date(endAt);
-  end.setHours(23, 59, 59, 999);
-  return end;
-}
-
-export function isMessageWithinSchedule(
-  message: Pick<Message, "startsAt" | "endsAt">,
-  now = new Date(),
-) {
-  if (message.startsAt && message.startsAt > now) return false;
-  if (message.endsAt && messageEndInclusive(message.endsAt) < now) return false;
-  return true;
-}
 
 export function isMessageRotationEligible(
   message: Message,

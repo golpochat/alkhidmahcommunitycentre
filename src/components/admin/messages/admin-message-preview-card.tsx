@@ -1,5 +1,5 @@
 import type { MessageFormState } from "@/lib/message-client";
-import { formatMessageSchedule } from "@/lib/message-client";
+import { formatMessageSchedule, isMessageOnTv } from "@/lib/message-client";
 import type { SerializedMessage } from "@/lib/message-types";
 
 interface AdminMessagePreviewCardProps {
@@ -53,12 +53,12 @@ export function AdminMessagePreviewCard({
           <dd>{form.durationSeconds}s on screen</dd>
         </div>
         <div>
-          <dt>Schedule</dt>
+          <dt>Ends</dt>
           <dd>{formatMessageSchedule(previewMessage)}</dd>
         </div>
         <div>
-          <dt>Status</dt>
-          <dd>{form.status === "ACTIVE" ? "Active" : "Inactive"}</dd>
+          <dt>On TV</dt>
+          <dd>{isMessageOnTv(form) ? "On" : "Off"}</dd>
         </div>
       </dl>
     </article>

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
-import { db } from "@/lib/db";
 import { canManagePrayerTimes, requireSession } from "@/lib/auth";
 import {
   getDefaultPrayerTimesForDate,
@@ -20,7 +19,7 @@ import {
 import { toDateKey } from "@/lib/prayer-times-pure";
 import type { DailyAdhanConfig } from "@/lib/prayer-adhan";
 import type { DailyIqamaConfig } from "@/lib/prayer-iqama";
-import { prayerTimesOverrideSchema, type PrayerTimesOverrideFormValues } from "@/lib/validations";
+import { prayerTimesOverrideSchema } from "@/lib/validations";
 
 type OverrideSection = "daily" | "jumuah" | "eid";
 
@@ -141,6 +140,6 @@ export async function DELETE() {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Delete failed";
     const status = message === "Unauthorized" || message === "Forbidden" ? 401 : 400;
-    return NextResponse.json({ error: message }, { status: 401 });
+    return NextResponse.json({ error: message }, { status });
   }
 }

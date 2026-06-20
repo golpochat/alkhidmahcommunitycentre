@@ -4,8 +4,6 @@ import { readFile } from "fs/promises";
 import path from "path";
 import { getDonationStatementBranding } from "@/lib/donation-statement-branding";
 import { LOGO_PATH } from "@/lib/constants";
-import { FLYER_LAYOUT } from "@/lib/flyers/constants";
-
 const FONT_CACHE = new Map<string, ArrayBuffer>();
 
 const LOCAL_FONTS = [

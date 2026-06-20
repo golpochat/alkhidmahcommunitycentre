@@ -11,6 +11,7 @@ import {
   createEmptyMessageForm,
   formToApiPayload,
   messageToForm,
+  type MessageSectionFlags,
 } from "@/lib/message-client";
 import { rotationMessagesKey } from "@/lib/display-bottom-slides";
 import type { CachedAyah } from "@/lib/display-cache";
@@ -20,11 +21,31 @@ import { parseJsonResponse } from "@/lib/parse-json-response";
 interface AdminMessagesCentreProps {
   ayat: CachedAyah[];
   rotationSpeed: number;
+  sectionFlags: MessageSectionFlags;
+  prioritySectionEnabled: boolean;
+  normalSectionEnabled: boolean;
+  ayatSectionEnabled: boolean;
+  savingSection?: boolean;
+  contentRefreshToken?: number;
+  onTogglePrioritySection: (enabled: boolean) => void;
+  onToggleNormalSection: (enabled: boolean) => void;
+  onSectionStateChange: () => void;
+  onEnabledPanelsChange: (panels: string[]) => void;
 }
 
 export function AdminMessagesCentre({
   ayat,
   rotationSpeed,
+  sectionFlags,
+  prioritySectionEnabled,
+  normalSectionEnabled,
+  ayatSectionEnabled,
+  savingSection,
+  contentRefreshToken = 0,
+  onTogglePrioritySection,
+  onToggleNormalSection,
+  onSectionStateChange,
+  onEnabledPanelsChange,
 }: AdminMessagesCentreProps) {
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -44,20 +65,30 @@ export function AdminMessagesCentre({
       const messagesRes = await fetch("/api/messages", { cache: "no-store" });
 
       if (messagesRes.ok) {
-        setMessages((await messagesRes.json()) as SerializedMessage[]);
+        const data = (await messagesRes.json()) as {
+          messages: SerializedMessage[];
+          enabledPanels: string[];
+        };
+        setMessages(data.messages);
+        onEnabledPanelsChange(data.enabledPanels);
       }
     } catch {
       toast.error("Failed to load messages");
     }
-  }, []);
+  }, [onEnabledPanelsChange]);
 
   useEffect(() => {
     void loadData().finally(() => setLoading(false));
     const interval = setInterval(() => {
       void loadData();
-    }, 30_000);
+    }, 10_000);
     return () => clearInterval(interval);
   }, [loadData]);
+
+  useEffect(() => {
+    if (contentRefreshToken === 0) return;
+    void loadData();
+  }, [contentRefreshToken, loadData]);
 
   useEffect(() => {
     const fetchRotation = async () => {
@@ -202,6 +233,7 @@ export function AdminMessagesCentre({
         throw new Error(error.error ?? "Update failed");
       }
       await loadData();
+      onSectionStateChange();
     } catch (error) {
       setMessages((current) =>
         current.map((item) => (item.id === message.id ? message : item)),
@@ -267,6 +299,12 @@ export function AdminMessagesCentre({
     <>
       <AdminMessageListPanel
         messages={messages}
+        sectionFlags={sectionFlags}
+        prioritySectionEnabled={prioritySectionEnabled}
+        normalSectionEnabled={normalSectionEnabled}
+        savingSection={savingSection}
+        onTogglePrioritySection={onTogglePrioritySection}
+        onToggleNormalSection={onToggleNormalSection}
         onCreate={openCreateModal}
         onEdit={openEditModal}
         onDuplicate={(message) => void duplicateMessage(message)}
@@ -281,6 +319,8 @@ export function AdminMessagesCentre({
             rotationQueue={rotationQueue}
             ayat={ayat}
             rotationSpeed={rotationSpeed}
+            ayatSectionEnabled={ayatSectionEnabled}
+            sectionFlags={sectionFlags}
           />
         }
       />

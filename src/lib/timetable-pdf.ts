@@ -8,7 +8,6 @@ import {
 } from "@/lib/donation-statement-branding";
 import {
   BRAND_GOLD,
-  BRAND_GREEN,
   buildTimetableLetterheadOptions,
   drawLetterhead,
   drawPdfTitleSection,

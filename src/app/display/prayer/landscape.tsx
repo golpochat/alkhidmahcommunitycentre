@@ -7,7 +7,7 @@ import { DisplayTopBar } from "@/components/display/display-top-bar";
 import { PrayerTimesPanel } from "@/components/display/prayer-times-panel";
 import { SeasonalModeWrapper } from "@/components/display/seasonal-mode-wrapper";
 import { EidPrayerBanner } from "@/components/prayer-times/eid-prayer-banner";
-import { isWeatherEnabled } from "@/lib/display-settings-types";
+import { isAyatHadithEnabled, isWeatherEnabled } from "@/lib/display-settings-types";
 
 export function LandscapeDisplayLayout({
   schedule,
@@ -49,7 +49,7 @@ export function LandscapeDisplayLayout({
           <RotationContainer
             messages={rotationMessages}
             ayat={ayat}
-            ayatEnabled
+            ayatEnabled={isAyatHadithEnabled(settings.enabledPanels)}
             ayatRotationSpeed={settings.rotationSpeed}
             variant="landscape"
             fillStage

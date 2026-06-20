@@ -115,7 +115,7 @@ Add `STRIPE_WEBHOOK_SECRET` to env or configure in Super Admin → Payment.
 
 ## 5. Post-deploy checklist
 
-- [ ] Run `npm run db:deploy` (or `db:push` on empty DB) including migration `20260609120000_phase3_hardening`
+- [ ] Run `npm run db:deploy` (or `db:push` on empty DB) including migrations `20260609120000_phase3_hardening` and `20260621120000_legal_policies`
 - [ ] Run `npm run db:seed` to sync new RBAC permissions (`contact.manage`, `content.audit`)
 - [ ] Log in as super-admin (`ADMIN_EMAIL` / seed password — change immediately)
 - [ ] Super Admin → Settings: site name, logo, SMTP, payment

@@ -318,7 +318,7 @@ function layoutLetterheadContactLines(
 ): { lines: LetterheadContactLineLayout[]; height: number } {
   const fontScale = options.fontScale ?? 1;
   const compact = options.compact ?? false;
-  const { font, fontBold } = fonts;
+  const { font } = fonts;
   const siteNameSize = 14 * fontScale;
   const contactSize = 9 * fontScale;
   const siteNameLineHeight = (compact ? 16 : 18) * fontScale;
@@ -366,7 +366,7 @@ async function computeLogoDimensions(
   const logoImage = await pdfDoc.embedPng(logoPng);
   const logoDims = logoImage.scale(0.35);
   const logoMaxHeight = LETTERHEAD_LOGO_MAX_HEIGHT * logoScale;
-  let logoWidth = Math.min(
+  const logoWidth = Math.min(
     (logoDims.width / logoDims.height) * logoMaxHeight,
     logoDims.width,
     maxLogoWidth,

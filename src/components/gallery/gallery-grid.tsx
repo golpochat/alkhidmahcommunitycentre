@@ -5,7 +5,7 @@ import type { SerializedGalleryItem } from "@/lib/gallery";
 
 interface GalleryGridProps {
   items: SerializedGalleryItem[];
-  onItemClick: (index: number) => void;
+  onItemClick: (item: SerializedGalleryItem) => void;
 }
 
 export function GalleryGrid({ items, onItemClick }: GalleryGridProps) {
@@ -23,7 +23,7 @@ export function GalleryGrid({ items, onItemClick }: GalleryGridProps) {
         <GalleryItemCard
           key={item.id}
           item={item}
-          onClick={() => onItemClick(index)}
+          onClick={() => onItemClick(item)}
           priority={index < 4}
         />
       ))}

@@ -179,7 +179,7 @@ export async function refreshDonationCategoryUrls() {
 }
 
 function buildUniqueCategorySlug(name: string, existingSlugs: string[]) {
-  let base = slugify(name).slice(0, 48) || "category";
+  const base = slugify(name).slice(0, 48) || "category";
   let slug = base;
   let suffix = 1;
 

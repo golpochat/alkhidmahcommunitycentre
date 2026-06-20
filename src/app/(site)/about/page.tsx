@@ -1,7 +1,6 @@
 import { Award } from "lucide-react";
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { PageHero } from "@/components/layout/page-hero";
 import { AboutValuesSection } from "@/components/about/about-values-section";
 import { AboutCommitteeSection } from "@/components/about/about-committee-section";

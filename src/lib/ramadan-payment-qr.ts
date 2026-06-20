@@ -3,7 +3,6 @@ import "server-only";
 import { generateQrDataUrl } from "@/lib/qr";
 import { db } from "@/lib/db";
 import {
-  emptyPaymentQrSlots,
   mergePaymentQrSlots,
   normalizeRamadanQrSlotCount,
   RAMADAN_QR_MAX_SLOTS,

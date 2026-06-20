@@ -39,7 +39,6 @@ import {
   canManageRegistrations,
   canManageContactMessages,
   canViewContentAudit,
-  canWriteAdminContent,
 } from "@/lib/rbac";
 import { cn } from "@/lib/utils";
 

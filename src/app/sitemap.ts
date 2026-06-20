@@ -1,4 +1,3 @@
-import { NextRequest, NextResponse } from "next/server";
 import { EDUCATION_PATH } from "@/lib/constants";
 import { getAllClasses, getAllEvents } from "@/lib/queries";
 import { getSiteBranding } from "@/lib/site-branding";

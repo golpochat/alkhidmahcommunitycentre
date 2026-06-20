@@ -22,7 +22,6 @@ import {
   addMinutesToTime,
   buildEidInfoFromRecord,
   buildScheduleDates,
-  buildSlot,
   defaultJumuahSlots,
   findNextPrayer,
   isEidVisibleForToday,

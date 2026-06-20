@@ -8,7 +8,7 @@ import { PrayerTimesStack } from "@/components/display/prayer-times-stack";
 import { RotationContainer } from "@/components/display/rotation-container";
 import { SeasonalModeWrapper } from "@/components/display/seasonal-mode-wrapper";
 import { EidPrayerBanner } from "@/components/prayer-times/eid-prayer-banner";
-import { isWeatherEnabled } from "@/lib/display-settings-types";
+import { isAyatHadithEnabled, isWeatherEnabled } from "@/lib/display-settings-types";
 
 export function PortraitDisplayLayout({
   schedule,
@@ -42,7 +42,7 @@ export function PortraitDisplayLayout({
           <RotationContainer
             messages={rotationMessages}
             ayat={ayat}
-            ayatEnabled
+            ayatEnabled={isAyatHadithEnabled(settings.enabledPanels)}
             ayatRotationSpeed={settings.rotationSpeed}
             variant="landscape"
             fillStage

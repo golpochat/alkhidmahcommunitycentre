@@ -53,9 +53,10 @@ function buildPortraitInfoSlides(
   for (const notice of activeNotices.filter((item) => item.priority !== "high")) {
     slides.push({
       key: `announcement-${notice.id}`,
-      kicker: "Announcements",
+      kicker: "",
       kickerClass: "display-portrait-panel-kicker-gold",
-      body: `${notice.title}: ${notice.message}`,
+      title: notice.title,
+      body: notice.message,
       panelClass: "display-portrait-info-panel",
     });
   }
@@ -128,9 +129,11 @@ export function DisplayPortraitInfoPanels({
     <section className="display-portrait-info-section" aria-label="Notices and events">
       {slide ? (
         <article className={slide.panelClass}>
-          <p className={`display-portrait-panel-kicker ${slide.kickerClass}`}>
-            {slide.kicker}
-          </p>
+          {slide.kicker ? (
+            <p className={`display-portrait-panel-kicker ${slide.kickerClass}`}>
+              {slide.kicker}
+            </p>
+          ) : null}
           {slide.title ? (
             <p className="display-portrait-panel-title">{slide.title}</p>
           ) : null}
@@ -146,9 +149,6 @@ export function DisplayPortraitInfoPanels({
         </article>
       ) : (
         <article className="display-portrait-info-panel">
-          <p className="display-portrait-panel-kicker display-portrait-panel-kicker-gold">
-            Announcements
-          </p>
           <p className="display-portrait-panel-body">
             No announcements at this time.
           </p>

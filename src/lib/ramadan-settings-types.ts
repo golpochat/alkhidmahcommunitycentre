@@ -48,7 +48,8 @@ export function normalizeRamadanStartDayOffset(value: unknown): number {
   return Math.min(5, Math.max(-5, Math.trunc(parsed)));
 }
 
-export function normalizeRamadanQrSlotCount(_value?: unknown): RamadanQrSlotCount {
+export function normalizeRamadanQrSlotCount(value?: unknown): RamadanQrSlotCount {
+  void value;
   return RAMADAN_QR_MAX_SLOTS;
 }
 

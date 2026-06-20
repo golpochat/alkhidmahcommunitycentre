@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireDisplayAdminSession } from "@/lib/display-admin-auth";
+import { maintainDisplaySections, syncDisplayPanelForMessages, getSerializedDisplaySettings } from "@/lib/display-section-sync";
 import {
   createMessage,
   listAllMessages,
@@ -24,8 +25,15 @@ function mapMessageInput(validated: ReturnType<typeof messageCreateSchema.parse>
 export async function GET() {
   try {
     await requireDisplayAdminSession();
-    const messages = await listAllMessages();
-    return NextResponse.json(messages);
+    await maintainDisplaySections();
+    const [messages, settings] = await Promise.all([
+      listAllMessages(),
+      getSerializedDisplaySettings(),
+    ]);
+    return NextResponse.json({
+      messages,
+      enabledPanels: settings.enabledPanels,
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed";
     const status =
@@ -40,6 +48,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validated = messageCreateSchema.parse(body);
     const message = await createMessage(mapMessageInput(validated));
+    await syncDisplayPanelForMessages(message.state);
     return NextResponse.json(message, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Invalid data";

@@ -397,19 +397,6 @@ function drawCenteredText(
   });
 }
 
-/** Draw a line with its top edge at yTop; returns y below the line. */
-function drawCenteredTextFromTop(
-  page: PDFPage,
-  text: string,
-  yTop: number,
-  size: number,
-  font: PdfFonts["font"],
-  color = BRAND_GREEN
-) {
-  drawCenteredText(page, text, yTop - size, size, font, color);
-  return yTop - size;
-}
-
 const RAMADAN_TITLE_SUBTITLE_GAP = 4;
 const RAMADAN_TITLE_TABLE_GAP = 4;
 const RAMADAN_TABLE_HEADER_PAD = 4;

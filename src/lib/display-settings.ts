@@ -14,13 +14,24 @@ export type {
 } from "@/lib/display-settings-types";
 
 export {
+  buildEnabledPanels,
+  isAyatHadithEnabled,
+  isNormalMessagesEnabled,
+  isPriorityMessagesEnabled,
   isWeatherEnabled,
+  parseDisplaySectionPanels,
+  setDisplayPanelEnabled,
   weatherEnabledPanels,
 } from "@/lib/display-settings-types";
 
 const DEFAULT_SETTINGS = {
   rotationSpeed: 10,
-  enabledPanels: ["weather"],
+  enabledPanels: [
+    "weather",
+    "priority-messages",
+    "normal-messages",
+    "ayat-hadith",
+  ],
   theme: "hybrid" as DisplayTheme,
   pinCode: null as string | null,
   brightnessSchedule: null as unknown,

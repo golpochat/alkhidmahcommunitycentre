@@ -1,4 +1,4 @@
-export async function parseJsonResponse<T extends Record<string, unknown> = Record<string, unknown>>(
+export async function parseJsonResponse<T = unknown>(
   response: Response
 ): Promise<T> {
   const text = await response.text();

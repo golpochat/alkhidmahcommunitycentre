@@ -119,7 +119,8 @@ export const paymentGatewaySchema = z
     }
   });
 
-export type PaymentGatewayFormValues = z.infer<typeof paymentGatewaySchema>;
+export type PaymentGatewayFormValues = z.input<typeof paymentGatewaySchema>;
+export type PaymentGatewayValues = z.infer<typeof paymentGatewaySchema>;
 
 export const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),

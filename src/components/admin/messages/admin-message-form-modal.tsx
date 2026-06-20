@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import type { MessageFormState } from "@/lib/message-client";
+import { isMessageOnTv, setMessageOnTv } from "@/lib/message-client";
 
 interface AdminMessageFormModalProps {
   open: boolean;
@@ -37,6 +38,7 @@ export function AdminMessageFormModal({
   onSave,
 }: AdminMessageFormModalProps) {
   const isPriority = form.state === "PRIORITY";
+  const onTv = isMessageOnTv(form);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -101,37 +103,35 @@ export function AdminMessageFormModal({
 
           <div className="admin-messages-toggle-row">
             <div>
-              <Label htmlFor="message-status">Status</Label>
+              <Label htmlFor="message-on-tv">On TV</Label>
               <p className="admin-messages-toggle-hint">
-                {form.status === "ACTIVE" ? "Active" : "Inactive"}
+                {onTv
+                  ? "Message can appear on TV when scheduled and its section is enabled."
+                  : "Message is saved but will not appear on TV."}
               </p>
             </div>
-            <Switch
-              id="message-status"
-              checked={form.status === "ACTIVE"}
-              onCheckedChange={(checked) =>
-                onChange({
-                  ...form,
-                  status: checked ? "ACTIVE" : "INACTIVE",
-                })
-              }
-            />
-          </div>
-
-          <div className="admin-messages-toggle-row">
-            <div>
-              <Label htmlFor="message-rotation">Include in rotation</Label>
-              <p className="admin-messages-toggle-hint">
-                When off, the message is stored but not shown on TV.
-              </p>
+            <div className="admin-messages-rotation-control">
+              <Switch
+                id="message-on-tv"
+                checked={onTv}
+                disabled={saving}
+                onCheckedChange={(checked) =>
+                  onChange(setMessageOnTv(form, Boolean(checked)))
+                }
+                className="admin-messages-rotation-switch"
+                aria-label={onTv ? "Remove message from TV" : "Show message on TV"}
+              />
+              <span
+                className={
+                  onTv
+                    ? "admin-messages-rotation-label admin-messages-rotation-label-on"
+                    : "admin-messages-rotation-label"
+                }
+                aria-hidden="true"
+              >
+                {onTv ? "On" : "Off"}
+              </span>
             </div>
-            <Switch
-              id="message-rotation"
-              checked={form.includeInRotation}
-              onCheckedChange={(checked) =>
-                onChange({ ...form, includeInRotation: checked })
-              }
-            />
           </div>
 
           <div className="admin-messages-field">

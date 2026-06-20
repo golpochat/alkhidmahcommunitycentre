@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireDisplayAdminSession } from "@/lib/display-admin-auth";
+import { syncDisplayPanelForMessages } from "@/lib/display-section-sync";
 import { updateMessage } from "@/lib/messages";
 import { validateMessageScheduleValues } from "@/lib/message-validation";
 import { messageUpdateSchema } from "@/lib/validations";
@@ -61,6 +62,8 @@ export async function PUT(
       ...(validated.startsAt !== undefined ? { startsAt: nextStartsAt } : {}),
       ...(validated.endsAt !== undefined ? { endsAt: nextEndsAt } : {}),
     });
+
+    await syncDisplayPanelForMessages(message.state);
 
     return NextResponse.json(message);
   } catch (error) {

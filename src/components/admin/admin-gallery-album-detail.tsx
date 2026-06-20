@@ -291,6 +291,7 @@ export function AdminGalleryAlbumDetail({ albumId }: AdminGalleryAlbumDetailProp
           onClose={() => setPreviewIndex(null)}
           onPrevious={goToPrevious}
           onNext={goToNext}
+          onSelectIndex={setPreviewIndex}
         />
       )}
     </div>

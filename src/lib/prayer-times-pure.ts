@@ -474,23 +474,6 @@ export function buildScheduleDates(dateKey: string, hijri: AlAdhanResponse["data
   };
 }
 
-function buildEidSlots(
-  adhan1?: string | null,
-  iqama1?: string | null,
-  adhan2?: string | null,
-  iqama2?: string | null
-): EidSlot[] {
-  const slots: EidSlot[] = [];
-
-  if (adhan1 || iqama1) {
-    slots.push({ index: 1, ...buildSlot(adhan1, iqama1) });
-  }
-  if (adhan2 || iqama2) {
-    slots.push({ index: 2, ...buildSlot(adhan2, iqama2) });
-  }
-
-  return slots;
-}
 
 export function hasOverrideData(override: OverrideRecord | null | undefined) {
   if (!override) return false;

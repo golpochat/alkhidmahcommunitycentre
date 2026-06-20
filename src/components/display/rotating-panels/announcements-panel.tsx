@@ -50,7 +50,7 @@ export function AnnouncementsPanel({
   if (!items.length) {
     if (variant === "landscape") {
       return (
-        <DisplayLandscapePanelShell kicker="Announcements">
+        <DisplayLandscapePanelShell>
           <p className="display-landscape-panel-empty">No announcements at this time</p>
         </DisplayLandscapePanelShell>
       );
@@ -58,7 +58,6 @@ export function AnnouncementsPanel({
 
     return (
       <div className="display-rotating-panel display-rotating-panel-empty">
-        <h3 className="display-rotating-panel-title">Announcements</h3>
         <p className="display-rotating-panel-empty-text">No announcements at this time</p>
       </div>
     );
@@ -68,7 +67,7 @@ export function AnnouncementsPanel({
 
   if (variant === "landscape") {
     return (
-      <DisplayLandscapePanelShell kicker="Announcements">
+      <DisplayLandscapePanelShell>
         <p className="display-landscape-panel-headline">
           <span className="display-landscape-panel-emphasis">{notice.title}</span>
           <span className="display-landscape-panel-separator"> · </span>
@@ -80,7 +79,6 @@ export function AnnouncementsPanel({
 
   return (
     <div className="display-rotating-panel">
-      <h3 className="display-rotating-panel-title">Announcements</h3>
       <article className="display-announcement-feature">
         <span
           className={`display-announcement-priority display-announcement-priority-${notice.priority}`}

@@ -67,7 +67,7 @@ export function DisplayLandscapeAnnouncement({
   return (
     <article className="display-landscape-announcement-block">
       <p className="display-landscape-announcement-title">
-        {notice?.title ?? "Announcements"}
+        {notice?.title ?? "Notice"}
       </p>
       <p className="display-landscape-announcement-message">
         {notice?.message ?? "No announcements at this time"}

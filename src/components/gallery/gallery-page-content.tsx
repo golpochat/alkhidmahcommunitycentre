@@ -2,62 +2,87 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { PageHero } from "@/components/layout/page-hero";
-import { AlbumFilter } from "@/components/gallery/album-filter";
+import { CategoryFilter } from "@/components/gallery/category-filter";
 import { GalleryGrid } from "@/components/gallery/gallery-grid";
 import { Lightbox } from "@/components/gallery/lightbox";
-import type { SerializedGalleryAlbum, SerializedGalleryItem } from "@/lib/gallery";
+import type { SerializedGalleryItem } from "@/lib/gallery";
 import { IMAGES } from "@/lib/images";
 import { SITE_NAME } from "@/lib/constants";
 
 interface GalleryPageContentProps {
   images: SerializedGalleryItem[];
-  albums: SerializedGalleryAlbum[];
 }
 
-export function GalleryPageContent({ images, albums }: GalleryPageContentProps) {
+function filterByCategory(
+  images: SerializedGalleryItem[],
+  filter: string,
+) {
+  if (filter === "all") {
+    return images;
+  }
+
+  return images.filter(
+    (image) => image.category?.toLowerCase() === filter.toLowerCase(),
+  );
+}
+
+export function GalleryPageContent({ images }: GalleryPageContentProps) {
   const [filter, setFilter] = useState("all");
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const filteredImages = useMemo(() => {
-    if (filter === "all") return images;
-    return images.filter((image) => image.albumId === filter);
-  }, [images, filter]);
+  const filteredImages = useMemo(
+    () => filterByCategory(images, filter),
+    [images, filter],
+  );
 
-  const goToPrevious = useCallback(() => {
-    if (selectedIndex === null) return;
-    setSelectedIndex(
-      selectedIndex === 0 ? filteredImages.length - 1 : selectedIndex - 1
-    );
-  }, [selectedIndex, filteredImages.length]);
-
-  const goToNext = useCallback(() => {
-    if (selectedIndex === null) return;
-    setSelectedIndex(
-      selectedIndex === filteredImages.length - 1 ? 0 : selectedIndex + 1
-    );
-  }, [selectedIndex, filteredImages.length]);
-
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if (selectedIndex === null) return;
-      if (event.key === "ArrowLeft") goToPrevious();
-      if (event.key === "ArrowRight") goToNext();
-      if (event.key === "Escape") setSelectedIndex(null);
+  const selectedIndex = useMemo(() => {
+    if (!selectedId) {
+      return null;
     }
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedIndex, goToPrevious, goToNext]);
+    const index = filteredImages.findIndex((image) => image.id === selectedId);
+    return index >= 0 ? index : null;
+  }, [filteredImages, selectedId]);
+
+  const goToPrevious = useCallback(() => {
+    if (selectedIndex === null || filteredImages.length <= 1) {
+      return;
+    }
+
+    const nextIndex =
+      selectedIndex === 0 ? filteredImages.length - 1 : selectedIndex - 1;
+    setSelectedId(filteredImages[nextIndex]?.id ?? null);
+  }, [filteredImages, selectedIndex]);
+
+  const goToNext = useCallback(() => {
+    if (selectedIndex === null || filteredImages.length <= 1) {
+      return;
+    }
+
+    const nextIndex =
+      selectedIndex === filteredImages.length - 1 ? 0 : selectedIndex + 1;
+    setSelectedId(filteredImages[nextIndex]?.id ?? null);
+  }, [filteredImages, selectedIndex]);
 
   useEffect(() => {
-    if (selectedIndex !== null) {
+    setSelectedId(null);
+  }, [filter]);
+
+  useEffect(() => {
+    if (selectedId && selectedIndex === null) {
+      setSelectedId(null);
+    }
+  }, [selectedId, selectedIndex]);
+
+  useEffect(() => {
+    if (selectedId) {
       document.body.classList.add("overflow-hidden");
     } else {
       document.body.classList.remove("overflow-hidden");
     }
 
     return () => document.body.classList.remove("overflow-hidden");
-  }, [selectedIndex]);
+  }, [selectedId]);
 
   return (
     <>
@@ -72,12 +97,12 @@ export function GalleryPageContent({ images, albums }: GalleryPageContentProps) 
       <section className="section-padding">
         <div className="section-container">
           <div className="mb-8">
-            <AlbumFilter albums={albums} value={filter} onChange={setFilter} />
+            <CategoryFilter value={filter} onChange={setFilter} />
           </div>
 
           <GalleryGrid
             items={filteredImages}
-            onItemClick={(index) => setSelectedIndex(index)}
+            onItemClick={(item) => setSelectedId(item.id)}
           />
         </div>
       </section>
@@ -86,9 +111,10 @@ export function GalleryPageContent({ images, albums }: GalleryPageContentProps) 
         <Lightbox
           items={filteredImages}
           index={selectedIndex}
-          onClose={() => setSelectedIndex(null)}
+          onClose={() => setSelectedId(null)}
           onPrevious={goToPrevious}
           onNext={goToNext}
+          onSelectIndex={(index) => setSelectedId(filteredImages[index]?.id ?? null)}
         />
       )}
     </>

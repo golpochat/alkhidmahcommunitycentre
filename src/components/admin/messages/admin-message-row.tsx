@@ -11,6 +11,8 @@ import {
 import {
   formatMessageSchedule,
   getMessageShowsLabel,
+  isMessageOnTv,
+  type MessageSectionFlags,
 } from "@/lib/message-client";
 import type { SerializedMessage } from "@/lib/message-types";
 import type { DragEvent, MouseEvent, PointerEvent } from "react";
@@ -18,6 +20,7 @@ import type { DragEvent, MouseEvent, PointerEvent } from "react";
 interface AdminMessageRowProps {
   message: SerializedMessage;
   allMessages: SerializedMessage[];
+  sectionFlags: MessageSectionFlags;
   dragging: boolean;
   dropTarget: boolean;
   onDragStart: (event: DragEvent<HTMLButtonElement>) => void;
@@ -46,6 +49,8 @@ function showsBadge(label: string) {
       return <Badge variant="secondary">Scheduled</Badge>;
     case "Waiting":
       return <Badge variant="outline">Waiting</Badge>;
+    case "Section off":
+      return <Badge variant="outline">Section off</Badge>;
     case "Expired":
       return <Badge variant="outline">Expired</Badge>;
     default:
@@ -66,10 +71,10 @@ export function AdminMessageRow({
   onDuplicate,
   onDelete,
   onTogglePublished,
+  sectionFlags,
 }: AdminMessageRowProps) {
-  const showsLabel = getMessageShowsLabel(message, allMessages);
-  const published =
-    message.status === "ACTIVE" && message.includeInRotation;
+  const showsLabel = getMessageShowsLabel(message, allMessages, new Date(), sectionFlags);
+  const published = isMessageOnTv(message);
 
   return (
     <TableRow

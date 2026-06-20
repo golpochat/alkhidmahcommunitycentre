@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 interface DisplayLandscapePanelShellProps {
-  kicker: string;
+  kicker?: string;
   children: ReactNode;
 }
 
@@ -11,7 +11,7 @@ export function DisplayLandscapePanelShell({
 }: DisplayLandscapePanelShellProps) {
   return (
     <div className="display-landscape-panel-shell">
-      <p className="display-landscape-panel-kicker">{kicker}</p>
+      {kicker ? <p className="display-landscape-panel-kicker">{kicker}</p> : null}
       <div className="display-landscape-panel-body">{children}</div>
     </div>
   );

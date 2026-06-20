@@ -22,7 +22,6 @@ import {
   EMPTY_RAMADAN_SETTINGS,
   normalizeRamadanQrSlotCount,
   normalizeRamadanStartDayOffset,
-  RAMADAN_NOTES_MAX_LENGTH,
   type RamadanSettingsData,
 } from "@/lib/ramadan-settings-types";
 import { listRamadanPaymentQrs } from "@/lib/ramadan-payment-qr";

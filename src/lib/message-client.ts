@@ -1,6 +1,10 @@
 import type { MessageState, MessageStatus } from "@prisma/client";
 import type { SerializedMessage } from "@/lib/message-types";
 import { nowIso, toDatetimeLocalValue } from "@/lib/events";
+import {
+  hasMessageScheduleEnded,
+  isMessageWithinSchedule,
+} from "@/lib/message-schedule";
 
 export type MessageValidity =
   | "active_now"
@@ -25,21 +29,26 @@ export interface MessageFormState {
   normalOrder: string;
 }
 
-function messageEndInclusive(endAt: Date) {
-  const end = new Date(endAt);
-  end.setHours(23, 59, 59, 999);
-  return end;
+export interface MessageSectionFlags {
+  priorityMessagesEnabled: boolean;
+  normalMessagesEnabled: boolean;
 }
 
-export function isMessageWithinSchedule(
-  message: Pick<SerializedMessage, "startsAt" | "endsAt">,
-  now = new Date(),
+export function isMessageOnTv(
+  message: Pick<SerializedMessage, "status" | "includeInRotation">,
 ) {
-  if (message.startsAt && new Date(message.startsAt) > now) return false;
-  if (message.endsAt && messageEndInclusive(new Date(message.endsAt)) < now) {
-    return false;
-  }
-  return true;
+  return message.status === "ACTIVE" && message.includeInRotation;
+}
+
+export function setMessageOnTv(
+  form: MessageFormState,
+  onTv: boolean,
+): MessageFormState {
+  return {
+    ...form,
+    status: onTv ? "ACTIVE" : "INACTIVE",
+    includeInRotation: onTv,
+  };
 }
 
 export function isMessageRotationEligible(
@@ -54,16 +63,27 @@ export function isMessageRotationEligible(
 export function buildRotationQueue(
   messages: SerializedMessage[],
   now = new Date(),
+  sections?: MessageSectionFlags,
 ): SerializedMessage[] {
-  const priorityMessages = sortMessagesByOrder(
-    messages.filter(
-      (message) =>
-        message.state === "PRIORITY" && isMessageRotationEligible(message, now),
-    ),
-  );
+  const priorityEnabled = sections?.priorityMessagesEnabled ?? true;
+  const normalEnabled = sections?.normalMessagesEnabled ?? true;
 
-  if (priorityMessages.length > 0) {
-    return priorityMessages;
+  if (priorityEnabled) {
+    const priorityMessages = sortMessagesByOrder(
+      messages.filter(
+        (message) =>
+          message.state === "PRIORITY" &&
+          isMessageRotationEligible(message, now),
+      ),
+    );
+
+    if (priorityMessages.length > 0) {
+      return priorityMessages;
+    }
+  }
+
+  if (!normalEnabled) {
+    return [];
   }
 
   return sortMessagesByOrder(
@@ -79,8 +99,9 @@ export function isMessageInRotationQueue(
   message: SerializedMessage,
   allMessages: SerializedMessage[],
   now = new Date(),
+  sections?: MessageSectionFlags,
 ) {
-  return buildRotationQueue(allMessages, now).some(
+  return buildRotationQueue(allMessages, now, sections).some(
     (queued) => queued.id === message.id,
   );
 }
@@ -89,9 +110,26 @@ export function getMessageQueueExclusionReason(
   message: SerializedMessage,
   allMessages: SerializedMessage[],
   now = new Date(),
+  sections?: MessageSectionFlags,
 ): string | null {
-  if (isMessageInRotationQueue(message, allMessages, now)) {
+  if (isMessageInRotationQueue(message, allMessages, now, sections)) {
     return null;
+  }
+
+  if (
+    message.state === "PRIORITY" &&
+    sections &&
+    !sections.priorityMessagesEnabled
+  ) {
+    return "Priority section off";
+  }
+
+  if (
+    message.state === "NON_PRIORITY" &&
+    sections &&
+    !sections.normalMessagesEnabled
+  ) {
+    return "Normal section off";
   }
 
   if (!message.includeInRotation) {
@@ -126,7 +164,24 @@ export function getMessageShowsLabel(
   message: SerializedMessage,
   allMessages: SerializedMessage[],
   now = new Date(),
+  sections?: MessageSectionFlags,
 ): string {
+  if (
+    message.state === "PRIORITY" &&
+    sections &&
+    !sections.priorityMessagesEnabled
+  ) {
+    return "Section off";
+  }
+
+  if (
+    message.state === "NON_PRIORITY" &&
+    sections &&
+    !sections.normalMessagesEnabled
+  ) {
+    return "Section off";
+  }
+
   if (message.status === "INACTIVE" || !message.includeInRotation) {
     return "Off";
   }
@@ -135,7 +190,7 @@ export function getMessageShowsLabel(
   if (validity === "expired") return "Expired";
   if (validity === "upcoming") return "Scheduled";
 
-  if (isMessageInRotationQueue(message, allMessages, now)) {
+  if (isMessageInRotationQueue(message, allMessages, now, sections)) {
     return "Live now";
   }
 
@@ -158,9 +213,8 @@ export function getMessageValidity(
   if (!message.includeInRotation) return "out_of_rotation";
 
   const startsAt = message.startsAt ? new Date(message.startsAt) : null;
-  const endsAt = message.endsAt ? messageEndInclusive(new Date(message.endsAt)) : null;
 
-  if (endsAt && endsAt < now) return "expired";
+  if (hasMessageScheduleEnded(message, now)) return "expired";
   if (startsAt && startsAt > now) return "upcoming";
   return "active_now";
 }
@@ -288,25 +342,22 @@ export function formToApiPayload(
   };
 }
 
-export function formatMessageSchedule(message: SerializedMessage) {
-  if (!message.startsAt && !message.endsAt) {
+export function formatMessageSchedule(
+  message: SerializedMessage,
+  now = new Date(),
+) {
+  if (!message.endsAt) {
     return "No end date";
   }
 
-  const start = message.startsAt
-    ? new Date(message.startsAt).toLocaleString("en-IE", {
-        dateStyle: "medium",
-        timeStyle: "short",
-      })
-    : "—";
-  const end = message.endsAt
-    ? new Date(message.endsAt).toLocaleString("en-IE", {
-        dateStyle: "medium",
-        timeStyle: "short",
-      })
-    : "—";
+  if (hasMessageScheduleEnded(message, now)) {
+    return "Expired";
+  }
 
-  return `${start} → ${end}`;
+  return new Date(message.endsAt).toLocaleString("en-IE", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
 }
 
 export type RotationSource =

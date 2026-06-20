@@ -33,19 +33,8 @@ function PortraitAnnouncementSlide({
     <article
       className={`display-portrait-info-panel${isPriority ? " display-portrait-info-panel-emergency" : ""}`}
     >
-      {!isPriority ? (
-        <p className="display-portrait-panel-kicker display-portrait-panel-kicker-gold">
-          Announcements
-        </p>
-      ) : null}
-      {isPriority ? (
-        <>
-          <p className="display-portrait-panel-title">{title}</p>
-          <p className="display-portrait-panel-body">{body}</p>
-        </>
-      ) : (
-        <p className="display-portrait-panel-body">{`${title}: ${body}`}</p>
-      )}
+      <p className="display-portrait-panel-title">{title}</p>
+      <p className="display-portrait-panel-body">{body}</p>
     </article>
   );
 }
@@ -63,11 +52,6 @@ function LandscapeAnnouncementSlide({
     <article
       className={`display-landscape-announcement-block${isPriority ? " display-landscape-announcement-priority" : ""}`}
     >
-      {!isPriority ? (
-        <p className="display-landscape-announcement-kicker display-landscape-announcement-kicker-gold">
-          Announcements
-        </p>
-      ) : null}
       <p className="display-landscape-announcement-title">{title}</p>
       <p className="display-landscape-announcement-message">{body}</p>
     </article>
@@ -85,9 +69,6 @@ function PortraitAyatSlide({
 }) {
   return (
     <article className="display-portrait-info-panel">
-      <p className="display-portrait-panel-kicker display-portrait-panel-kicker-gold">
-        Ayat &amp; Hadith
-      </p>
       <p className="display-portrait-panel-body" dir="rtl">
         {arabic}
       </p>
@@ -110,7 +91,6 @@ function LandscapeAyatSlide({
 }) {
   return (
     <article className="display-landscape-announcement-block">
-      <p className="display-landscape-announcement-title">Ayat &amp; Hadith</p>
       <p className="display-landscape-announcement-message" dir="rtl">
         {arabic}
       </p>
